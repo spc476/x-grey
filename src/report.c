@@ -110,13 +110,13 @@ char *report_time(time_t start,time_t end)
   
   ptime = localtime(&start);
   if (ptime)
-    strftime(txt_start,BUFSIZ,c_timestamp,ptime);
+    strftime(txt_start,BUFSIZ,c_timeformat,ptime);
   else
     ptstart = "[ERROR in timestamp]";
   
   ptime = localtime(&end);
   if (ptime)
-    strftime(txt_end,BUFSIZ,c_timestamp,ptime);
+    strftime(txt_end,BUFSIZ,c_timeformat,ptime);
   else
     ptend = "[ERROR in timestamp]";
 

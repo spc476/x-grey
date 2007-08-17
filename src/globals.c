@@ -1,36 +1,20 @@
-/************************************************************************
-*
-* Copyright 2007 by Sean Conner.  All Rights Reserved.
-*
-* This program is free software; you can redistribute it and/or
-* modify it under the terms of the GNU General Public License
-* as published by the Free Software Foundation; either version 2
-* of the License, or (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*
-* Comments, questions and criticisms can be sent to: sean@conman.org
-*
-*************************************************************************/
 
 #include <errno.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <time.h>
+#include <ctype.h>
 
 #include <unistd.h>
 #include <syslog.h>
 #include <signal.h>
 #include <getopt.h>
+#include <netdb.h>
+#include <sys/epoll.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include <cgilib/memory.h>
 #include <cgilib/errors.h>
@@ -40,6 +24,8 @@
 #include <cgilib/ddt.h>
 
 #include "graylist.h"
+#include "signals.h"
+#include "util.h"
 
 enum
 {
@@ -50,6 +36,7 @@ enum
   OPT_PORT_POSTFIX,
   OPT_PORT_SENDMAIL,
   OPT_MAX_TUPLES,
+  OPT_POLL_QUEUE,
   OPT_TIMEOUT_CLEANUP,
   OPT_TIMEOUT_ACCEPT,
   OPT_TIMEOUT_GRAY,
@@ -72,21 +59,24 @@ struct chars_int
   const int   value;
 };
 
-/************************************************************/
+/********************************************************************/
 
-static void		 daemon_init		(void);
-static void		 report_syslog		(int,char *,char *, ... );
-static void		 report_stderr		(int,char *,char *, ... );
-static void		 parse_cmdline		(int,char *[]);
-static size_t		 read_size		(char *);
-static double   	 read_dtime		(char *);
-static void		 dump_defaults		(void);
-static void		 read_dump		(void);
-static int		 ci_map_int		(const char *,const struct chars_int *,size_t);
-static const char	*ci_map_chars		(int,const struct chars_int *,size_t);
-static void		 my_exit		(void);
+static void		 dump_defaults	(void);
+static void		 parse_cmdline	(int,char *[]);
+static void		 daemon_init	(void);
+static void		 report_syslog	(int,char *,char *, ... );
+static void		 report_stderr	(int,char *,char *, ... );
+#if 0
+static size_t		 read_size	(char *);
+#endif
+static double		 read_dtime	(char *);
+static int		 ci_map_int	(const char *,const struct chars_int *,size_t);
+static const char	*ci_map_chars	(int,const struct chars_int *,size_t);
+static void		 my_exit	(void);
 
-/***************************************************************/
+/*********************************************************************/
+
+extern char **environ;
 
 char          *c_whitefile       = "/tmp/whitelist.txt";
 char          *c_grayfile        = "/tmp/grayfile.txt";	
@@ -95,6 +85,7 @@ char          *c_host            = "localhost";
 int            c_pfport          = 9990;
 int            c_smport          = 9991;
 size_t         c_poolmax         = 65536uL;
+int            c_pollqueue       = 20;
 unsigned int   c_timeout_cleanup = 60;
 double	       c_timeout_accept  = 3600.0;
 double         c_timeout_gray    = 3600.0 *  4.0;
@@ -109,52 +100,58 @@ void         (*cv_report)(int,char *,char *, ... ) = report_syslog;
 
 	/*---------------------------------------------------*/
 	
-size_t        g_unique;
-size_t        g_uniquepassed;
-size_t        g_poolnum;
-struct tuple *g_tuplespace;	/* actual space */
-Tuple        *g_pool;		/* used for sorting records */
+size_t          g_unique;
+size_t          g_uniquepassed;
+size_t          g_poolnum;
+struct tuple   *g_tuplespace;	/* actual space */
+Tuple          *g_pool;		/* used for sorting records */
+int             g_sigpiper;	
+int	        g_sigpipew;
+int             g_queue;
+char          **g_argv;
 
-	/*---------------------------------------------------*/
+/*******************************************************************/
+
+volatile int m_debug = 1;
 
 static const struct chars_int m_facilities[] =
 {
-  { "AUTH"      , LOG_AUTHPRIV  } ,
-  { "AUTHPRIV"  , LOG_AUTHPRIV  } ,
-  { "CRON"      , LOG_CRON      } ,
-  { "DAEMON"    , LOG_DAEMON    } ,
-  { "FTP"       , LOG_FTP       } ,
-  { "KERN"      , LOG_KERN      } ,
-  { "LOCAL0"    , LOG_LOCAL0    } ,
-  { "LOCAL1"    , LOG_LOCAL1    } ,
-  { "LOCAL2"    , LOG_LOCAL2    } ,
-  { "LOCAL3"    , LOG_LOCAL3    } ,
-  { "LOCAL4"    , LOG_LOCAL4    } ,
-  { "LOCAL5"    , LOG_LOCAL5    } ,
-  { "LOCAL6"    , LOG_LOCAL6    } ,
-  { "LOCAL7"    , LOG_LOCAL7    } ,
-  { "LPR"       , LOG_LPR       } ,
-  { "MAIL"      , LOG_MAIL      } ,
-  { "NEWS"      , LOG_NEWS      } ,
-  { "SYSLOG"    , LOG_SYSLOG    } ,
-  { "USER"      , LOG_USER      } ,
-  { "UUCP"      , LOG_UUCP      } 
+  { "AUTH"	, LOG_AUTHPRIV	} ,
+  { "AUTHPRIV"	, LOG_AUTHPRIV	} ,
+  { "CRON"	, LOG_CRON	} ,
+  { "DAEMON"	, LOG_DAEMON	} ,
+  { "FTP"	, LOG_FTP	} ,
+  { "KERN"	, LOG_KERN	} ,
+  { "LOCAL0"	, LOG_LOCAL0	} ,
+  { "LOCAL1"	, LOG_LOCAL1	} ,
+  { "LOCAL2"	, LOG_LOCAL2	} ,
+  { "LOCAL3"	, LOG_LOCAL3	} ,
+  { "LOCAL4"	, LOG_LOCAL4	} ,
+  { "LOCAL5"	, LOG_LOCAL5	} ,
+  { "LOCAL6"	, LOG_LOCAL6	} ,
+  { "LOCAL7"	, LOG_LOCAL7	} ,
+  { "LPR"	, LOG_LPR	} ,
+  { "MAIL"	, LOG_MAIL	} ,
+  { "NEWS"	, LOG_NEWS	} ,
+  { "SYSLOG"	, LOG_SYSLOG	} ,
+  { "USER"	, LOG_USER	} ,
+  { "UUCP"	, LOG_UUCP	} 
 };
 
-static const struct chars_int m_levels[] =
+static const struct chars_int m_levels[] = 
 {
-  { "ALERT"     , LOG_ALERT     } ,
-  { "CRIT"      , LOG_CRIT      } ,
-  { "DEBUG"     , LOG_DEBUG     } ,
-  { "ERR"       , LOG_ERR       } ,
-  { "INFO"      , LOG_INFO      } ,
-  { "NOTICE"    , LOG_NOTICE    } ,
-  { "WARNING"   , LOG_WARNING   }
+  { "ALERT"	, LOG_ALERT	} ,
+  { "CRIT"	, LOG_CRIT	} ,
+  { "DEBUG"	, LOG_DEBUG	} ,
+  { "ERR"	, LOG_ERR	} ,
+  { "INFO"	, LOG_INFO	} ,
+  { "NOTICE"	, LOG_NOTICE	} ,
+  { "WARNING"	, LOG_WARNING	}
 };
 
 static const size_t mc_facilities_cnt = sizeof(m_facilities) / sizeof(struct chars_int);
-static const size_t mc_levels_cnd     = sizeof(m_levels)     / sizeof(struct chars_int);
-	
+static const size_t mc_levels_cnt     = sizeof(m_levels)     / sizeof(struct chars_int);
+
 static const struct option mc_options[] =
 {
   { "whitelist"      	, required_argument	, NULL	, OPT_LIST_WHITE	},
@@ -164,6 +161,7 @@ static const struct option mc_options[] =
   { "postfix-port"	, required_argument	, NULL	, OPT_PORT_POSTFIX	} ,
   { "sendmail-port"	, required_argument	, NULL	, OPT_PORT_SENDMAIL	} ,
   { "max-tuples"	, required_argument	, NULL	, OPT_MAX_TUPLES	} ,
+  { "poll-queue"	, required_argument	, NULL	, OPT_POLL_QUEUE	} ,
   { "timeout-cleanup" 	, required_argument	, NULL	, OPT_TIMEOUT_CLEANUP	} ,
   { "timeout-accept"	, required_argument	, NULL	, OPT_TIMEOUT_ACCEPT	} ,
   { "timeout-gray"	, required_argument	, NULL	, OPT_TIMEOUT_GRAY	} ,
@@ -181,116 +179,159 @@ static const struct option mc_options[] =
   { NULL	     	, 0		 	, NULL	, 0 			}
 };
 
-/************************************************************/
+/********************************************************************/
 
-int (GlobalInit)(int argc,char *argv[])
+int (GlobalsInit)(int argc,char *argv[])
 {
+  int tpipes[2];
+  int rc;
+  int i;
+  
+  ddt(argc >  0);
+  ddt(argv != NULL);
+
+  /*--------------------------------------------------------------
+  ; we save the arguments for possible later use.  What possible
+  ; later use?  When one of the worker threads unexpectantly dies,
+  ; we will inform the other remaining threads to finish up, then
+  ; they're killed and this program will then reexec itself to start
+  ; up.  This is what they do in Erlang to remain up and running.
+  ;--------------------------------------------------------------*/
+  
+  g_argv      = argv;
   c_starttime = time(NULL);
   
   parse_cmdline(argc,argv);
+  openlog(c_sysid,0,c_facility);
 
-  openlog(c_sysid,0,c_facility);  
-  
-  g_tuplespace = MemAlloc(c_poolmax * sizeof(struct tuple));
-
-  set_signal(SIGINT,  sighandler_sigs);
-  set_signal(SIGHUP,  sighandler_sigs);
-  set_signal(SIGTRAP, sighandler_sigs);
-  set_signal(SIGQUIT, sighandler_sigs);
-  set_signal(SIGTERM, sighandler_sigs);
-  set_signal(SIGUSR1, sighandler_sigs);
-  set_signal(SIGUSR2, sighandler_sigs);
-  set_signal(SIGCHLD, sighandler_chld);
-  set_signal(SIGWINCH,sighandler_sigs);
-  
   atexit(my_exit);
+
+  g_tuplespace = MemAlloc(c_poolmax * sizeof(struct tuple));
+  g_pool       = MemAlloc(c_poolmax * sizeof(Tuple));
+
+  memset(g_tuplespace,0,c_poolmax * sizeof(struct tuple));
+  memset(g_pool      ,0,c_poolmax * sizeof(Tuple));
+
+  for (i = 0 ; i < c_poolmax ; i++)
+    g_pool[i] = &g_tuplespace[i];
+
+  rc = pipe(tpipes);
+  if (rc < 0)
+  {
+    (*cv_report)(LOG_EMERG,"$","pipe() = %a",strerror(errno));
+    return(ERR_ERR);
+  }
   
+  g_sigpiper = tpipes[0];
+  g_sigpipew = tpipes[1];
+
   if (cf_debug)
     dump_defaults();
-
+  
   if (!cf_foreground)
     daemon_init();
 
+  set_signal(SIGINT,  sighandler_sigs);
+  set_signal(SIGQUIT, sighandler_sigs);
+  set_signal(SIGTERM, sighandler_sigs);
+  set_signal(SIGCHLD, sighandler_chld);
+  
+  set_extsignal(SIGSEGV ,sighandler_critical);
+  set_extsignal(SIGBUS  ,sighandler_critical);
+  set_extsignal(SIGFPE  ,sighandler_critical);
+  set_extsignal(SIGILL  ,sighandler_critical);
+  set_extsignal(SIGXCPU ,sighandler_critical);
+  set_extsignal(SIGXFSZ ,sighandler_critical);
+
+  g_queue = epoll_create(c_pollqueue);
+  if (g_queue == -1)
+  {
+    (*cv_report)(LOG_ERR,"i $","epoll_create(%a) = %b",c_pollqueue,strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+  close_on_exec(g_queue);
+  
   return(ERR_OKAY);
 }
 
-/***********************************************************/
+/*********************************************************************/
 
-int (GlobalDeinit)(void)
+int (GlobalsDeinit)(void)
 {
   MemFree(g_pool);
+  MemFree(g_tuplespace);
+  close(g_sigpipew);
+  close(g_sigpiper);
   closelog();
   return(ERR_OKAY);
 }
 
-/************************************************************/
+/*********************************************************************/
 
-static void daemon_init(void)
+static void dump_defaults(void)
 {
-  pid_t pid;
-  
-  pid = fork();
-  if (pid == (pid_t)-1)
-  {
-    (*cv_report)(LOG_EMERG,"$","daemon_init: fork() returned %a",strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-  else if (pid != 0)	/* parent goes bye bye */
-    exit(EXIT_SUCCESS);
-  
-  /*chdir("/tmp");*/
+  char *togray;
+  char *towhite;
 
-  setsid();
+  togray  = report_delta(c_timeout_gray);
+  towhite = report_delta(c_timeout_white);
 
-  StreamFree(StdinStream);	/* these streams are no longer needed */
-  StreamFree(StdoutStream);
-  close(STDOUT_FILENO);
-  close(STDIN_FILENO);
+  LineSFormat(
+  	StderrStream,
+  	"$ $ $ i i L $ $ $ $ $ $ $ $ $ $ i",
+  	"\t--whitelist <file>\t\t(%a)\n"
+  	"\t--graylist  <file>\t\t(%b)\n"
+  	"\t--host <hostname>\t\t(%c)\n"
+  	"\t--postfix-port <num>\t\t(%d)\n"
+  	"\t--sendmail-port <num>*\t\t(%e)\n"
+  	"\t--max-tuples <num>\t\t(%f)\n"
+  	"\t--poll-queue <num>\t\t(%q)\n"
+  	"\t--timeout-gray <timespec>\t(%g)\n"
+  	"\t--timeout-white <timespec>\t(%h)\n"
+  	"\t--time-format <strftime>\t(%i)\n"
+  	"\t--report-format syslog | stderr\t(%j)\n"
+  	"\t--sys-facility <facility>\t(%k)\n"
+  	"\t--sys-level <level>\t\t(%l)\n"
+  	"\t--sys-sysid <string>\t\t(%m)\n"
+  	"\t--debug\t\t\t\t(%n)\n"
+  	"\t--foreground\t\t\t(%o)\n"
+  	"\t--stderr\t\t\t(%p)\n"
+  	"\t--help\n"
+  	"\t\t* not implemented\n",
+  	c_whitefile,
+  	c_grayfile,
+  	c_host,
+  	c_pfport,
+  	c_smport,
+  	(unsigned long)c_poolmax,
+  	togray,
+  	towhite,
+  	c_timeformat,
+  	(cv_report == report_stderr) ? "stderr" : "syslog",
+  	ci_map_chars(c_facility,m_facilities,mc_facilities_cnt),
+  	ci_map_chars(c_level,   m_levels,    mc_levels_cnt),
+  	c_sysid,
+  	(cf_debug) ? "true" : "false" ,
+  	(cf_foreground) ? "true" : "false",
+  	(cv_report == report_stderr) ? "true" : "false",
+  	c_pollqueue
+  );
+
+  MemFree(towhite);
+  MemFree(togray);
   
-  if (cv_report == report_syslog)
-  {
-    StreamFree(StderrStream);
-    close(STDERR_FILENO);
-  }
 }
 
-/*****************************************************************/
-
-static void report_syslog(int level,char *format,char *msg, ... )
-{
-  Stream  out;
-  va_list arg;
-  
-  va_start(arg,msg);
-  out = StringStreamWrite();
-  LineSFormatv(out,format,msg,arg);
-  msg = StringFromStream(out);
-  syslog(level,"%s",msg);
-  MemFree(msg);
-  StreamFree(out);
-  va_end(arg);
-}
-
-/***********************************************************************/
-
-static void report_stderr(int level,char *format,char *msg, ... )
-{
-  va_list arg;
-  
-  va_start(arg,msg);
-  if (level <= c_level)
-  {
-    LineSFormatv(StderrStream,format,msg,arg);
-    StreamWrite(StderrStream,'\n');
-  }
-  va_end(arg);
-}
-
-/***********************************************************************/
+/********************************************************************/ 
 
 static void parse_cmdline(int argc,char *argv[])
 {
-  int option = 0;
+  char *tmp;
+  int   option = 0;
+  
+  ddt(argc >  0);
+  ddt(argv != NULL);
   
   while(1)
   {
@@ -304,7 +345,7 @@ static void parse_cmdline(int argc,char *argv[])
            c_whitefile = dup_string(optarg);
            break;
       case OPT_LIST_GRAY:
-           c_graylist = dup_string(optarg);
+           c_grayfile = dup_string(optarg);
            break;
       case OPT_HOST:
            c_host = dup_string(optarg);
@@ -314,6 +355,9 @@ static void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_PORT_SENDMAIL:
            c_smport = strtoul(optarg,NULL,10);
+           break;
+      case OPT_POLL_QUEUE:
+           c_pollqueue = strtoul(optarg,NULL,10);
            break;
       case OPT_MAX_TUPLES:
            c_poolmax = strtoul(optarg,NULL,10);
@@ -335,7 +379,7 @@ static void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_REPORT_FORMAT:
            {
-             char *tmp = up_string(dup_string(optarg));
+             tmp = up_string(dup_string(optarg));
              
              if (strcmp(tmp,"SYSLOG") == 0)
                cv_report = report_syslog;
@@ -356,14 +400,14 @@ static void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_FACILITY:
            {
-             chat *tmp  = up_string(dup_string(optarg));
+             tmp = up_string(dup_string(optarg));
              c_facility = ci_map_int(tmp,m_facilities,mc_facilities_cnt);
              MemFree(tmp);
            }
            break;
       case OPT_LEVEL:
            {
-             char *tmp = up_string(dup_string(optarg));
+             tmp = up_string(dup_string(optarg));
              c_level   = ci_map_int(tmp,m_levels,mc_levels_cnt);
              MemFree(tmp);
            }
@@ -384,10 +428,49 @@ static void parse_cmdline(int argc,char *argv[])
            exit(EXIT_FAILURE);
     }
   }
+} 
+
+/*******************************************************************/
+
+static void daemon_init(void)
+{
+  pid_t pid;
+
+  pid = fork();
+  if (pid == (pid_t)-1)
+  {
+    (*cv_report)(LOG_EMERG,"$","daemon_init(): fork() returned %a",strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+  else if (pid != 0)	/* parent goes bye bye */
+    exit(EXIT_SUCCESS);
+  
+  /*----------------------------------------------
+  ; there used to be a chdir("/tmp") call here, but
+  ; then the re-exec may fail if the program was
+  ; started using a relative path.  It has been
+  ; disabled for now.
+  ;----------------------------------------------*/
+
+  /*chdir("/tmp");*/
+
+  setsid();
+
+  StreamFree(StdinStream);	/* these no longer needed */
+  StreamFree(StdoutStream);
+  close(STDOUT_FILENO);
+  close(STDIN_FILENO);
+
+  if (cv_report == report_syslog)
+  {
+    StreamFree(StderrStream); /* except maybe this one */
+    close(STDERR_FILENO);
+  }
 }
 
-/*********************************************************************/
+/**********************************************************************/
 
+#if 0
 static size_t read_size(char *arg)
 {
   size_t  value;
@@ -413,6 +496,7 @@ static size_t read_size(char *arg)
   }
   return(value);
 }
+#endif
 
 /********************************************************************/
 
@@ -464,75 +548,62 @@ static double read_dtime(char *arg)
   return(time);
 }
 
-/*********************************************************************/
+/*******************************************************************/
 
-static void dump_defaults(void)
+static void report_syslog(int level,char *format,char *msg, ... )
 {
-  char *togray;
-  char *towhite;
+  Stream   out;
+  va_list  arg;
+  char    *txt;
   
-  togray  = report_delta(c_timeout_gray);
-  towhite = report_delta(c_timeout_white);
-
-  LineSFormat(
-  	StderrStream,
-  	"$ $ $ i i L $ $ $ $ $ $ $ i i i",
-  	"\t--whitelist <file>			 (%a)\n"
-  	"\t--graylist  <file>			 (%b)\n"
-  	"\t--host <hostname>			 (%c)\n"
-  	"\t--postfix-port <num>			 (%d)\n"
-  	"\t--sendmail-port <num>*		 (%e)\n"
-  	"\t--max-tuples <num>			 (%f)\n"
-  	"\t--timeout-gray <timespec>		 (%g)\n"
-  	"\t--timeout-white <timespec>		 (%h)\n"
-  	"\t--time-format <strftime>		 (%i)\n"
-  	"\t--report-format <'syslog' | 'stderr'> (%j)\n"
-  	"\t--sys-facility <facility>		 (%k)\n"
-  	"\t--sys-level <level>			 (%l)\n"
-  	"\t--sys-sysid <string>			 (%m)\n"
-  	"\t--debug				 (%n)\n"
-  	"\t--foreground				 (%o)\n"
-  	"\t--stderr				 (%p)\n"
-  	"\t--help\n"
-  	"\t\t* not implemented\n",
-  	c_whitefile,
-  	c_grayfile,
-  	c_host,
-  	c_pfport,
-  	c_smport,
-  	(unsigned long)c_poolmax,
-  	togray,
-  	towhite,
-  	c_timeformat,
-  	(cv_report == report_stderr) ? "stderr" : "syslog",
-  	ci_map_chars(c_facility,m_facilities,mc_facilities_cnt),
-  	ci_map_chars(c_level,   m_levels,    mc_levels_cnt),
-  	c_sysid,
-  	(cf_debug) ? "true" : "false" ,
-  	(cf_foreground) ? "true" : "false",
-  	(cv_report == report_stderr) ? "true" : "false"
-  );
-
-  MemFree(towhite);
-  MemFree(togray);
+  ddt(level  >= 0);
+  ddt(format != NULL);
+  ddt(msg    != NULL);
+  
+  va_start(arg,msg);
+  out = StringStreamWrite();
+  LineSFormatv(out,format,msg,arg);
+  txt = StringFromStream(out);
+  syslog(level,"%s",txt);
+  MemFree(txt);
+  StreamFree(out);
+  va_end(arg);
 }
 
-/*************************************************************************/
+/********************************************************************/
+
+static void report_stderr(int level,char *format,char *msg, ... )
+{
+  va_list arg;
+  
+  ddt(level  >= 0);
+  ddt(format != NULL);
+  ddt(msg    != NULL);
+  
+  va_start(arg,msg);
+  if (level <= c_level)
+  {
+    LineSFormatv(StderrStream,format,msg,arg);
+    StreamWrite(StderrStream,'\n');
+  }
+  va_end(arg);
+}
+
+/*******************************************************************/
 
 static int ci_map_int(const char *name,const struct chars_int *list,size_t size)
 {
   int i;
-
+  
   ddt(name != NULL);
   ddt(list != NULL);
   ddt(size >  0);
-
+  
   for (i = 0 ; i < size ; i++)
   {
     if (strcmp(name,list[i].name) == 0)
       return(list[i].value);
   }
-
   return(-1);
 }
 
@@ -541,16 +612,15 @@ static int ci_map_int(const char *name,const struct chars_int *list,size_t size)
 static const char *ci_map_chars(int value,const struct chars_int *list,size_t size)
 {
   int i;
-
+  
   ddt(list != NULL);
   ddt(size >  0);
-
+  
   for (i = 0 ; i < size ; i++)
   {
     if (value == list[i].value)
       return(list[i].name);
   }
-  
   return("");
 }
 
@@ -558,12 +628,14 @@ static const char *ci_map_chars(int value,const struct chars_int *list,size_t si
 
 static void my_exit(void)
 {
-	/*--------------------------------------------
-	; This routine only exists as a handy place to
-	; put a breakpoint to catch those unexpected
-	; calls to exit().
-	;----------------------------------------------*/
+  /*----------------------------------------------
+  ; this routine only exists as a handy place to
+  ; put a breakpoint to catch those unexpected
+  ; calls to exit().
+  ;------------------------------------------------*/
+
+  closelog();
 }
 
-/******************************************************************/
+/*************************************************************************/
 
