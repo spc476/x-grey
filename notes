@@ -1,0 +1,29 @@
+http://www.postfix.org/SMTPD_POLICY_README.html
+http://www.sendmail.org/doc/sendmail-current/libmilter/docs/
+
+
+
+
+Look at using SA_RESTART for signals.
+
+use pipe() to create a pipe.  epoll() on the read end. have the signals that
+do stuff other than exit, write the signal number to the write end of the
+pipe.  The readend gets notified of data, and we dispatch on that.  That
+way, we don't have to busy-check the signals we're interested in.
+
+
+format for whitelist:
+	time ip from to
+	...
+
+reading in whitelist:
+
+	Zen = mtime of tile
+	Tao = now
+	d   = Tao - Zen
+
+	for each entry in whitelist
+		read in
+		adjust time by d
+		if > c_timeout_whitelist reject
+
