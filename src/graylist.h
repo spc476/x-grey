@@ -32,8 +32,8 @@ typedef struct tuple
   size_t tsize;
   int    white;
   byte   ip  [16];
-  char   from[128];
-  char   to  [128];
+  char   from[110];
+  char   to  [110];
 } *Tuple;
 
 typedef struct pollnode
@@ -50,11 +50,15 @@ typedef struct listen_node
 
 typedef struct socket_node
 {
-  struct pollnode    node;
-  int                conn;
-  struct sockaddr_in remote;
-  Stream             in;
-  Stream             out;
+  struct pollnode     node;
+  int                 conn;
+  struct sockaddr_in  remote;
+  char               *request;
+  char               *from;
+  char               *to;
+  char               *ip;
+  size_t              bufsiz;
+  char                buffer[BUFSIZ];
 } *SocketNode;
 
 /***************************************************************/

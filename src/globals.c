@@ -251,6 +251,8 @@ int (GlobalsInit)(int argc,char *argv[])
   }
 
   close_on_exec(g_queue);
+  close_on_exec(g_sigpiper);
+  close_on_exec(g_sigpipew);
   
   return(ERR_OKAY);
 }
@@ -261,6 +263,7 @@ int (GlobalsDeinit)(void)
 {
   MemFree(g_pool);
   MemFree(g_tuplespace);
+  close(g_queue);
   close(g_sigpipew);
   close(g_sigpiper);
   closelog();

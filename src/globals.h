@@ -37,7 +37,7 @@ extern const struct tuple  *g_tuplespace;
 extern const Tuple         *g_pool;
 extern const int            g_sigpiper;
 extern const int            g_sigpipew;
-extern int                  g_queue;
+extern const int            g_queue;
 extern const int          **g_argv;
 
 /*****************************************************************/
