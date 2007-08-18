@@ -1,8 +1,92 @@
 http://www.postfix.org/SMTPD_POLICY_README.html
 http://www.sendmail.org/doc/sendmail-current/libmilter/docs/
 
+-------------
+
+Okay, the way Postfix does things, it screws the pooch.  So, reorg time.
+
+On the postfix side:
+
+	while(1)
+	{
+		name = LineRead(STDIN);
+		value = strchr(name,'=');
+		eos   = strchr(value,'\n');
+		*value++ = '\0';
+		*eos     = '\0';
+
+		// pull out request, from, to, ip
+		if (all_data) break;
+	}
+
+	// package it up in a UDP packet
+	// fire it off to the graylist daemon host
+	// wait up to 10 seconds for the response
+
+	if (okay)
+		LineSFormat(STDOUT,"permit blah blah");
+	else
+		LineSFormat(STDOUT,"dunno");
+
+On the daemon side:
+
+	while(1)
+	{
+		packet = recieve();
+		t = tuple_lookup(packet.ip,packet.from,packet.to);
+		if (t == nil)
+			create_tuple(t);
+		else
+			// rest of logic
+	}
+
+The packet:
+
+struct graylist_request
+{
+  uint16 version;
+  uint16 MTA;
+  uint16 type;			/* 0 - graylist query */
+  uint16 ipsize;
+  uint16 fromsize;
+  uint16 tosize;
+  uint8  ip  [ipsize];
+  char   from[fromsize];	/* '\0' terminated-not included in size */
+  char   to  [tosize];		/* '\0' terminated-not included in size */
+};
 
 
+the return packet
+
+struct graylist_reply
+{
+  uint16 version;
+  uint16 MTA;
+  uint16 type;		/* 1 - graylist response */
+  uint16 response;	/* 0 - whitelist, >0 - graylist */
+};
+
+future revisions?
+
+struct graylist_banip
+{
+  uint16 version;
+  uint16 MTA;
+  uint16 type;		/* 2 - banip - 3 - banip-rep */
+  uint16 ipsize;
+  uint8  ip[ipsize];
+};
+
+struct graylist_banfrom
+{
+  uint16 version;
+  uint16 MTA;
+  uint16 type;		/* 3 - banfrom - 4 - banfrom-rep */
+  uint16 fromsize;
+  char   from[fromsize];	/* ASCII0 */
+};
+
+------------
 
 Look at using SA_RESTART for signals.
 
