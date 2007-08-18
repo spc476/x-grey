@@ -48,6 +48,12 @@ int main(int argc,char *argv[])
 
   GlobalsInit(argc,argv);
   
+  {
+    char *t = timetoa(c_starttime);
+    (*cv_report)(LOG_INFO,"$","start time: %a",t);
+    MemFree(t);
+  }
+  
   lnode          = MemAlloc(sizeof(struct listen_node));
   lnode->node.fn = event_listen;
   lnode->listen  = create_socket(c_host,c_pfport);
@@ -167,7 +173,7 @@ static void event_socket(struct epoll_event *pev)
   if (rrc == -1)
   {
     if (errno != EINTR)
-      (*cv_report)(LOG_DEBUG,"$","read() = %a",strerror(errno));
+      (*cv_report)(LOG_WARNING,"$","read() = %a",strerror(errno));
     return;
   }
 
@@ -199,7 +205,8 @@ static void event_socket(struct epoll_event *pev)
     ; we're done collecting the request,
     ; now process it.
     ;-----------------------------------*/
-    (*cv_report)(LOG_DEBUG,"$ $ $","process [%a,%b,%c]",data->ip,data->from,data->to);
+    (*cv_report)(LOG_INFO,"$ $ $","process [ %a , %b , %c ]",data->ip,data->from,data->to);
+    write(data->conn,"action=dunno\n\n",14);
     event_socket_remove(pev);
     return;
   }
