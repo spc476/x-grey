@@ -16,36 +16,14 @@ static int	process_request		(void);
 
 /**********************************************************/
 
-static int m_logfile;
-
-/***********************************************************/
-
 int main(int argc,char *argv[])
 {
   if (GlobalsInit(argc,argv) != EXIT_SUCCESS)
     return(EXIT_FAILURE);  
 
-  if (cf_debug)
-  {
-    pid_t pid;
-    char  fname[BUFSIZ];
-    
-    pid = getpid();
-    sprintf(fname,"/tmp/log.%lu",(unsigned long)pid);
-    m_logfile = open(fname,O_CREAT | O_APPEND | O_SYNC,0644);
-    if (m_logfile == -1)
-    {
-      syslog(LOG_ERR,"open() = %s",strerror(errno));
-      return(EXIT_FAILURE);
-    }
-  }
-  
   while(process_request())
     ;
   
-  if (cf_debug)
-    close(m_logfile);
-    
   return(EXIT_SUCCESS);
 }
 
@@ -97,9 +75,6 @@ static int process_request(void)
       }
       if (rrc ==  0) return(0);
       
-      if (cf_debug)
-        write(m_logfile,&buffer[bufsiz],rrc);
-        
       bufsiz += rrc;
       assert(bufsiz <= BUFSIZ);
       refill  = 0;
