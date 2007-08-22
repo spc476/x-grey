@@ -24,6 +24,9 @@
 #include <cgilib/ddt.h>
 
 #include "../../common/src/graylist.h"
+#include "../../common/src/globals.h"
+#include "../../common/src/util.h"
+
 #include "graylist.h"
 #include "signals.h"
 #include "util.h"
@@ -43,19 +46,13 @@ enum
   OPT_REPORT_FORMAT,
   OPT_TIME_FORMAT,  
   OPT_DEBUG,
-  OPT_FACILITY,
-  OPT_LEVEL,
-  OPT_SYSID,
+  OPT_LOG_FACILITY,
+  OPT_LOG_LEVEL,
+  OPT_LOG_ID,
   OPT_FOREGROUND,
   OPT_STDERR,
   OPT_HELP,
   OPT_MAX
-};
-
-struct chars_int
-{
-  const char *name;
-  const int   value;
 };
 
 /********************************************************************/
@@ -63,34 +60,31 @@ struct chars_int
 static void		 dump_defaults	(void);
 static void		 parse_cmdline	(int,char *[]);
 static void		 daemon_init	(void);
-static void		 report_syslog	(int,char *,char *, ... );
-static void		 report_stderr	(int,char *,char *, ... );
 static double		 read_dtime	(char *);
-static int		 ci_map_int	(const char *,const struct chars_int *,size_t);
-static const char	*ci_map_chars	(int,const struct chars_int *,size_t);
 static void		 my_exit	(void);
 
 /*********************************************************************/
 
 extern char **environ;
 
+char          *c_host            = DEF_HOST;
+int            c_port            = DEF_PORT;
+int            c_log_facility    = LOG_LOCAL6;
+int            c_log_level       = LOG_INFO;
+char	      *c_log_id          = "graylist";
+int            cf_debug          = 0;
+void         (*cv_report)(int,char *,char *, ...) = report_syslog;
+
 char          *c_whitefile       = "/tmp/whitelist.txt";
 char          *c_grayfile        = "/tmp/grayfile.txt";	
 char          *c_timeformat      = "%c";
-char          *c_host            = DEF_HOST;
-int            c_port            = DEF_PORT;
 size_t         c_poolmax         = 65536uL;
 unsigned int   c_timeout_cleanup = 60;
 double	       c_timeout_accept  = 3600.0;
 double         c_timeout_gray    = 3600.0 *  4.0;
 double	       c_timeout_white   = 3600.0 * 24.0 * 36.0;
-int	       c_facility        = LOG_LOCAL6;
-int	       c_level           = LOG_INFO;
-char	      *c_sysid           = "graylist";
 time_t         c_starttime       = 0;
-int            cf_debug          = 0;
 int            cf_foreground     = 0;
-void         (*cv_report)(int,char *,char *, ... ) = report_syslog;
 
 	/*---------------------------------------------------*/
 	
@@ -104,44 +98,6 @@ char          **g_argv;
 /*******************************************************************/
 
 volatile int m_debug = 1;
-
-static const struct chars_int m_facilities[] =
-{
-  { "AUTH"	, LOG_AUTHPRIV	} ,
-  { "AUTHPRIV"	, LOG_AUTHPRIV	} ,
-  { "CRON"	, LOG_CRON	} ,
-  { "DAEMON"	, LOG_DAEMON	} ,
-  { "FTP"	, LOG_FTP	} ,
-  { "KERN"	, LOG_KERN	} ,
-  { "LOCAL0"	, LOG_LOCAL0	} ,
-  { "LOCAL1"	, LOG_LOCAL1	} ,
-  { "LOCAL2"	, LOG_LOCAL2	} ,
-  { "LOCAL3"	, LOG_LOCAL3	} ,
-  { "LOCAL4"	, LOG_LOCAL4	} ,
-  { "LOCAL5"	, LOG_LOCAL5	} ,
-  { "LOCAL6"	, LOG_LOCAL6	} ,
-  { "LOCAL7"	, LOG_LOCAL7	} ,
-  { "LPR"	, LOG_LPR	} ,
-  { "MAIL"	, LOG_MAIL	} ,
-  { "NEWS"	, LOG_NEWS	} ,
-  { "SYSLOG"	, LOG_SYSLOG	} ,
-  { "USER"	, LOG_USER	} ,
-  { "UUCP"	, LOG_UUCP	} 
-};
-
-static const struct chars_int m_levels[] = 
-{
-  { "ALERT"	, LOG_ALERT	} ,
-  { "CRIT"	, LOG_CRIT	} ,
-  { "DEBUG"	, LOG_DEBUG	} ,
-  { "ERR"	, LOG_ERR	} ,
-  { "INFO"	, LOG_INFO	} ,
-  { "NOTICE"	, LOG_NOTICE	} ,
-  { "WARNING"	, LOG_WARNING	}
-};
-
-static const size_t mc_facilities_cnt = sizeof(m_facilities) / sizeof(struct chars_int);
-static const size_t mc_levels_cnt     = sizeof(m_levels)     / sizeof(struct chars_int);
 
 static const struct option mc_options[] =
 {
@@ -158,9 +114,9 @@ static const struct option mc_options[] =
   { "timeout-white"	, required_argument	, NULL	, OPT_TIMEOUT_WHITE	} ,
   { "time-format"     	, required_argument 	, NULL	, OPT_TIME_FORMAT    	} ,
   { "report-format"     , required_argument 	, NULL	, OPT_REPORT_FORMAT	} ,
-  { "sys-facility"   	, required_argument 	, NULL	, OPT_FACILITY		} ,
-  { "sys-level"      	, required_argument 	, NULL	, OPT_LEVEL		} ,
-  { "sys-sysid"      	, required_argument 	, NULL	, OPT_SYSID        	} ,
+  { "log-facility"   	, required_argument 	, NULL	, OPT_LOG_FACILITY		} ,
+  { "log-level"      	, required_argument 	, NULL	, OPT_LOG_LEVEL		} ,
+  { "log-id"      	, required_argument 	, NULL	, OPT_LOG_ID        	} ,
   { "debug"          	, no_argument       	, NULL	, OPT_DEBUG		} ,
   { "foreground"     	, no_argument       	, NULL	, OPT_FOREGROUND   	} ,
   { "stderr"	     	, no_argument       	, NULL	, OPT_STDERR       	} ,
@@ -189,7 +145,7 @@ int (GlobalsInit)(int argc,char *argv[])
   c_starttime = time(NULL);
   
   parse_cmdline(argc,argv);
-  openlog(c_sysid,0,c_facility);
+  openlog(c_log_id,0,c_log_facility);
 
   atexit(my_exit);
 
@@ -273,9 +229,9 @@ static void dump_defaults(void)
   	towhite,
   	c_timeformat,
   	(cv_report == report_stderr) ? "stderr" : "syslog",
-  	ci_map_chars(c_facility,m_facilities,mc_facilities_cnt),
-  	ci_map_chars(c_level,   m_levels,    mc_levels_cnt),
-  	c_sysid,
+	ci_map_chars(c_log_facility,c_facilities,C_FACILITIES),
+  	ci_map_chars(c_log_level,   c_levels,    C_LEVELS),
+  	c_log_id,
   	(cf_debug) ? "true" : "false" ,
   	(cf_foreground) ? "true" : "false",
   	(cv_report == report_stderr) ? "true" : "false"
@@ -351,25 +307,25 @@ static void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_DEBUG:
            cf_debug = 1;
-           c_level  = LOG_DEBUG;
+           c_log_level  = LOG_DEBUG;
            LineSFormat(StderrStream,"","using '--sys-facility debug'\n");
            break;
-      case OPT_FACILITY:
+      case OPT_LOG_FACILITY:
            {
              tmp = up_string(dup_string(optarg));
-             c_facility = ci_map_int(tmp,m_facilities,mc_facilities_cnt);
+             c_log_facility = ci_map_int(tmp,c_facilities,C_FACILITIES);
              MemFree(tmp);
            }
            break;
-      case OPT_LEVEL:
+      case OPT_LOG_LEVEL:
            {
              tmp = up_string(dup_string(optarg));
-             c_level   = ci_map_int(tmp,m_levels,mc_levels_cnt);
+             c_log_level   = ci_map_int(tmp,c_levels,C_LEVELS);
              MemFree(tmp);
            }
            break;
-      case OPT_SYSID:
-           c_sysid = dup_string(optarg);
+      case OPT_LOG_ID:
+           c_log_id = dup_string(optarg);
            break;
       case OPT_FOREGROUND:
            cf_foreground = 1;
@@ -505,82 +461,6 @@ static double read_dtime(char *arg)
 }
 
 /*******************************************************************/
-
-static void report_syslog(int level,char *format,char *msg, ... )
-{
-  Stream   out;
-  va_list  arg;
-  char    *txt;
-  
-  ddt(level  >= 0);
-  ddt(format != NULL);
-  ddt(msg    != NULL);
-  
-  va_start(arg,msg);
-  out = StringStreamWrite();
-  LineSFormatv(out,format,msg,arg);
-  txt = StringFromStream(out);
-  syslog(level,"%s",txt);
-  MemFree(txt);
-  StreamFree(out);
-  va_end(arg);
-}
-
-/********************************************************************/
-
-static void report_stderr(int level,char *format,char *msg, ... )
-{
-  va_list arg;
-  
-  ddt(level  >= 0);
-  ddt(format != NULL);
-  ddt(msg    != NULL);
-  
-  va_start(arg,msg);
-  if (level <= c_level)
-  {
-    LineSFormatv(StderrStream,format,msg,arg);
-    StreamWrite(StderrStream,'\n');
-  }
-  va_end(arg);
-}
-
-/*******************************************************************/
-
-static int ci_map_int(const char *name,const struct chars_int *list,size_t size)
-{
-  int i;
-  
-  ddt(name != NULL);
-  ddt(list != NULL);
-  ddt(size >  0);
-  
-  for (i = 0 ; i < size ; i++)
-  {
-    if (strcmp(name,list[i].name) == 0)
-      return(list[i].value);
-  }
-  return(-1);
-}
-
-/************************************************************************/
-
-static const char *ci_map_chars(int value,const struct chars_int *list,size_t size)
-{
-  int i;
-  
-  ddt(list != NULL);
-  ddt(size >  0);
-  
-  for (i = 0 ; i < size ; i++)
-  {
-    if (value == list[i].value)
-      return(list[i].name);
-  }
-  return("");
-}
-
-/**************************************************************************/
 
 static void my_exit(void)
 {

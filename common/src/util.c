@@ -1,6 +1,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <errno.h>
 
 #include <netdb.h>
@@ -11,9 +12,10 @@
 #include <fcntl.h>
 #include <syslog.h>
 
+#include <cgilib/memory.h>
 #include <cgilib/ddt.h>
 
-#include "globals.h"
+#include "eglobals.h"
 #include "util.h"
 
 /*****************************************************************/
@@ -95,4 +97,80 @@ void close_stream_on_exec(Stream s)
 }
 
 /******************************************************************/
+
+int ci_map_int(const char *name,const struct chars_int *list,size_t size)
+{
+  int i;
+
+  ddt(name != NULL);
+  ddt(list != NULL);
+  ddt(size >  0);
+
+  for (i = 0 ; i < size ; i++)
+  {
+    if (strcmp(name,list[i].name) == 0)
+      return(list[i].value);
+  }
+  return(-1);
+}
+
+/************************************************************************/
+
+const char *ci_map_chars(int value,const struct chars_int *list,size_t size)
+{
+  int i;
+
+  ddt(list != NULL);
+  ddt(size >  0);
+
+  for (i = 0 ; i < size ; i++)
+  {
+    if (value == list[i].value)
+      return(list[i].name);
+  }
+  return("");
+}
+
+/***********************************************************************/
+
+void report_syslog(int level,char *format,char *msg, ... )
+{
+  Stream   out;
+  va_list  arg;
+  char    *txt;
+  
+  ddt(level  >= 0);
+  ddt(format != NULL);
+  ddt(msg    != NULL);
+  
+  va_start(arg,msg);
+  out = StringStreamWrite();
+  LineSFormatv(out,format,msg,arg);
+  txt = StringFromStream(out);
+  syslog(level,"%s",txt);
+  MemFree(txt);
+  StreamFree(out);
+  va_end(arg);
+}
+
+/********************************************************************/
+
+void report_stderr(int level,char *format,char *msg, ... )
+{
+  va_list arg;
+  
+  ddt(level  >= 0);
+  ddt(format != NULL);
+  ddt(msg    != NULL);
+  
+  va_start(arg,msg);
+  if (level <= c_log_level)
+  {
+    LineSFormatv(StderrStream,format,msg,arg);
+    StreamWrite(StderrStream,'\n');
+  }
+  va_end(arg);
+}
+
+/*******************************************************************/
 

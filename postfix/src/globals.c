@@ -1,13 +1,20 @@
 
 #include <stdarg.h>
 #include <string.h>
-#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 
 #include <syslog.h>
 #include <getopt.h>
+
+#include <cgilib/memory.h>
+#include <cgilib/util.h>
+#include <cgilib/ddt.h>
+
+#include "../../common/src/graylist.h"
+#include "../../common/src/globals.h"
+#include "../../common/src/util.h"
 
 enum
 {
@@ -20,26 +27,20 @@ enum
   OPT_MAX
 };
 
-struct chars_int
-{
-  const char *name;
-  const int   value;
-};
-
 /*****************************************************************/
 
 static void		 parse_cmdline	(int,char *[]);
 static void		 dump_defaults	(void);
-static int		 ci_map_int	(const char *,const struct chars_int *,size_t);
-static const char	*ci_map_chars	(int,const struct chars_int *,size_t);
-static char		*up_string	(char *);
 
 /****************************************************************/
 
+char  *c_host        = DEF_HOST;
+int    c_port        = DEF_PORT;
 int   c_log_facility = LOG_LOCAL5;
 int   c_log_level    = LOG_DEBUG;
 char *c_log_id	     = "pfgl";
 int   cf_debug       = 0;
+void  (*cv_report)(int,char *,char *,...) = report_syslog;
 
   /*----------------------------------------------------*/
 
@@ -53,50 +54,12 @@ static const struct option mc_options[] =
   { NULL		, 0			, NULL	, 0			} 
 };
 
-static const struct chars_int m_facilities[] =
-{
-  { "AUTH"	, LOG_AUTHPRIV	} ,
-  { "AUTHPRIV"	, LOG_AUTHPRIV	} ,
-  { "CRON"	, LOG_CRON	} ,
-  { "DAEMON"	, LOG_DAEMON	} ,
-  { "FTP"	, LOG_FTP	} ,
-  { "KERN"	, LOG_KERN	} ,
-  { "LOCAL0"	, LOG_LOCAL0	} ,
-  { "LOCAL1"	, LOG_LOCAL1	} ,
-  { "LOCAL2"	, LOG_LOCAL2	} ,
-  { "LOCAL3"	, LOG_LOCAL3	} ,
-  { "LOCAL4"	, LOG_LOCAL4	} ,
-  { "LOCAL5"	, LOG_LOCAL5	} ,
-  { "LOCAL6"	, LOG_LOCAL6	} ,
-  { "LOCAL7"	, LOG_LOCAL7	} ,
-  { "LPR"	, LOG_LPR	} ,
-  { "MAIL"	, LOG_MAIL	} ,
-  { "NEWS"	, LOG_NEWS	} ,
-  { "SYSLOG"	, LOG_SYSLOG	} ,
-  { "USER"	, LOG_USER	} ,
-  { "UUCP"	, LOG_UUCP	} 
-};
-
-static const struct chars_int m_levels[] = 
-{
-  { "ALERT"	, LOG_ALERT	} ,
-  { "CRIT"	, LOG_CRIT	} ,
-  { "DEBUG"	, LOG_DEBUG	} ,
-  { "ERR"	, LOG_ERR	} ,
-  { "INFO"	, LOG_INFO	} ,
-  { "NOTICE"	, LOG_NOTICE	} ,
-  { "WARNING"	, LOG_WARNING	}
-};
-
-static const size_t mc_facilities_cnt = sizeof(m_facilities) / sizeof(struct chars_int);
-static const size_t mc_levels_cnt     = sizeof(m_levels)     / sizeof(struct chars_int);
-
 /*********************************************************************/
 
 int (GlobalsInit)(int argc,char *argv[])
 {
-  assert(argc >  0);
-  assert(argv != NULL);
+  ddt(argc >  0);
+  ddt(argv != NULL);
   
   parse_cmdline(argc,argv);
   openlog(c_log_id,0,c_log_facility);
@@ -116,8 +79,8 @@ static void parse_cmdline(int argc,char *argv[])
 {
   int option = 0;
   
-  assert(argc >  0);
-  assert(argv != NULL);
+  ddt(argc >  0);
+  ddt(argv != NULL);
   
   while(1)
   {
@@ -129,20 +92,20 @@ static void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_LOG_FACILITY:
            {
-             char *tmp = up_string(strdup(optarg));
-             c_log_facility = ci_map_int(tmp,m_facilities,mc_facilities_cnt);
-             free(tmp);
+             char *tmp = up_string(dup_string(optarg));
+             c_log_facility = ci_map_int(tmp,c_facilities,C_FACILITIES);
+             MemFree(tmp);
            }
            break;
       case OPT_LOG_LEVEL:
            {
-             char *tmp = up_string(strdup(optarg));
-             c_log_level = ci_map_int(tmp,m_levels,mc_levels_cnt);
-             free(tmp);
+             char *tmp = up_string(dup_string(optarg));
+             c_log_level = ci_map_int(tmp,c_levels,C_LEVELS);
+             MemFree(tmp);
            }
            break;
       case OPT_LOG_ID:
-           c_log_id = strdup(optarg);
+           c_log_id = dup_string(optarg);
            break;
       case OPT_DEBUG:
            cf_debug = 1;
@@ -167,8 +130,8 @@ static void dump_defaults(void)
     "\t--log-id <id>		 (%s)\n"
     "\t--debug			 (%s)\n"
     "\t--help\n",
-    ci_map_chars(c_log_facility,m_facilities,mc_facilities_cnt),
-    ci_map_chars(c_log_level,   m_levels,    mc_levels_cnt),
+    ci_map_chars(c_log_facility,c_facilities,C_FACILITIES),
+    ci_map_chars(c_log_level,   c_levels,    C_LEVELS),
     c_log_id,
     (cf_debug) ? "true" : "false"
   );  
@@ -176,49 +139,3 @@ static void dump_defaults(void)
 
 /********************************************************************/
 
-static int ci_map_int(const char *name,const struct chars_int *list,size_t size)
-{
-  int i;
-  
-  assert(name != NULL);
-  assert(list != NULL);
-  assert(size >  0);
-  
-  for (i = 0 ; i < size ; i++)
-  {
-    if (strcmp(name,list[i].name) == 0)
-      return(list[i].value);
-  }
-  return(-1);
-}
-
-/************************************************************************/
-
-static const char *ci_map_chars(int value,const struct chars_int *list,size_t size)
-{
-  int i;
-  
-  assert(list != NULL);
-  assert(size >  0);
-  
-  for (i = 0 ; i < size ; i++)
-  {
-    if (value == list[i].value)
-      return(list[i].name);
-  }
-  return("");
-}
-
-/*************************************************************************/
-
-static char *up_string(char *s)
-{
-  char *r = s;
-  
-  for ( ; *s ; s++)
-    *s = toupper(*s);
-  
-  return(r);
-}
-
-/*********************************************************************/

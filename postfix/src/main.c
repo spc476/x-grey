@@ -3,25 +3,36 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <cgilib/memory.h>
+#include <cgilib/ddt.h>
+#include <cgilib/stream.h>
+
 #include "globals.h"
 
-static int	process_request		(void);
+static int	process_request		(int);
 
 /**********************************************************/
 
 int main(int argc,char *argv[])
 {
+  int sock;
+  
+  MemInit();
+  DdtInit();
+  StreamInit();
+  
   if (GlobalsInit(argc,argv) != EXIT_SUCCESS)
     return(EXIT_FAILURE);  
 
-  while(process_request())
+  sock = create_socket(c_host,c_port);
+  
+  while(process_request(sock))
     ;
   
   return(EXIT_SUCCESS);
@@ -29,7 +40,7 @@ int main(int argc,char *argv[])
 
 /*****************************************************/
 
-static int process_request(void)
+static int process_request(int sock)
 {
   static char    buffer[BUFSIZ];
   static size_t  bufsiz    = 0;
@@ -76,7 +87,7 @@ static int process_request(void)
       if (rrc ==  0) return(0);
       
       bufsiz += rrc;
-      assert(bufsiz <= BUFSIZ);
+      ddt(bufsiz <= BUFSIZ);
       refill  = 0;
     }
     
@@ -91,7 +102,7 @@ static int process_request(void)
     {
       syslog(LOG_INFO,"tuple: [%s , %s , %s]",ip,from,to);
       rrc = write(STDOUT_FILENO,"action=dunno\n\n",14);
-      assert(rrc == 14);
+      ddt(rrc == 14);
       free(request);
       free(from);
       free(to);
@@ -131,3 +142,86 @@ static int process_request(void)
   }
 }
 
+/********************************************************/
+
+int check_graylist(char *ip,char *from,char *to)
+{
+  byte                      outpacket[600];
+  byte                      inpacket [1500];
+  struct graylist_request  *glq;
+  struct graylist_response *glr;
+  
+  sfrom = min(strlen(from),200);
+  sto   = min(strlen(to),  200);
+  
+  glq = (struct graylist_request *)outpacket;
+  glr = (struct graylist_response *)inpacket;
+  
+  p = &glq->data;
+  
+  glq->version  = htons(VERSION);
+  glq->MTA      = htons(MTA_POSTFIX);
+  glq->type     = htons(CMD_GRAYLIST);
+  glq->ipsize   = htons(4);
+  glq->fromsize = htons(sfrom);
+  glq->tosize   = htons(sto);
+  
+  *p++ = strtoul(ip,&d,10); d++;	/* pack IP */
+  *p++ = strtoul(ip,&d,10); d++;
+  *p++ = strtoul(ip,&d,10); d++;
+  *p++ = strtoul(ip,&d,10); d++;
+  
+  memcpy(p,from,sfrom);	p += sfrom;
+  memcpy(p,to,sto);     p += sto;
+  
+  rrc = sendto(
+  		sock,
+  		outpacket,
+  		(size_t)(p - outpacket),
+  		0,
+  		sip,
+  		sipsize
+  	);
+  if (rrc == -1)
+  {
+    (*cv_report)(LOG_ERR,"$","sendto() = %a",strerror(errno));
+    return(TRUE);
+  }
+  
+  alarm(c_timeout);
+  
+  rrc = recvfrom(
+  		sock,
+  		inpacket,
+  		sizeof(inpacket),
+  		0,
+  		sip,
+  		sipsize
+  	);
+  
+  if (rrc == -1)
+  {
+    (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
+    return(TRUE);
+  }
+  
+  if (ntohs(glr->VERSION) != VERSION)
+  {
+    (*cv_report)(LOG_ERR,"","received response from wrong version");
+    return(TRUE);
+  }
+
+  if (ntohs(glr->MTA) != MTA_POSTFIX)
+  {
+    (*cv_report)(LOG_ERR,"","are we running another MTA here?");
+    return(TRUE);
+  }
+  
+  if (ntohs(glr->type) != CMD_GRAYLIST_RESP)
+  {
+    (*cv_report)(LOG_ERR,"i","received error %a",ntohs(glr->response));
+    return(TRUE);
+  }
+  
+  
+  

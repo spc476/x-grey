@@ -1,16 +1,18 @@
 
 CGILIB=/home/spc/source/cgi
-CINCL=
+CINCL=-I $(CGILIB)/src
 
 CC=gcc -g
 CFLAGS=-Wall -pedantic $(CINCL)
-LFLAGS=
+LFLAGS=-L$(CGILIB)/$(HOSTDIR) -lcgi5
 
 $(HOSTDIR)/pfc : $(HOSTDIR)/main.o	\
 		$(HOSTDIR)/globals.o
-	$(CC) $(CFLAGS) -o $@		\
-		$(HOSTDIR)/main.o	\
-		$(HOSTDIR)/globals.o	\
+	$(CC) $(CFLAGS) -o $@			\
+		$(HOSTDIR)/main.o		\
+		$(HOSTDIR)/globals.o		\
+		../common/$(HOSTDIR)/globals.o	\
+		../common/$(HOSTDIR)/util.o	\
 		$(LFLAGS)
 
 $(HOSTDIR)/main.o : src/main.c	

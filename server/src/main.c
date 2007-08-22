@@ -17,6 +17,7 @@
 #include <cgilib/util.h>
 
 #include "../../common/src/graylist.h"
+#include "../../common/src/util.h"
 
 #include "graylist.h"
 #include "globals.h"
