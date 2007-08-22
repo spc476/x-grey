@@ -16,13 +16,19 @@
 #include <cgilib/stream.h>
 #include <cgilib/util.h>
 
+#include "../../common/src/graylist.h"
+
+#include "graylist.h"
 #include "globals.h"
 #include "signals.h"
 #include "util.h"
+#include "server.h"
 
 /********************************************************************/
 
-static void	mainloop		(int);
+static void	 mainloop		(int);
+static char	*ipv4			(const byte *);
+static void	 send_reply		(struct request *,int,int);
 
 /********************************************************************/
 
@@ -61,7 +67,151 @@ int main(int argc,char *argv[])
 
 static void mainloop(int sock)
 {
+  struct request req;
+  
+  while(1)
+  {
+    rrc = recvfrom(
+    	sock,
+    	req.packet,
+    	sizeof(req.packet),
+    	0,
+    	&req.remote,
+    	&req.rsize
+    );
+    
+    if (rc == -1)
+    {
+      if (errno != EINTR)
+        (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
+      continue;
+    }
+    
+    req.sock = sock;
+    req.glr  = (struct graylist_request *)req.packet;
+    req.size = rrc;
+    
+    if (ntohs(req.glr->version) != VERSION)
+    {
+      send_reply(req,CMD_NONE_RESP,ERR_VERSION_NOT_SUPPORTED);
+      continue;
+    }
+    
+    switch(ntohs(req.glr->type))
+    {
+      case CMD_NONE:
+           send_reply(req,CMD_NONE_RESP,ERR_OKAY);
+           break;
+      case CMD_GRAYLIST:
+           type_graylist(req);
+           break;
+      default:
+           send_reply(req,CMD_NONE_RESP,ERR_TYPE_NOT_SUPPORTED);
+           break;
+    }
+  }
 }
 
-/**********************************************************************/
+/*******************************************************************/
+
+void type_graylist(struct request *req)
+{
+  struct graylist_request *glr;
+  struct tuple             tuple;
+  char                    *p;
+
+  ddt(req != NULL);
+
+  glr = req->glr;
+  p   = glr->data;
+
+  if ((glr->ipsize != 4) || (glr->ipsize != 16))
+  {
+    send_reply(req,CMD_NONE_RESP,ERR_BAD_DATA);
+    return;
+  }
+
+  glr->ipsize    = ntohl(glr->ipsize);
+  glr->fromsize  = ntohl(glr->fromsize);
+  glr->tosize    = ntohl(glr->tosize);
+
+  tuple.ctime    = time(NULL);
+  tuple.fromsize = min(sizeof(tuple.from) - 1,glr->fromsize);
+  tuple.tosize   = min(sizeof(tuple.to)   - 1,glr->tosize);
+  tuple.f        = 0;
+
+  memcpy(tuple.ip,  p,glr->ipsize);    p += glr->ipsize;
+  memcpy(tuple.from,p,tuple.fromsize); p += glr->fromsize;
+  memcpy(tuple.to,  p,tuple.tosize);
+
+  tuple.from[tuple.fromsize] = '\0';
+  tuple.to  [tuple.tosize]   = '\0';
+
+  if (tuple.fromsize <  glr->fromsize) tuple.f |= F_TRUNCFROM;
+  if (tuple.tosize   <  glr->tosize)   tuple.f |= F_TRUNCTO;
+  if (glr.ipsize     == 16)            tuple.f |= F_IPv6;
+
+  (*cv_report)(
+  	LOG_INFO,
+  	"$ $ $","
+  	tuple: [%a , %b , %c]",
+  	ipv4(tuple.ip),
+  	tuple.from,
+  	tuple,to
+  );
+
+  send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+}
+
+/*********************************************************************/
+
+static char *ipv4(const byte *ip)
+{
+  static char buffer[20];
+  
+  ddt(ip != NULL);
+  
+  sprintf(buffer,"%d.%d.%d.%d",ip[0],ip[1],ip[2],ip[3]);
+  return(buffer);
+}
+
+/***********************************************************************/
+
+static void send_reply(struct request *req,int type,int response)
+{
+#if 0
+  struct graylist_response resp;
+  ssize_t                  rrc;
+  
+  ddt(req      != NULL);
+  ddt(type     >= 0);
+  ddt(response >= 0);
+  
+  resp.version  = htons(VERSION);
+  resp.MTA      = req->glr->MTA;
+  resp.type     = htons(type);
+  resp.respnose = htons(response);
+  
+  do
+  {
+    rrc = sendto(
+  		req->sock,
+  		&resp,
+  		sizeof(struct graylist_response),
+  		0,
+  		&req->remote,
+  		req->rsize
+  	);
+  
+    if (rrc == -1)
+    {
+      if (errno == EINTR)
+        continue;
+      (*cv_report)(LOG_ERR,"$","sendto() = %a",strerror(errno));
+    }
+  } while (rrc == -1);
+#endif
+}
+
+/********************************************************************/
 
