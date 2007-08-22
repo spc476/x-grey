@@ -23,6 +23,7 @@
 #include <cgilib/types.h>
 #include <cgilib/ddt.h>
 
+#include "../../common/src/graylist.h"
 #include "graylist.h"
 #include "signals.h"
 #include "util.h"
@@ -33,8 +34,7 @@ enum
   OPT_LIST_WHITE,
   OPT_LIST_GRAY,
   OPT_HOST,
-  OPT_PORT_POSTFIX,
-  OPT_PORT_SENDMAIL,
+  OPT_PORT,
   OPT_MAX_TUPLES,
   OPT_TIMEOUT_CLEANUP,
   OPT_TIMEOUT_ACCEPT,
@@ -77,8 +77,8 @@ extern char **environ;
 char          *c_whitefile       = "/tmp/whitelist.txt";
 char          *c_grayfile        = "/tmp/grayfile.txt";	
 char          *c_timeformat      = "%c";
-char          *c_host            = "localhost";
-int            c_port            = 9990;
+char          *c_host            = DEF_HOST;
+int            c_port            = DEF_PORT;
 size_t         c_poolmax         = 65536uL;
 unsigned int   c_timeout_cleanup = 60;
 double	       c_timeout_accept  = 3600.0;
@@ -149,8 +149,7 @@ static const struct option mc_options[] =
   { "graylist"		, required_argument	, NULL	, OPT_LIST_GRAY 	} ,
   { "greylist"		, required_argument	, NULL	, OPT_LIST_GRAY		} ,
   { "host"		, required_argument	, NULL	, OPT_HOST		} ,
-  { "postfix-port"	, required_argument	, NULL	, OPT_PORT_POSTFIX	} ,
-  { "sendmail-port"	, required_argument	, NULL	, OPT_PORT_SENDMAIL	} ,
+  { "port"		, required_argument	, NULL	, OPT_PORT		} ,
   { "max-tuples"	, required_argument	, NULL	, OPT_MAX_TUPLES	} ,
   { "timeout-cleanup" 	, required_argument	, NULL	, OPT_TIMEOUT_CLEANUP	} ,
   { "timeout-accept"	, required_argument	, NULL	, OPT_TIMEOUT_ACCEPT	} ,
@@ -173,7 +172,6 @@ static const struct option mc_options[] =
 
 int (GlobalsInit)(int argc,char *argv[])
 {
-  int rc;
   int i;
   
   ddt(argc >  0);
@@ -222,8 +220,6 @@ int (GlobalsInit)(int argc,char *argv[])
   set_extsignal(SIGXCPU ,sighandler_critical);
   set_extsignal(SIGXFSZ ,sighandler_critical);
 
-  close_on_exec(g_queue);
-  
   return(ERR_OKAY);
 }
 
@@ -233,9 +229,6 @@ int (GlobalsDeinit)(void)
 {
   MemFree(g_pool);
   MemFree(g_tuplespace);
-  close(g_queue);
-  close(g_sigpipew);
-  close(g_sigpiper);
   closelog();
   return(ERR_OKAY);
 }
@@ -256,8 +249,7 @@ static void dump_defaults(void)
   	"\t--whitelist <file>\t\t(%a)\n"
   	"\t--graylist  <file>\t\t(%b)\n"
   	"\t--host <hostname>\t\t(%c)\n"
-  	"\t--postfix-port <num>\t\t(%d)\n"
-  	"\t--sendmail-port <num>*\t\t(%e)\n"
+  	"\t--port <num>\t\t(%d)\n"
   	"\t--max-tuples <num>\t\t(%f)\n"
   	"\t--timeout-gray <timespec>\t(%g)\n"
   	"\t--timeout-white <timespec>\t(%h)\n"
@@ -274,8 +266,8 @@ static void dump_defaults(void)
   	c_whitefile,
   	c_grayfile,
   	c_host,
-  	c_pfport,
-  	c_smport,
+  	0,
+  	c_port,
   	(unsigned long)c_poolmax,
   	togray,
   	towhite,
@@ -291,7 +283,6 @@ static void dump_defaults(void)
 
   MemFree(towhite);
   MemFree(togray);
-  
 }
 
 /********************************************************************/ 
@@ -321,11 +312,8 @@ static void parse_cmdline(int argc,char *argv[])
       case OPT_HOST:
            c_host = dup_string(optarg);
            break;
-      case OPT_PORT_POSTFIX:
-           c_pfport = strtoul(optarg,NULL,10);
-           break;
-      case OPT_PORT_SENDMAIL:
-           c_smport = strtoul(optarg,NULL,10);
+      case OPT_PORT:
+           c_port = strtoul(optarg,NULL,10);
            break;
       case OPT_MAX_TUPLES:
            c_poolmax = strtoul(optarg,NULL,10);

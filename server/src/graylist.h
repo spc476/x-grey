@@ -3,6 +3,7 @@
 #define GRAYLIST_H
 
 #include <time.h>
+#include "../../common/src/graylist.h"
 
 #define SECSMIN         (60.0)
 #define SECSHOUR        (60.0 * 60.0)

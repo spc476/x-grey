@@ -24,7 +24,11 @@
 #include "util.h"
 #include "server.h"
 
+#define min(a,b)	((a) < (b)) ? (a) : (b)
+
 /********************************************************************/
+
+void 		 type_graylist		(struct request *);
 
 static void	 mainloop		(int);
 static char	*ipv4			(const byte *);
@@ -35,7 +39,6 @@ static void	 send_reply		(struct request *,int,int);
 int main(int argc,char *argv[])
 {
   int sock;
-  int rc;
   
   MemInit();
   DdtInit();
@@ -58,7 +61,7 @@ int main(int argc,char *argv[])
     MemFree(t);
   }
 
-  mainloop(sock)
+  mainloop(sock);
   
   return(EXIT_SUCCESS);
 }
@@ -68,9 +71,12 @@ int main(int argc,char *argv[])
 static void mainloop(int sock)
 {
   struct request req;
+  ssize_t        rrc;
   
   while(1)
   {
+    check_signals();
+
     rrc = recvfrom(
     	sock,
     	req.packet,
@@ -80,7 +86,7 @@ static void mainloop(int sock)
     	&req.rsize
     );
     
-    if (rc == -1)
+    if (rrc == -1)
     {
       if (errno != EINTR)
         (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
@@ -93,20 +99,20 @@ static void mainloop(int sock)
     
     if (ntohs(req.glr->version) != VERSION)
     {
-      send_reply(req,CMD_NONE_RESP,ERR_VERSION_NOT_SUPPORTED);
+      send_reply(&req,CMD_NONE_RESP,GLERR_VERSION_NOT_SUPPORTED);
       continue;
     }
     
     switch(ntohs(req.glr->type))
     {
       case CMD_NONE:
-           send_reply(req,CMD_NONE_RESP,ERR_OKAY);
+           send_reply(&req,CMD_NONE_RESP,GLERR_OKAY);
            break;
       case CMD_GRAYLIST:
-           type_graylist(req);
+           type_graylist(&req);
            break;
       default:
-           send_reply(req,CMD_NONE_RESP,ERR_TYPE_NOT_SUPPORTED);
+           send_reply(&req,CMD_NONE_RESP,GLERR_TYPE_NOT_SUPPORTED);
            break;
     }
   }
@@ -118,7 +124,7 @@ void type_graylist(struct request *req)
 {
   struct graylist_request *glr;
   struct tuple             tuple;
-  char                    *p;
+  byte                    *p;
 
   ddt(req != NULL);
 
@@ -127,7 +133,7 @@ void type_graylist(struct request *req)
 
   if ((glr->ipsize != 4) || (glr->ipsize != 16))
   {
-    send_reply(req,CMD_NONE_RESP,ERR_BAD_DATA);
+    send_reply(req,CMD_NONE_RESP,GLERR_BAD_DATA);
     return;
   }
 
@@ -149,15 +155,15 @@ void type_graylist(struct request *req)
 
   if (tuple.fromsize <  glr->fromsize) tuple.f |= F_TRUNCFROM;
   if (tuple.tosize   <  glr->tosize)   tuple.f |= F_TRUNCTO;
-  if (glr.ipsize     == 16)            tuple.f |= F_IPv6;
+  if (glr->ipsize    == 16)            tuple.f |= F_IPv6;
 
   (*cv_report)(
   	LOG_INFO,
-  	"$ $ $","
-  	tuple: [%a , %b , %c]",
+  	"$ $ $",
+  	"tuple: [%a , %b , %c]",
   	ipv4(tuple.ip),
   	tuple.from,
-  	tuple,to
+  	tuple.to
   );
 
   send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);

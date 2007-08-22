@@ -1,10 +1,13 @@
 
-#ifndef GRAYLIST_H
-#define GRAYLIST_H
+#ifndef GRAYLIST_COMMON_H
+#define GRAYLIST_COMMON_H
 
 #include <time.h>
 
-#define VERSION	0x0100
+#define VERSION		0x0100
+
+#define DEF_HOST	"localhost"
+#define DEF_PORT	9990
 
 /********************************************************************/
 
@@ -33,12 +36,12 @@ enum
 
 enum
 {
-  ERR_OKAY,
-  ERR_VERSION_NOT_SUPPORTED,
-  ERR_MTA_NOT_SUPPORTED,
-  ERR_TYPE_NOT_SUPPORTED,
-  ERR_BAD_DATA,
-  ERR_MAX
+  GLERR_OKAY,
+  GLERR_VERSION_NOT_SUPPORTED,
+  GLERR_MTA_NOT_SUPPORTED,
+  GLERR_TYPE_NOT_SUPPORTED,
+  GLERR_BAD_DATA,
+  GLERR_MAX
 };
 
 enum
@@ -47,7 +50,7 @@ enum
   GRAYLIST_YEA
 };
 
-typedef struct graylist_response
+struct graylist_response
 {
   unet16 version;
   unet16 MTA;
@@ -55,14 +58,14 @@ typedef struct graylist_response
   unet16 response;
 };
 
-typedef struct graylist_request
+struct graylist_request
 {
   unet16 version;
   unet16 MTA;
   unet16 type;
-  uint16 ipsize;
-  uint16 fromsize;
-  uint16 tosize;
+  unet16 ipsize;
+  unet16 fromsize;
+  unet16 tosize;
   byte   data[1];
 };
 
