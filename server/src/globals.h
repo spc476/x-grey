@@ -15,7 +15,6 @@ extern const char *const    c_host;
 extern const int            c_pfport;
 extern const int            c_smport;
 extern const size_t         c_poolmax;
-extern const int            c_pollqueue;
 extern const unsigned int   c_timeout_cleanup;
 extern const double         c_timeout_accept;
 extern const double         c_timeout_gray;
@@ -35,9 +34,6 @@ extern size_t               g_uniquepassed;
 extern size_t               g_pollnum;
 extern const struct tuple  *g_tuplespace;
 extern const Tuple         *g_pool;
-extern const int            g_sigpiper;
-extern const int            g_sigpipew;
-extern const int            g_queue;
 extern const int          **g_argv;
 
 /*****************************************************************/

@@ -36,7 +36,6 @@ enum
   OPT_PORT_POSTFIX,
   OPT_PORT_SENDMAIL,
   OPT_MAX_TUPLES,
-  OPT_POLL_QUEUE,
   OPT_TIMEOUT_CLEANUP,
   OPT_TIMEOUT_ACCEPT,
   OPT_TIMEOUT_GRAY,
@@ -66,9 +65,6 @@ static void		 parse_cmdline	(int,char *[]);
 static void		 daemon_init	(void);
 static void		 report_syslog	(int,char *,char *, ... );
 static void		 report_stderr	(int,char *,char *, ... );
-#if 0
-static size_t		 read_size	(char *);
-#endif
 static double		 read_dtime	(char *);
 static int		 ci_map_int	(const char *,const struct chars_int *,size_t);
 static const char	*ci_map_chars	(int,const struct chars_int *,size_t);
@@ -82,15 +78,13 @@ char          *c_whitefile       = "/tmp/whitelist.txt";
 char          *c_grayfile        = "/tmp/grayfile.txt";	
 char          *c_timeformat      = "%c";
 char          *c_host            = "localhost";
-int            c_pfport          = 9990;
-int            c_smport          = 9991;
+int            c_port            = 9990;
 size_t         c_poolmax         = 65536uL;
-int            c_pollqueue       = 20;
 unsigned int   c_timeout_cleanup = 60;
 double	       c_timeout_accept  = 3600.0;
 double         c_timeout_gray    = 3600.0 *  4.0;
 double	       c_timeout_white   = 3600.0 * 24.0 * 36.0;
-int	       c_facility        = LOG_LOCAL5;
+int	       c_facility        = LOG_LOCAL6;
 int	       c_level           = LOG_INFO;
 char	      *c_sysid           = "graylist";
 time_t         c_starttime       = 0;
@@ -105,9 +99,6 @@ size_t          g_uniquepassed;
 size_t          g_poolnum;
 struct tuple   *g_tuplespace;	/* actual space */
 Tuple          *g_pool;		/* used for sorting records */
-int             g_sigpiper;	
-int	        g_sigpipew;
-int             g_queue;
 char          **g_argv;
 
 /*******************************************************************/
@@ -161,7 +152,6 @@ static const struct option mc_options[] =
   { "postfix-port"	, required_argument	, NULL	, OPT_PORT_POSTFIX	} ,
   { "sendmail-port"	, required_argument	, NULL	, OPT_PORT_SENDMAIL	} ,
   { "max-tuples"	, required_argument	, NULL	, OPT_MAX_TUPLES	} ,
-  { "poll-queue"	, required_argument	, NULL	, OPT_POLL_QUEUE	} ,
   { "timeout-cleanup" 	, required_argument	, NULL	, OPT_TIMEOUT_CLEANUP	} ,
   { "timeout-accept"	, required_argument	, NULL	, OPT_TIMEOUT_ACCEPT	} ,
   { "timeout-gray"	, required_argument	, NULL	, OPT_TIMEOUT_GRAY	} ,
@@ -183,7 +173,6 @@ static const struct option mc_options[] =
 
 int (GlobalsInit)(int argc,char *argv[])
 {
-  int tpipes[2];
   int rc;
   int i;
   
@@ -215,16 +204,6 @@ int (GlobalsInit)(int argc,char *argv[])
   for (i = 0 ; i < c_poolmax ; i++)
     g_pool[i] = &g_tuplespace[i];
 
-  rc = pipe(tpipes);
-  if (rc < 0)
-  {
-    (*cv_report)(LOG_EMERG,"$","pipe() = %a",strerror(errno));
-    return(ERR_ERR);
-  }
-  
-  g_sigpiper = tpipes[0];
-  g_sigpipew = tpipes[1];
-
   if (cf_debug)
     dump_defaults();
   
@@ -243,16 +222,7 @@ int (GlobalsInit)(int argc,char *argv[])
   set_extsignal(SIGXCPU ,sighandler_critical);
   set_extsignal(SIGXFSZ ,sighandler_critical);
 
-  g_queue = epoll_create(c_pollqueue);
-  if (g_queue == -1)
-  {
-    (*cv_report)(LOG_ERR,"i $","epoll_create(%a) = %b",c_pollqueue,strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-
   close_on_exec(g_queue);
-  close_on_exec(g_sigpiper);
-  close_on_exec(g_sigpipew);
   
   return(ERR_OKAY);
 }
@@ -282,14 +252,13 @@ static void dump_defaults(void)
 
   LineSFormat(
   	StderrStream,
-  	"$ $ $ i i L $ $ $ $ $ $ $ $ $ $ i",
+  	"$ $ $ i i L $ $ $ $ $ $ $ $ $ $",
   	"\t--whitelist <file>\t\t(%a)\n"
   	"\t--graylist  <file>\t\t(%b)\n"
   	"\t--host <hostname>\t\t(%c)\n"
   	"\t--postfix-port <num>\t\t(%d)\n"
   	"\t--sendmail-port <num>*\t\t(%e)\n"
   	"\t--max-tuples <num>\t\t(%f)\n"
-  	"\t--poll-queue <num>\t\t(%q)\n"
   	"\t--timeout-gray <timespec>\t(%g)\n"
   	"\t--timeout-white <timespec>\t(%h)\n"
   	"\t--time-format <strftime>\t(%i)\n"
@@ -317,8 +286,7 @@ static void dump_defaults(void)
   	c_sysid,
   	(cf_debug) ? "true" : "false" ,
   	(cf_foreground) ? "true" : "false",
-  	(cv_report == report_stderr) ? "true" : "false",
-  	c_pollqueue
+  	(cv_report == report_stderr) ? "true" : "false"
   );
 
   MemFree(towhite);
@@ -358,9 +326,6 @@ static void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_PORT_SENDMAIL:
            c_smport = strtoul(optarg,NULL,10);
-           break;
-      case OPT_POLL_QUEUE:
-           c_pollqueue = strtoul(optarg,NULL,10);
            break;
       case OPT_MAX_TUPLES:
            c_poolmax = strtoul(optarg,NULL,10);

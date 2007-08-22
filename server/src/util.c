@@ -41,7 +41,7 @@ int create_socket(const char *host,int port)
   sin.sin_family = AF_INET;
   sin.sin_port   = htons(port);
   
-  s = socket(AF_INET,SOCK_STREAM,0);
+  s = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
   if (s < -1)
   {
     (*cv_report)(LOG_ERR,"$","socket() = %a",strerror(errno));
@@ -63,7 +63,6 @@ int create_socket(const char *host,int port)
   
   close_on_exec(s);
   
-  listen(s,5);
   return(s);
 }
 
