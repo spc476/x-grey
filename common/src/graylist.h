@@ -8,6 +8,10 @@
 
 #define DEF_HOST	"localhost"
 #define DEF_PORT	9990
+#define DEF_RHOST	"localhost"
+#define DEF_RPORT	9990
+#define DEF_LHOST	"localhost"
+#define DEF_LPORT	20000
 
 /********************************************************************/
 

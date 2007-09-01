@@ -125,6 +125,7 @@ void type_graylist(struct request *req)
 {
   struct graylist_request *glr;
   struct tuple             tuple;
+  size_t                   rsize;
   byte                    *p;
 
   ddt(req != NULL);
@@ -132,16 +133,28 @@ void type_graylist(struct request *req)
   glr = req->glr;
   p   = glr->data;
 
-  if ((glr->ipsize != 4) || (glr->ipsize != 16))
+  glr->ipsize    = ntohs(glr->ipsize);
+  glr->fromsize  = ntohs(glr->fromsize);
+  glr->tosize    = ntohs(glr->tosize);
+
+  if ((glr->ipsize != 4) && (glr->ipsize != 16))
   {
     send_reply(req,CMD_NONE_RESP,GLERR_BAD_DATA);
     return;
   }
 
-  glr->ipsize    = ntohl(glr->ipsize);
-  glr->fromsize  = ntohl(glr->fromsize);
-  glr->tosize    = ntohl(glr->tosize);
+  rsize = glr->ipsize 
+        + glr->fromsize 
+	+ glr->tosize 
+	+ sizeof(struct graylist_request) 
+	- 2;	/* empiracally found --- this is bad XXX */
 
+  if (rsize > req->size)
+  {
+    send_reply(req,CMD_NONE_RESP,GLERR_BAD_DATA);
+    return;
+  }
+  
   tuple.ctime    = time(NULL);
   tuple.fromsize = min(sizeof(tuple.from) - 1,glr->fromsize);
   tuple.tosize   = min(sizeof(tuple.to)   - 1,glr->tosize);
@@ -186,7 +199,6 @@ static char *ipv4(const byte *ip)
 
 static void send_reply(struct request *req,int type,int response)
 {
-#if 0
   struct graylist_response resp;
   ssize_t                  rrc;
   
@@ -197,7 +209,7 @@ static void send_reply(struct request *req,int type,int response)
   resp.version  = htons(VERSION);
   resp.MTA      = req->glr->MTA;
   resp.type     = htons(type);
-  resp.respnose = htons(response);
+  resp.response = htons(response);
   
   do
   {
@@ -217,7 +229,6 @@ static void send_reply(struct request *req,int type,int response)
       (*cv_report)(LOG_ERR,"$","sendto() = %a",strerror(errno));
     }
   } while (rrc == -1);
-#endif
 }
 
 /********************************************************************/

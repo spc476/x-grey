@@ -7,15 +7,23 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 
 #include <cgilib/memory.h>
+#include <cgilib/types.h>
 #include <cgilib/ddt.h>
 #include <cgilib/stream.h>
 
+#include "../../common/src/graylist.h"
+#include "../../common/src/util.h"
 #include "globals.h"
 
-static int	process_request		(int);
+#define min(a,b)	((a) < (b)) ? (a) : (b)
+
+int		check_graylist	(int,char *,char *,char *);	
+static int	process_request	(int);
 
 /**********************************************************/
 
@@ -100,9 +108,22 @@ static int process_request(int sock)
     
     if (p == buffer)
     {
+      int okay;
+      
       syslog(LOG_INFO,"tuple: [%s , %s , %s]",ip,from,to);
-      rrc = write(STDOUT_FILENO,"action=dunno\n\n",14);
-      ddt(rrc == 14);
+      okay = check_graylist(sock,ip,from,to);
+      
+      if (okay)
+      {
+        rrc = write(STDOUT_FILENO,"action=dunno\n\n",14);
+        ddt(rrc == 14);
+      }
+      else
+      {
+        rrc = write(STDOUT_FILENO,"action=defer_if_permit Service temporarily unavailable\n\n",56);
+        ddt(rrc == 56);
+      }
+      
       free(request);
       free(from);
       free(to);
@@ -144,12 +165,19 @@ static int process_request(int sock)
 
 /********************************************************/
 
-int check_graylist(char *ip,char *from,char *to)
+int check_graylist(int sock,char *ip,char *from,char *to)
 {
   byte                      outpacket[600];
   byte                      inpacket [1500];
   struct graylist_request  *glq;
   struct graylist_response *glr;
+  struct sockaddr_in        sip;
+  socklen_t                 sipsize;
+  size_t                    sfrom;
+  size_t                    sto;
+  byte                     *p;
+  char                     *d;
+  ssize_t                   rrc;
   
   sfrom = min(strlen(from),200);
   sto   = min(strlen(to),  200);
@@ -157,7 +185,7 @@ int check_graylist(char *ip,char *from,char *to)
   glq = (struct graylist_request *)outpacket;
   glr = (struct graylist_response *)inpacket;
   
-  p = &glq->data;
+  p = glq->data;
   
   glq->version  = htons(VERSION);
   glq->MTA      = htons(MTA_POSTFIX);
@@ -167,9 +195,9 @@ int check_graylist(char *ip,char *from,char *to)
   glq->tosize   = htons(sto);
   
   *p++ = strtoul(ip,&d,10); d++;	/* pack IP */
-  *p++ = strtoul(ip,&d,10); d++;
-  *p++ = strtoul(ip,&d,10); d++;
-  *p++ = strtoul(ip,&d,10); d++;
+  *p++ = strtoul(d ,&d,10); d++;
+  *p++ = strtoul(d ,&d,10); d++;
+  *p++ = strtoul(d ,&d,10); d++;
   
   memcpy(p,from,sfrom);	p += sfrom;
   memcpy(p,to,sto);     p += sto;
@@ -179,8 +207,8 @@ int check_graylist(char *ip,char *from,char *to)
   		outpacket,
   		(size_t)(p - outpacket),
   		0,
-  		sip,
-  		sipsize
+  		(const struct sockaddr *)&c_raddr,
+  		c_raddrsize
   	);
   if (rrc == -1)
   {
@@ -195,9 +223,17 @@ int check_graylist(char *ip,char *from,char *to)
   		inpacket,
   		sizeof(inpacket),
   		0,
-  		sip,
-  		sipsize
+  		(struct sockaddr *)&sip,
+  		&sipsize
   	);
+  
+  alarm(0);
+  
+  /*--------------------------------------------------------
+  ; if we get anything we don't understand, return TRUE---better
+  ; to err on the side of caution than to be overly strict
+  ; and miss an important email.
+  ;---------------------------------------------------------*/
   
   if (rrc == -1)
   {
@@ -205,7 +241,7 @@ int check_graylist(char *ip,char *from,char *to)
     return(TRUE);
   }
   
-  if (ntohs(glr->VERSION) != VERSION)
+  if (ntohs(glr->version) != VERSION)
   {
     (*cv_report)(LOG_ERR,"","received response from wrong version");
     return(TRUE);
@@ -223,5 +259,26 @@ int check_graylist(char *ip,char *from,char *to)
     return(TRUE);
   }
   
+  glr->response = ntohs(glr->response);
   
-  
+  if (glr->response == GRAYLIST_YEA)
+  {
+    (*cv_report)(LOG_INFO,"","received okay");
+    return(TRUE);
+  }
+  else if (glr->response == GRAYLIST_NAY)
+  {
+    (*cv_report)(LOG_INFO,"","received nay");
+    return(FALSE);
+  }
+  else
+  {
+    (*cv_report)(LOG_INFO,"","received na?");
+    return(TRUE);
+  }
+  ddt(0);
+  return(TRUE);
+}
+
+/*******************************************************************/
+

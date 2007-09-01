@@ -7,6 +7,10 @@
 
 #include <syslog.h>
 #include <getopt.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #include <cgilib/memory.h>
 #include <cgilib/util.h>
@@ -34,13 +38,18 @@ static void		 dump_defaults	(void);
 
 /****************************************************************/
 
-char  *c_host        = DEF_HOST;
-int    c_port        = DEF_PORT;
-int   c_log_facility = LOG_LOCAL5;
-int   c_log_level    = LOG_DEBUG;
-char *c_log_id	     = "pfgl";
-int   cf_debug       = 0;
-void  (*cv_report)(int,char *,char *,...) = report_syslog;
+char                *c_host        = DEF_LHOST;
+int                  c_port        = DEF_LPORT;
+char                *c_rhost       = DEF_RHOST;
+int                  c_rport       = DEF_RPORT;
+struct sockaddr_in   c_raddr;
+socklen_t            c_raddrsize    = sizeof(struct sockaddr_in);
+int                  c_timeout      = 5;
+int                  c_log_facility = LOG_LOCAL5;
+int                  c_log_level    = LOG_DEBUG;
+char                *c_log_id	    = "pfgl";
+int                  cf_debug       = 0;
+void               (*cv_report)(int,char *,char *,...) = report_syslog;
 
   /*----------------------------------------------------*/
 
@@ -58,10 +67,25 @@ static const struct option mc_options[] =
 
 int (GlobalsInit)(int argc,char *argv[])
 {
+  struct hostent *remote;
+
   ddt(argc >  0);
   ddt(argv != NULL);
   
   parse_cmdline(argc,argv);
+  remote = gethostbyname(c_rhost);
+  if (remote == NULL)
+  {
+    (*cv_report)(LOG_ERR,"$ $","gethostbyname(%a) = %b",c_rhost,strerror(errno));
+    return(EXIT_FAILURE);
+  }
+  
+  memcpy(&c_raddr.sin_addr.s_addr,remote->h_addr,remote->h_length);
+  c_raddr.sin_family = AF_INET;
+  c_raddr.sin_port   = htons(c_rport);
+  
+  c_port += (int)(getpid()) % 100;
+  
   openlog(c_log_id,0,c_log_facility);
   return(EXIT_SUCCESS);
 }
