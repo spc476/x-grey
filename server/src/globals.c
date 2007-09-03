@@ -11,7 +11,6 @@
 #include <signal.h>
 #include <getopt.h>
 #include <netdb.h>
-#include <sys/epoll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -95,6 +94,11 @@ struct tuple   *g_tuplespace;	/* actual space */
 Tuple          *g_pool;		/* used for sorting records */
 char          **g_argv;
 
+size_t	        g_graycount_waiting;
+size_t          g_graycount_expired;
+size_t          g_whitecount_waiting;
+size_t          g_whitecount_expired;
+
 /*******************************************************************/
 
 volatile int m_debug = 1;
@@ -169,12 +173,12 @@ int (GlobalsInit)(int argc,char *argv[])
   set_signal(SIGTERM, sighandler_sigs);
   set_signal(SIGCHLD, sighandler_chld);
   
-  set_extsignal(SIGSEGV ,sighandler_critical);
-  set_extsignal(SIGBUS  ,sighandler_critical);
-  set_extsignal(SIGFPE  ,sighandler_critical);
-  set_extsignal(SIGILL  ,sighandler_critical);
-  set_extsignal(SIGXCPU ,sighandler_critical);
-  set_extsignal(SIGXFSZ ,sighandler_critical);
+  set_signal(SIGSEGV ,sighandler_critical);
+  set_signal(SIGBUS  ,sighandler_critical);
+  set_signal(SIGFPE  ,sighandler_critical);
+  set_signal(SIGILL  ,sighandler_critical);
+  set_signal(SIGXCPU ,sighandler_critical);
+  set_signal(SIGXFSZ ,sighandler_critical);
 
   return(ERR_OKAY);
 }

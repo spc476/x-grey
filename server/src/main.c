@@ -3,7 +3,6 @@
 #include <errno.h>
 #include <string.h>
 
-#include <sys/epoll.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -173,11 +172,13 @@ void type_graylist(struct request *req)
 
   (*cv_report)(
   	LOG_INFO,
-  	"$ $ $",
-  	"tuple: [%a , %b , %c]",
+  	"$ $ $ $ $",
+  	"tuple: [%a , %b , %c]%d%e",
   	ipv4(tuple.ip),
   	tuple.from,
-  	tuple.to
+  	tuple.to,
+  	(tuple.f & F_TRUNCFROM) ? " Tf" : "",
+  	(tuple.f & F_TRUNCTO)   ? " Tt" : ""
   );
 
   send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);

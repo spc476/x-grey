@@ -51,7 +51,8 @@ enum
 enum
 {
   GRAYLIST_NAY,
-  GRAYLIST_YEA
+  GRAYLIST_YEA,
+  GRAYLIST_LATER
 };
 
 struct graylist_response

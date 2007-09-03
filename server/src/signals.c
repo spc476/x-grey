@@ -30,26 +30,6 @@ static volatile sig_atomic_t mf_sigpipe;
 
 /**********************************************************************/
 
-void set_extsignal(int sig,void (*handler)(int,siginfo_t *,void *))
-{
-  struct sigaction act;
-  struct sigaction oact;
-  int              rc;
-  
-  sigemptyset(&act.sa_mask);
-  act.sa_handler = (void (*)(int))handler;
-  act.sa_flags   = SA_SIGINFO;
-  
-  rc = sigaction(sig,&act,&oact);
-  if (rc == -1)
-  {
-    (*cv_report)(LOG_ERR,"$","sigaction() returned %a",strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-}
-
-/*******************************************************************/
-
 void set_signal(int sig,void (*handler)(int))
 {
   struct sigaction act;
@@ -89,7 +69,7 @@ void check_signals(void)
 
 /********************************************************************/
 
-void sighandler_critical(int sig,siginfo_t *si,void *dummy)
+void sighandler_critical(int sig)
 {
   extern char **environ;
   sigset_t      sigset;
@@ -105,9 +85,8 @@ void sighandler_critical(int sig,siginfo_t *si,void *dummy)
   (*cv_report)(
        LOG_ERR,
        "$ p",
-       "DANGER!  %a @ %b - restarting program",
-       sys_siglist[sig],
-       si->si_addr
+       "DANGER!  %a - restarting program",
+       sys_siglist[sig]
     );
 
   /*---------------------------------------------------------
@@ -117,20 +96,6 @@ void sighandler_critical(int sig,siginfo_t *si,void *dummy)
   sigfillset(&sigset);
   sigprocmask(SIG_UNBLOCK,&sigset,NULL);
   
-  /*---------------------------------------------------------
-  ; close everything down - I'm marking all file descriptors
-  ; as "close on exec" so this shouldn't be needed.
-  ;---------------------------------------------------------*/
-
-#if 0
-  {
-    int i;
-
-    for (i = 3 ; (i < OPEN_MAX) && (close(i) == 0) ; i++)
-      ;
-  }
-#endif
-
   execve(g_argv[0],g_argv,environ);
   (*cv_report)(LOG_ERR,"$ $","exec('%a') = %b",g_argv[0],strerror(errno));
   _exit(EXIT_FAILURE);	/* when all else fails! */

@@ -2,8 +2,6 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#include <sys/epoll.h>
-
 #include "graylist.h"
 
 	/*----------------------------------------------*/
@@ -34,6 +32,11 @@ extern size_t               g_pollnum;
 extern const struct tuple  *g_tuplespace;
 extern const Tuple         *g_pool;
 extern const int          **g_argv;
+
+extern size_t               g_graycount_waiting;
+extern size_t               g_graycount_expired;
+extern size_t               g_whitecount_waiting;
+extern size_t               g_whitecount_expired;
 
 /*****************************************************************/
 
