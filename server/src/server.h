@@ -7,6 +7,7 @@
 struct request
 {
   int                      sock;
+  time_t                   now;
   struct sockaddr          remote;
   socklen_t                rsize;
   char                     packet[1500];

@@ -1,13 +1,27 @@
 
+#include <string.h>
+#include <stdlib.h>
+
+#include <syslog.h>
+
+#include <cgilib/ddt.h>
+
+#include "../../common/src/graylist.h"
+#include "graylist.h"
+#include "globals.h"
+
 /**********************************************************************/
 
 int tuple_cmp(const void *left,const void *right)
 {
-  Tuple l = left;
-  Tuple r = right;
+  const struct tuple *l = left;
+  const struct tuple *r = right;
+  int                 rc;
   
   ddt(left  != NULL);
   ddt(right != NULL);
+  ddt(l->pad == 0xDECAFBAD);
+  ddt(r->pad == 0xDECAFBAD);
   
   if ((rc = memcmp(l->ip,r->ip,sizeof(l->ip))) != 0) return(rc);
   
@@ -37,7 +51,7 @@ int tuple_qsort_cmp(const void *left, const void *right)
   ddt(left  != NULL);
   ddt(right != NULL);
   
-  return(tuple_cmp(*l,*r);
+  return(tuple_cmp(*l,*r));
 }
 
 /**************************************************************************/
@@ -50,8 +64,9 @@ Tuple tuple_search(Tuple key,size_t *pidx)
   size_t mid;
   int    q;
   
-  ddt(key  != NULL);
-  ddt(pidx != NULL);
+  ddt(key      != NULL);
+  ddt(pidx     != NULL);
+  ddt(key->pad == 0xDECAFBAD);
   
   if (g_poolnum == 0)
   {
@@ -69,7 +84,7 @@ Tuple tuple_search(Tuple key,size_t *pidx)
     
     delta = high - low;
     mid   = (low + high) / 2;
-    q     = tuple_cmp(key,g_pool[mid]);
+    q     = tuple_cmp(key,g_tuplespace[mid]);
     
     if (q < 0)
     {
@@ -95,7 +110,8 @@ Tuple tuple_search(Tuple key,size_t *pidx)
     else if (q == 0)
     {
       *pidx = mid;
-      return(g_pool[mid]);
+      ddt(g_tuplespace[mid]->pad == 0xDECAFBAD);
+      return(g_tuplespace[mid]);
     }
     else
     {
@@ -120,7 +136,20 @@ Tuple tuple_search(Tuple key,size_t *pidx)
 
 Tuple tuple_allocate(void)
 {
-  ddt(g_poolnum < c_poolmax);
+  ddt(g_poolnum <= c_poolmax);
+  
+  if (g_poolnum == c_poolmax)
+  {
+    (*cv_report)(LOG_ERR,"","too many requests-attempting to clean house");
+    tuple_expire(time(NULL));
+    if (g_poolnum == c_poolmax)
+    {
+      (*cv_report)(LOG_ERR,"","too many requests-cleaning house failed-starting over");
+      g_poolnum = 0;
+    }
+  }
+  
+  D(g_pool[g_poolnum].pad = 0xDECAFBAD;)
   return(&g_pool[g_poolnum]);
 }
 
@@ -128,25 +157,21 @@ Tuple tuple_allocate(void)
 
 void tuple_add(Tuple rec,size_t index)
 {
-  ddt(index                  <  g_poolnum + 2);
-  ddt(rec                    != NULL);
-  ddt(rec                    >= &g_pool[0]);
-  ddt(rec                    <= &g_pool[c_poolmax - 1]);
-  ddt(g_poolnum - index + 1) <= c_poolmax);
+  ddt(g_poolnum <  c_poolmax);
+  ddt(index     <= g_poolnum);
+  ddt(rec       != NULL);
+  ddt(rec       >= &g_pool[0]);
+  ddt(rec       <= &g_pool[c_poolmax - 1]);
+  ddt(rec->pad  == 0xDECAFBAD);
   
   memmove(
   	&g_tuplespace[index + 1],
   	&g_tuplespace[index],
-  	(g_poolnum - index + 1) * sizeof(Tuple)
-  );
-  
+  	(g_poolnum - index /*+ 1*/) * sizeof(Tuple)
+    );
+
   g_tuplespace[index] = rec;
-  g_poolnum++;
-  
-  if (g_poolnum == c_poolmax)
-  {
-    /* error condition --- possibly remove some entries */
-  }
+  g_poolnum++;  
 }
 
 /*******************************************************************/
@@ -154,43 +179,32 @@ void tuple_add(Tuple rec,size_t index)
 void tuple_expire(time_t Tao)
 {
   size_t i;
-  size_t count;
-  
-  for (i = count = 0 ; count < g_poolnum ; count++)
+  size_t j;
+
+  for (i = j = 0 ; i < g_poolnum ; i++)
   {
-    if ((g_pool[count].f & F_GRAYLIST))
+    if ((g_pool[i].f & F_WHITELIST))
     {
-      if (difftime(Tao,g_pool[count].atime) < c_timeout_gray)
-      {
-        g_pool[i++] = g_pool[count];
-        g_graycount_waiting++;
-      }
+      if (difftime(Tao,g_pool[i].atime) < c_timeout_white)
+        g_pool[j++] = g_pool[i];
       else
-      {
-        g_graycount_waiting--;
-        g_graycount_expired++;
-      }
+        g_whitelist_expired++;
+      continue;
     }
     
-    if ((g_pool[count].f & F_WHITELIST) == F_WHITELIST)
+    if (difftime(Tao,g_pool[i].atime) < c_timeout_gray)
     {
-      if (difftime(Tao,g_pool[count].atime) < c_timeout_white)
-      {
-        g_pool[i++] = g_pool[count];
-        g_whitecount_waiting++;
-      }
-      else
-      {
-        g_whitecount_waiting--;
-        g_whitecount_expired++;
-      }
-    }    
+      g_pool[j++] = g_pool[i];
+      continue;
+    }
+    
+    g_graylist_expired++;
   }
-
-  g_poolnum = i;
-
-  for (count = 0 ; count < g_poolnum ; count++)
-    g_tuplespace[count] = &g_pool[count];
+  
+  g_poolnum = j;
+  
+  for (i = 0 ; i < g_poolnum ; i++)
+    g_tuplespace[i] = &g_pool[i];
   
   qsort(g_tuplespace,g_poolnum,sizeof(Tuple *),tuple_qsort_cmp);
 }

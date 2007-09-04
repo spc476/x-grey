@@ -38,8 +38,8 @@ enum
   OPT_HOST,
   OPT_PORT,
   OPT_MAX_TUPLES,
-  OPT_TIMEOUT_CLEANUP,
-  OPT_TIMEOUT_ACCEPT,
+  OPT_TIME_CLEANUP,
+  OPT_TIMEOUT_EMBARGO,
   OPT_TIMEOUT_GRAY,
   OPT_TIMEOUT_WHITE,
   OPT_REPORT_FORMAT,
@@ -59,7 +59,6 @@ enum
 static void		 dump_defaults	(void);
 static void		 parse_cmdline	(int,char *[]);
 static void		 daemon_init	(void);
-static double		 read_dtime	(char *);
 static void		 my_exit	(void);
 
 /*********************************************************************/
@@ -78,26 +77,24 @@ char          *c_whitefile       = "/tmp/whitelist.txt";
 char          *c_grayfile        = "/tmp/grayfile.txt";	
 char          *c_timeformat      = "%c";
 size_t         c_poolmax         = 65536uL;
-unsigned int   c_timeout_cleanup = 60;
-double	       c_timeout_accept  = 3600.0;
-double         c_timeout_gray    = 3600.0 *  4.0;
+unsigned int   c_time_cleanup    = 60 * 5;
+double	       c_timeout_embargo = 3600.0 * 24;	/*3600.0;*/
+double         c_timeout_gray    = 3600.0 * 12; /* 4.0;*/
 double	       c_timeout_white   = 3600.0 * 24.0 * 36.0;
 time_t         c_starttime       = 0;
 int            cf_foreground     = 0;
 
 	/*---------------------------------------------------*/
 	
-size_t          g_unique;
-size_t          g_uniquepassed;
 size_t          g_poolnum;
-struct tuple   *g_tuplespace;	/* actual space */
-Tuple          *g_pool;		/* used for sorting records */
+struct tuple   *g_pool;			/* actual space */
+Tuple          *g_tuplespace;		/* used for sorting records */
 char          **g_argv;
 
-size_t	        g_graycount_waiting;
-size_t          g_graycount_expired;
-size_t          g_whitecount_waiting;
-size_t          g_whitecount_expired;
+size_t          g_graylisted;
+size_t          g_whitelisted;
+size_t          g_whitelist_expired;
+size_t          g_graylist_expired;
 
 /*******************************************************************/
 
@@ -111,14 +108,14 @@ static const struct option mc_options[] =
   { "host"		, required_argument	, NULL	, OPT_HOST		} ,
   { "port"		, required_argument	, NULL	, OPT_PORT		} ,
   { "max-tuples"	, required_argument	, NULL	, OPT_MAX_TUPLES	} ,
-  { "timeout-cleanup" 	, required_argument	, NULL	, OPT_TIMEOUT_CLEANUP	} ,
-  { "timeout-accept"	, required_argument	, NULL	, OPT_TIMEOUT_ACCEPT	} ,
+  { "time-cleanup" 	, required_argument	, NULL	, OPT_TIME_CLEANUP	} ,
+  { "timeout-embargo"	, required_argument	, NULL	, OPT_TIMEOUT_EMBARGO	} ,
   { "timeout-gray"	, required_argument	, NULL	, OPT_TIMEOUT_GRAY	} ,
   { "timeout-grey"	, required_argument	, NULL	, OPT_TIMEOUT_GRAY	} ,
   { "timeout-white"	, required_argument	, NULL	, OPT_TIMEOUT_WHITE	} ,
   { "time-format"     	, required_argument 	, NULL	, OPT_TIME_FORMAT    	} ,
   { "report-format"     , required_argument 	, NULL	, OPT_REPORT_FORMAT	} ,
-  { "log-facility"   	, required_argument 	, NULL	, OPT_LOG_FACILITY		} ,
+  { "log-facility"   	, required_argument 	, NULL	, OPT_LOG_FACILITY	} ,
   { "log-level"      	, required_argument 	, NULL	, OPT_LOG_LEVEL		} ,
   { "log-id"      	, required_argument 	, NULL	, OPT_LOG_ID        	} ,
   { "debug"          	, no_argument       	, NULL	, OPT_DEBUG		} ,
@@ -132,8 +129,6 @@ static const struct option mc_options[] =
 
 int (GlobalsInit)(int argc,char *argv[])
 {
-  int i;
-  
   ddt(argc >  0);
   ddt(argv != NULL);
 
@@ -153,14 +148,16 @@ int (GlobalsInit)(int argc,char *argv[])
 
   atexit(my_exit);
 
-  g_tuplespace = MemAlloc(c_poolmax * sizeof(struct tuple));
-  g_pool       = MemAlloc(c_poolmax * sizeof(Tuple));
+  g_pool       = MemAlloc(c_poolmax * sizeof(struct tuple));
+  g_tuplespace = MemAlloc(c_poolmax * sizeof(Tuple));
 
-  memset(g_tuplespace,0,c_poolmax * sizeof(struct tuple));
-  memset(g_pool      ,0,c_poolmax * sizeof(Tuple));
+  memset(g_pool,      0,c_poolmax * sizeof(struct tuple));
+  memset(g_tuplespace,0,c_poolmax * sizeof(Tuple));
 
+#if 0
   for (i = 0 ; i < c_poolmax ; i++)
-    g_pool[i] = &g_tuplespace[i];
+    g_tuplespace[i] = &g_pool[i];
+#endif
 
   if (cf_debug)
     dump_defaults();
@@ -168,18 +165,25 @@ int (GlobalsInit)(int argc,char *argv[])
   if (!cf_foreground)
     daemon_init();
 
+  set_signal(SIGCHLD, sighandler_chld);
   set_signal(SIGINT,  sighandler_sigs);
   set_signal(SIGQUIT, sighandler_sigs);
   set_signal(SIGTERM, sighandler_sigs);
-  set_signal(SIGCHLD, sighandler_chld);
-  
+  set_signal(SIGUSR1, sighandler_sigs);
+  set_signal(SIGUSR2, sighandler_sigs);
+  set_signal(SIGALRM, sighandler_sigs);
+  set_signal(SIGHUP,  sighandler_sigs);
+
+#if 0  
   set_signal(SIGSEGV ,sighandler_critical);
   set_signal(SIGBUS  ,sighandler_critical);
   set_signal(SIGFPE  ,sighandler_critical);
   set_signal(SIGILL  ,sighandler_critical);
   set_signal(SIGXCPU ,sighandler_critical);
   set_signal(SIGXFSZ ,sighandler_critical);
+#endif
 
+  alarm(c_time_cleanup);	/* start the countdown */
   return(ERR_OKAY);
 }
 
@@ -199,18 +203,21 @@ static void dump_defaults(void)
 {
   char *togray;
   char *towhite;
+  char *toclean;
 
   togray  = report_delta(c_timeout_gray);
   towhite = report_delta(c_timeout_white);
-
+  toclean = report_delta(c_time_cleanup);
+  
   LineSFormat(
   	StderrStream,
-  	"$ $ $ i i L $ $ $ $ $ $ $ $ $ $",
+  	"$ $ $ i i L $ $ $ $ $ $ $ $ $ $ $",
   	"\t--whitelist <file>\t\t(%a)\n"
   	"\t--graylist  <file>\t\t(%b)\n"
   	"\t--host <hostname>\t\t(%c)\n"
-  	"\t--port <num>\t\t(%d)\n"
+  	"\t--port <num>\t\t\t(%d)\n"
   	"\t--max-tuples <num>\t\t(%f)\n"
+  	"\t--time-cleanup <num>\t\t(%q)\n"
   	"\t--timeout-gray <timespec>\t(%g)\n"
   	"\t--timeout-white <timespec>\t(%h)\n"
   	"\t--time-format <strftime>\t(%i)\n"
@@ -238,9 +245,11 @@ static void dump_defaults(void)
   	c_log_id,
   	(cf_debug) ? "true" : "false" ,
   	(cf_foreground) ? "true" : "false",
-  	(cv_report == report_stderr) ? "true" : "false"
+  	(cv_report == report_stderr) ? "true" : "false",
+  	toclean
   );
 
+  MemFree(toclean);
   MemFree(towhite);
   MemFree(togray);
 }
@@ -278,11 +287,11 @@ static void parse_cmdline(int argc,char *argv[])
       case OPT_MAX_TUPLES:
            c_poolmax = strtoul(optarg,NULL,10);
            break;
-      case OPT_TIMEOUT_CLEANUP:
-           c_timeout_cleanup = strtoul(optarg,NULL,10);
+      case OPT_TIME_CLEANUP:
+           c_time_cleanup = (int)read_dtime(optarg);
            break;
-      case OPT_TIMEOUT_ACCEPT:
-           c_timeout_accept = read_dtime(optarg);
+      case OPT_TIMEOUT_EMBARGO:
+           c_timeout_embargo = read_dtime(optarg);
            break;
       case OPT_TIMEOUT_GRAY:
            c_timeout_gray = read_dtime(optarg);
@@ -415,56 +424,6 @@ static size_t read_size(char *arg)
 #endif
 
 /********************************************************************/
-
-static double read_dtime(char *arg)
-{
-  double time = 0.0;
-  double val;
-  char   *p;
-  
-  p = arg;
-  do
-  {
-    val = strtod(p,&p);
-    switch(toupper(*p))
-    {
-      case 'Y':
-           val *= SECSYEAR;
-           p++;
-           break;
-      case 'D':
-           val *= SECSDAY;
-           p++;
-           break;
-      case 'H':
-           val *= SECSHOUR;
-           p++;
-           break;
-      case 'M':
-           val *= SECSMIN;
-           p++;
-           break;
-      case 'S':
-           p++;
-           break;
-      case '\0':
-           break;
-      default:
-           LineSFormat(
-           	StderrStream,
-           	"$",
-           	"Bad time specifier '%a'\n",
-           	arg
-           );
-           exit(EXIT_FAILURE);
-    }
-    time += val;
-  } while (*p);
-  
-  return(time);
-}
-
-/*******************************************************************/
 
 static void my_exit(void)
 {

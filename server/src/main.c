@@ -31,8 +31,8 @@
 void 		 type_graylist		(struct request *);
 
 static void	 mainloop		(int);
-static char	*ipv4			(const byte *);
 static void	 send_reply		(struct request *,int,int);
+static void 	 my_exit		(void);
 
 /********************************************************************/
 
@@ -49,11 +49,11 @@ int main(int argc,char *argv[])
   ; various streams opened up by the CGILIB.
   ;----------------------------------------------------*/
 
+  atexit(my_exit);
   close_stream_on_exec(ddtstream->output);
+  GlobalsInit(argc,argv);
 
   sock = create_socket(c_host,c_port);
-  
-  GlobalsInit(argc,argv);
   
   {
     char *t = timetoa(c_starttime);
@@ -77,6 +77,9 @@ static void mainloop(int sock)
   {
     check_signals();
 
+    memset(&req.remote,0,sizeof(req.remote));
+    req.rsize = sizeof(req.remote);
+
     rrc = recvfrom(
     	sock,
     	req.packet,
@@ -93,6 +96,7 @@ static void mainloop(int sock)
       continue;
     }
     
+    req.now  = time(NULL);
     req.sock = sock;
     req.glr  = (struct graylist_request *)req.packet;
     req.size = rrc;
@@ -124,11 +128,17 @@ void type_graylist(struct request *req)
 {
   struct graylist_request *glr;
   struct tuple             tuple;
+  Tuple                    stored;
   size_t                   rsize;
+  size_t                   idx;
   byte                    *p;
 
   ddt(req != NULL);
 
+  /*---------------------------------------------------
+  ; sanitize the request, and form a tuple from it.
+  ;---------------------------------------------------*/
+  
   glr = req->glr;
   p   = glr->data;
 
@@ -154,7 +164,9 @@ void type_graylist(struct request *req)
     return;
   }
   
-  tuple.ctime    = time(NULL);
+  memset(&tuple,0,sizeof(struct tuple));
+  D(tuple.pad    = 0xDECAFBAD;)
+  tuple.ctime    = tuple.atime = req->now;
   tuple.fromsize = min(sizeof(tuple.from) - 1,glr->fromsize);
   tuple.tosize   = min(sizeof(tuple.to)   - 1,glr->tosize);
   tuple.f        = 0;
@@ -181,22 +193,49 @@ void type_graylist(struct request *req)
   	(tuple.f & F_TRUNCTO)   ? " Tt" : ""
   );
 
+  /*------------------------------------------------
+  ; at some point, we'll add a check for sender IP
+  ; and see if we can accept/reject it at this 
+  ; point, otherwise, we do the tuple check.
+  ;-----------------------------------------------*/
+  
+  /*-------------------------------------------------------
+  ; second half of routine---look up the tuple.  If not found,
+  ; add it, else update the access time, and if less than the
+  ; embargo period, return LATER, else accept.
+  ;---------------------------------------------------------*/
+  
+  stored = tuple_search(&tuple,&idx);
+  
+  if (stored == NULL)
+  {
+    stored  = tuple_allocate();
+    memcpy(stored,&tuple,sizeof(struct tuple));
+    tuple_add(stored,idx);
+    g_graylisted++;
+    send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_LATER);
+    return;
+  }
+  
+  if (difftime(req->now,stored->atime) < c_timeout_embargo)
+  {
+    stored->atime = req->now;
+    send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_LATER);
+    return;
+  }
+  
+  stored->atime = req->now;
+  
+  if ((stored->f & F_WHITELIST) == 0)
+  {
+    stored->f |= F_WHITELIST;
+    g_whitelisted++;
+  }
+    
   send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
 }
 
 /*********************************************************************/
-
-static char *ipv4(const byte *ip)
-{
-  static char buffer[20];
-  
-  ddt(ip != NULL);
-  
-  sprintf(buffer,"%d.%d.%d.%d",ip[0],ip[1],ip[2],ip[3]);
-  return(buffer);
-}
-
-/***********************************************************************/
 
 static void send_reply(struct request *req,int type,int response)
 {
@@ -228,9 +267,20 @@ static void send_reply(struct request *req,int type,int response)
       if (errno == EINTR)
         continue;
       (*cv_report)(LOG_ERR,"$","sendto() = %a",strerror(errno));
+      if (errno == EINVAL)
+        break;
+      sleep(1);
     }
   } while (rrc == -1);
 }
 
 /********************************************************************/
+
+static void my_exit(void)
+{
+  StreamFlush(StdoutStream);
+  StreamFlush(StderrStream);
+}
+
+/**********************************************************************/
 

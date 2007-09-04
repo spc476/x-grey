@@ -3,7 +3,7 @@ CGILIB=/home/spc/source/cgi
 CINCL=-I $(CGILIB)/src
 
 CC=gcc -g
-CFLAGS=-Wall -pedantic $(CINCL)
+CFLAGS=-Wall -pedantic $(CINCL) -DDDT
 LFLAGS=-L$(CGILIB)/$(HOSTDIR) -lcgi5
 
 all : $(HOSTDIR)/globals.o	\

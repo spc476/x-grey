@@ -86,10 +86,11 @@ typedef struct tuple
   time_t       atime;
   size_t       fromsize;
   size_t       tosize;
+  unsigned int pad;
   flags        f;
   byte         ip  [16];
-  char         from[114];
-  char         to  [114];
+  char         from[108];
+  char         to  [108];
 } *Tuple;
 
 /***************************************************************/

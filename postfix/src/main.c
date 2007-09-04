@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -22,8 +23,15 @@
 
 #define min(a,b)	((a) < (b)) ? (a) : (b)
 
+/***********************************************************/
+
 int		check_graylist	(int,char *,char *,char *);	
 static int	process_request	(int);
+static void	handler_sigalrm	(int);
+
+/**********************************************************/
+
+static volatile sig_atomic_t mf_sigalrm;
 
 /**********************************************************/
 
@@ -38,6 +46,8 @@ int main(int argc,char *argv[])
   if (GlobalsInit(argc,argv) != EXIT_SUCCESS)
     return(EXIT_FAILURE);  
 
+  set_signal(SIGALRM,handler_sigalrm);
+  
   sock = create_socket(c_host,c_port);
   
   while(process_request(sock))
@@ -237,7 +247,13 @@ int check_graylist(int sock,char *ip,char *from,char *to)
   
   if (rrc == -1)
   {
-    (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
+    /*---------------------------------------------------
+    ; we expect EINTR (from SIG_ALRM), but if the error
+    ; is anything else, we record it.
+    ;---------------------------------------------------*/
+    
+    if (errno != EINTR)
+      (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
     return(TRUE);
   }
   
@@ -263,17 +279,17 @@ int check_graylist(int sock,char *ip,char *from,char *to)
   
   if (glr->response == GRAYLIST_YEA)
   {
-    (*cv_report)(LOG_INFO,"","received okay");
+    (*cv_report)(LOG_DEBUG,"","received okay");
     return(TRUE);
   }
   else if (glr->response == GRAYLIST_NAY)
   {
-    (*cv_report)(LOG_INFO,"","received nay");
+    (*cv_report)(LOG_DEBUG,"","received nay");
     return(FALSE);
   }
   else
   {
-    (*cv_report)(LOG_INFO,"","received na?");
+    (*cv_report)(LOG_DEBUG,"","received na?");
     return(TRUE);
   }
   ddt(0);
@@ -281,4 +297,11 @@ int check_graylist(int sock,char *ip,char *from,char *to)
 }
 
 /*******************************************************************/
+
+static void handler_sigalrm(int sig)
+{
+  mf_sigalrm = 1;
+}
+
+/******************************************************************/
 

@@ -12,8 +12,8 @@ extern const char *const    c_timeformat;
 extern const char *const    c_host;
 extern const int            c_port;
 extern const size_t         c_poolmax;
-extern const unsigned int   c_timeout_cleanup;
-extern const double         c_timeout_accept;
+extern const unsigned int   c_time_cleanup;
+extern const double         c_timeout_embargo;
 extern const double         c_timeout_gray;
 extern const double         c_timeout_white;
 extern const int            c_facility;
@@ -26,17 +26,15 @@ extern void               (*cv_report)(int,char *,char *, ... );
 
 	/*---------------------------------------------*/
 	
-extern size_t               g_unique;
-extern size_t               g_uniquepassed;
-extern size_t               g_pollnum;
-extern const struct tuple  *g_tuplespace;
-extern const Tuple         *g_pool;
-extern const int          **g_argv;
+extern size_t         g_poolnum;
+extern struct tuple  *g_pool;
+extern Tuple         *g_tuplespace;
+extern int          **g_argv;
 
-extern size_t               g_graycount_waiting;
-extern size_t               g_graycount_expired;
-extern size_t               g_whitecount_waiting;
-extern size_t               g_whitecount_expired;
+extern size_t	      g_graylisted;
+extern size_t	      g_whitelisted;
+extern size_t	      g_whitelist_expired;
+extern size_t	      g_graylist_expired;
 
 /*****************************************************************/
 

@@ -10,8 +10,11 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <linux/limits.h>
-#include <cgilib/memory.h>
 
+#include <cgilib/memory.h>
+#include <cgilib/stream.h>
+
+#include "../../common/src/util.h"
 #include "globals.h"
 
 /***********************************************************************/
@@ -20,6 +23,10 @@ static void	handle_sigint		(void);
 static void	handle_sigquit		(void);
 static void	handle_sigterm		(void);
 static void	handle_sigpipe		(void);
+static void	handle_sigalrm		(void);
+static void	handle_sigusr1		(void);
+static void	handle_sigusr2		(void);
+static void	handle_sighup		(void);
 
 /***********************************************************************/
 
@@ -27,44 +34,23 @@ static volatile sig_atomic_t mf_sigint;
 static volatile sig_atomic_t mf_sigquit;
 static volatile sig_atomic_t mf_sigterm;
 static volatile sig_atomic_t mf_sigpipe;
-
-/**********************************************************************/
-
-void set_signal(int sig,void (*handler)(int))
-{
-  struct sigaction act;
-  struct sigaction oact;
-  int              rc;
-
-  /*-----------------------------------------------
-  ; Do NOT set SA_RESTART!  This will cause the program
-  ; to fail in mysterious ways.  I've tried the "restart
-  ; system calls" method and it doesn't work for this
-  ; program.  So please don't bother adding it.
-  ; 
-  ; You have been warned ... 
-  ;-----------------------------------------------*/
-  
-  sigemptyset(&act.sa_mask);
-  act.sa_handler = handler;
-  act.sa_flags   = 0;
-  
-  rc = sigaction(sig,&act,&oact);
-  if (rc == -1)
-  {
-    (*cv_report)(LOG_ERR,"$","sigaction() returned %a",strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-}
+static volatile sig_atomic_t mf_sigalrm;
+static volatile sig_atomic_t mf_sigusr1;
+static volatile sig_atomic_t mf_sigusr2;
+static volatile sig_atomic_t mf_sighup;
 
 /**********************************************************************/
 
 void check_signals(void)
 {
+  if (mf_sigalrm)  handle_sigalrm();
   if (mf_sigint)   handle_sigint(); 
   if (mf_sigquit)  handle_sigquit();
   if (mf_sigterm)  handle_sigterm();
   if (mf_sigpipe)  handle_sigpipe();
+  if (mf_sigusr1)  handle_sigusr1();
+  if (mf_sigusr2)  handle_sigusr2();
+  if (mf_sighup)   handle_sighup();
 }
 
 /********************************************************************/
@@ -111,8 +97,12 @@ void sighandler_sigs(int sig)
     case SIGQUIT  : mf_sigquit  = 1; break;
     case SIGTERM  : mf_sigterm  = 1; break;
     case SIGPIPE  : mf_sigpipe  = 1; break;
+    case SIGALRM  : mf_sigalrm  = 1; break;
+    case SIGUSR1  : mf_sigusr1  = 1; break;
+    case SIGUSR2  : mf_sigusr2  = 1; break;
+    case SIGHUP   : mf_sighup   = 1; break;
     default:
-         (*cv_report)(LOG_ERR,"i","someone forgot to handle signal %a",signal);
+         (*cv_report)(LOG_ERR,"i","someone forgot to handle signal %a",sig);
          break;
   }
 }
@@ -207,4 +197,87 @@ static void handle_sigpipe(void)
 }
 
 /***********************************************************/
+
+static void handle_sigalrm(void)
+{
+  (*cv_report)(LOG_DEBUG,"","Alarm-time for house cleaning!");
+  mf_sigalrm = 0;
+  tuple_expire(time(NULL));
+  alarm(c_time_cleanup);	/* signal next cleanup */
+}
+
+/***********************************************************/
+
+static void handle_sigusr1(void)
+{
+  Stream out;
+  pid_t  child;
+  size_t i;
+
+  (*cv_report)(LOG_DEBUG,"","User 1 Signal");
+  mf_sigusr1 = 0;
+  
+  child = fork();
+  if (child == (pid_t)-1)
+  {
+    (*cv_report)(LOG_CRIT,"$","fork() = %a",strerror(errno));
+    return;
+  }
+  
+  if (child > 0)
+    return;
+  
+  out = FileStreamWrite("/tmp/pool",FILE_CREATE | FILE_TRUNCATE);
+  if (out == NULL)
+  {
+    (*cv_report)(LOG_ERR,"$","could not open %a","/tmp/pool");
+    _exit(0);
+  }
+  
+  for (i = 0 ; i < g_poolnum ; i++)
+  {
+    LineSFormat(
+    	out,
+    	"$ $ $ $ $ $ $ $ L L",
+    	"[%a , %b , %c] %d%e%f%g%h %i %j\n",
+    	ipv4(g_tuplespace[i]->ip),
+    	g_tuplespace[i]->from,
+    	g_tuplespace[i]->to,
+    	(g_tuplespace[i]->f & F_WHITELIST) ? "W" : "-",
+    	(g_tuplespace[i]->f & F_GRAYLIST)  ? "G" : "-",
+    	(g_tuplespace[i]->f & F_TRUNCFROM) ? "F" : "-",
+    	(g_tuplespace[i]->f & F_TRUNCTO)   ? "T" : "-",
+    	(g_tuplespace[i]->f & F_IPv6)      ? "6" : "-",
+    	(unsigned long)g_tuplespace[i]->ctime,
+    	(unsigned long)g_tuplespace[i]->atime
+    );
+  }
+  
+  StreamFree(out);
+  _exit(0);
+}
+
+/***********************************************************************/
+
+static void handle_sigusr2(void)
+{
+  (*cv_report)(LOG_DEBUG,"","User 2 Signal");
+  mf_sigusr2 = 0;
+  tuple_expire(time(NULL));
+}
+
+/**********************************************************************/
+
+static void handle_sighup(void)
+{
+  (*cv_report)(LOG_DEBUG,"","Sighup");
+  mf_sighup = 0;
+  (*cv_report)(LOG_INFO,"L10","tuples:            %a",(unsigned long)g_poolnum);
+  (*cv_report)(LOG_INFO,"L10","graylisted:        %a",(unsigned long)g_graylisted);
+  (*cv_report)(LOG_INFO,"L10","whitelisted:       %a",(unsigned long)g_whitelisted);
+  (*cv_report)(LOG_INFO,"L10","graylist expired:  %a",(unsigned long)g_graylist_expired);
+  (*cv_report)(LOG_INFO,"L10","whitelist expired: %a",(unsigned long)g_whitelist_expired);
+}
+
+/*********************************************************************/
 

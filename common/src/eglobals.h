@@ -4,6 +4,7 @@
 
 extern const char *const c_host;
 extern const int         c_port;
+extern const char *const c_timeformat;
 extern const int         c_log_facility;
 extern const int         c_log_level;
 extern const char *const c_log_id;

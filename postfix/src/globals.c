@@ -23,6 +23,7 @@
 enum
 {
   OPT_NONE,
+  OPT_TIMEOUT,
   OPT_LOG_FACILITY,
   OPT_LOG_LEVEL,
   OPT_LOG_ID,
@@ -39,7 +40,8 @@ static void		 dump_defaults	(void);
 /****************************************************************/
 
 char                *c_host        = DEF_LHOST;
-int                  c_port        = DEF_LPORT;
+int                  c_port        = 0;
+char                *c_timeformat  = "%c";
 char                *c_rhost       = DEF_RHOST;
 int                  c_rport       = DEF_RPORT;
 struct sockaddr_in   c_raddr;
@@ -55,6 +57,7 @@ void               (*cv_report)(int,char *,char *,...) = report_syslog;
 
 static const struct option mc_options[] =
 {
+  { "timeout"		, required_argument	, NULL  , OPT_TIMEOUT		} ,
   { "log-facility"	, required_argument	, NULL	, OPT_LOG_FACILITY	} ,
   { "log-level"		, required_argument	, NULL	, OPT_LOG_LEVEL		} ,
   { "log-id"		, required_argument	, NULL	, OPT_LOG_ID		} ,
@@ -83,9 +86,7 @@ int (GlobalsInit)(int argc,char *argv[])
   memcpy(&c_raddr.sin_addr.s_addr,remote->h_addr,remote->h_length);
   c_raddr.sin_family = AF_INET;
   c_raddr.sin_port   = htons(c_rport);
-  
-  c_port += (int)(getpid()) % 100;
-  
+
   openlog(c_log_id,0,c_log_facility);
   return(EXIT_SUCCESS);
 }
@@ -113,6 +114,9 @@ static void parse_cmdline(int argc,char *argv[])
       case EOF:
            return;
       case OPT_NONE:
+           break;
+      case OPT_TIMEOUT:
+           c_timeout = read_dtime(optarg);
            break;
       case OPT_LOG_FACILITY:
            {
@@ -147,18 +151,25 @@ static void parse_cmdline(int argc,char *argv[])
 
 static void dump_defaults(void)
 {
+  char *tout;
+  
+  tout = report_delta(c_timeout);
+  
   fprintf(
     stderr,
+    "\t--timeout <time>          (%s)\n"
     "\t--log-facility <facility> (%s)\n"
-    "\t--log-level <level>	 (%s)\n"
-    "\t--log-id <id>		 (%s)\n"
-    "\t--debug			 (%s)\n"
+    "\t--log-level <level>       (%s)\n"
+    "\t--log-id <id>             (%s)\n"
+    "\t--debug                   (%s)\n"
     "\t--help\n",
+    tout,
     ci_map_chars(c_log_facility,c_facilities,C_FACILITIES),
     ci_map_chars(c_log_level,   c_levels,    C_LEVELS),
     c_log_id,
     (cf_debug) ? "true" : "false"
   );  
+  MemFree(tout);
 }
 
 /********************************************************************/
