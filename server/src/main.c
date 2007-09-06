@@ -23,6 +23,7 @@
 #include "signals.h"
 #include "util.h"
 #include "server.h"
+#include "iplist.h"
 
 #define min(a,b)	((a) < (b)) ? (a) : (b)
 
@@ -132,6 +133,7 @@ void type_graylist(struct request *req)
   size_t                   rsize;
   size_t                   idx;
   byte                    *p;
+  int                      rc;
 
   ddt(req != NULL);
 
@@ -198,6 +200,19 @@ void type_graylist(struct request *req)
   ; and see if we can accept/reject it at this 
   ; point, otherwise, we do the tuple check.
   ;-----------------------------------------------*/
+  
+  rc = iplist_check(tuple.ip,4);
+  
+  if (rc == IPCMD_ACCEPT)
+  {
+    send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+    return;
+  }
+  else if (rc == IPCMD_REJECT)
+  {
+    send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+    return;
+  }
   
   /*-------------------------------------------------------
   ; second half of routine---look up the tuple.  If not found,

@@ -9,11 +9,13 @@ LFLAGS=-L$(CGILIB)/$(HOSTDIR) -lcgi5
 $(HOSTDIR)/gl : $(HOSTDIR)/main.o		\
 		$(HOSTDIR)/globals.o		\
 		$(HOSTDIR)/signals.o		\
+		$(HOSTDIR)/iplist.o		\
 		$(HOSTDIR)/tuple.o		
 	$(CC) $(CFLAGS) -o $@			\
 		$(HOSTDIR)/main.o		\
 		$(HOSTDIR)/globals.o		\
 		$(HOSTDIR)/signals.o		\
+		$(HOSTDIR)/iplist.o		\
 		$(HOSTDIR)/tuple.o		\
 		../common/$(HOSTDIR)/globals.o	\
 		../common/$(HOSTDIR)/util.o	\
@@ -27,6 +29,9 @@ $(HOSTDIR)/globals.o : src/globals.c
 
 $(HOSTDIR)/signals.o : src/signals.c
 	$(CC) $(CFLAGS) -c -o $@ src/signals.c
+
+$(HOSTDIR)/iplist.o : src/iplist.c
+	$(CC) $(CFLAGS) -c -o $@ src/iplist.c
 
 $(HOSTDIR)/tuple.o : src/tuple.c
 	$(CC) $(CFLAGS) -c -o $@ src/tuple.c

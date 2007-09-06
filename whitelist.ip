@@ -1,6 +1,12 @@
-64.12.137.0/24		accept	# AOL
-205.188.157.0/24	accept	# AOL
-204.127.217.0/24	accept	# BellSouth
-207.115.11.0/24		accept	# BellSouth
+64.12/16		accept	# AOL
+205.188.0.0/16		accept	# AOL
+204.127.0.0/16		accept	# BellSouth
+207.115.0.0/18		accept	# BellSouth
 209.145.140.57		accept	# Classiccomputer mailing list
+
+10.10.10.0/24		reject	# test
+10.10.0.0/18		reject	# test
+10.10.10.3/32		reject	# test
+10.8.0.0/14		reject	# test
+
 

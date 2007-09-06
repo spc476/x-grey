@@ -3,11 +3,14 @@
 #define GLOBALS_H
 
 #include "graylist.h"
+#include "iplist.h"
 
 	/*----------------------------------------------*/
 	
 extern const char *const    c_whitefile;
 extern const char *const    c_grayfile;
+extern const char *const    c_dumpfile;
+extern const char *const    c_iplistfile;
 extern const char *const    c_timeformat;
 extern const char *const    c_host;
 extern const int            c_port;
@@ -23,6 +26,7 @@ extern const time_t         c_starttime;
 extern const int            cf_debug;
 extern const int            cf_foreground;
 extern void               (*cv_report)(int,char *,char *, ... );
+extern const size_t         c_ipmax;
 
 	/*---------------------------------------------*/
 	
@@ -35,6 +39,9 @@ extern size_t	      g_graylisted;
 extern size_t	      g_whitelisted;
 extern size_t	      g_whitelist_expired;
 extern size_t	      g_graylist_expired;
+
+extern struct ipblock g_iplist[100];
+extern size_t         g_ipcnt;
 
 /*****************************************************************/
 

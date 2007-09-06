@@ -29,6 +29,7 @@
 #include "graylist.h"
 #include "signals.h"
 #include "util.h"
+#include "iplist.h"
 
 enum
 {
@@ -42,6 +43,7 @@ enum
   OPT_TIMEOUT_EMBARGO,
   OPT_TIMEOUT_GRAY,
   OPT_TIMEOUT_WHITE,
+  OPT_FILE_IPLIST,
   OPT_REPORT_FORMAT,
   OPT_TIME_FORMAT,  
   OPT_DEBUG,
@@ -75,6 +77,8 @@ void         (*cv_report)(int,char *,char *, ...) = report_syslog;
 
 char          *c_whitefile       = "/tmp/whitelist.txt";
 char          *c_grayfile        = "/tmp/grayfile.txt";	
+char          *c_dumpfile        = "/tmp/dump.txt";
+char          *c_iplistfile      = "whitelist.ip";
 char          *c_timeformat      = "%c";
 size_t         c_poolmax         = 65536uL;
 unsigned int   c_time_cleanup    = 60 * 5;
@@ -83,6 +87,7 @@ double         c_timeout_gray    = 3600.0 * 12; /* 4.0;*/
 double	       c_timeout_white   = 3600.0 * 24.0 * 36.0;
 time_t         c_starttime       = 0;
 int            cf_foreground     = 0;
+size_t         c_ipmax           = 100;
 
 	/*---------------------------------------------------*/
 	
@@ -95,6 +100,9 @@ size_t          g_graylisted;
 size_t          g_whitelisted;
 size_t          g_whitelist_expired;
 size_t          g_graylist_expired;
+
+struct ipblock  g_iplist[100];
+size_t          g_ipcnt;
 
 /*******************************************************************/
 
@@ -113,6 +121,7 @@ static const struct option mc_options[] =
   { "timeout-gray"	, required_argument	, NULL	, OPT_TIMEOUT_GRAY	} ,
   { "timeout-grey"	, required_argument	, NULL	, OPT_TIMEOUT_GRAY	} ,
   { "timeout-white"	, required_argument	, NULL	, OPT_TIMEOUT_WHITE	} ,
+  { "iplist"		, required_argument	, NULL	, OPT_FILE_IPLIST	} ,
   { "time-format"     	, required_argument 	, NULL	, OPT_TIME_FORMAT    	} ,
   { "report-format"     , required_argument 	, NULL	, OPT_REPORT_FORMAT	} ,
   { "log-facility"   	, required_argument 	, NULL	, OPT_LOG_FACILITY	} ,
@@ -154,13 +163,11 @@ int (GlobalsInit)(int argc,char *argv[])
   memset(g_pool,      0,c_poolmax * sizeof(struct tuple));
   memset(g_tuplespace,0,c_poolmax * sizeof(Tuple));
 
-#if 0
-  for (i = 0 ; i < c_poolmax ; i++)
-    g_tuplespace[i] = &g_pool[i];
-#endif
-
   if (cf_debug)
     dump_defaults();
+  
+  iplist_read(c_iplistfile);
+  whitelist_load();
   
   if (!cf_foreground)
     daemon_init();
@@ -211,7 +218,7 @@ static void dump_defaults(void)
   
   LineSFormat(
   	StderrStream,
-  	"$ $ $ i i L $ $ $ $ $ $ $ $ $ $ $",
+  	"$ $ $ i i L $ $ $ $ $ $ $ $ $ $ $ $",
   	"\t--whitelist <file>\t\t(%a)\n"
   	"\t--graylist  <file>\t\t(%b)\n"
   	"\t--host <hostname>\t\t(%c)\n"
@@ -220,6 +227,7 @@ static void dump_defaults(void)
   	"\t--time-cleanup <num>\t\t(%q)\n"
   	"\t--timeout-gray <timespec>\t(%g)\n"
   	"\t--timeout-white <timespec>\t(%h)\n"
+  	"\t--iplist <file>\t\t\t(%r)\n"
   	"\t--time-format <strftime>\t(%i)\n"
   	"\t--report-format syslog | stderr\t(%j)\n"
   	"\t--sys-facility <facility>\t(%k)\n"
@@ -246,7 +254,8 @@ static void dump_defaults(void)
   	(cf_debug) ? "true" : "false" ,
   	(cf_foreground) ? "true" : "false",
   	(cv_report == report_stderr) ? "true" : "false",
-  	toclean
+  	toclean,
+  	c_iplistfile
   );
 
   MemFree(toclean);
@@ -298,6 +307,9 @@ static void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_TIMEOUT_WHITE:
            c_timeout_white = read_dtime(optarg);
+           break;
+      case OPT_FILE_IPLIST:
+           c_iplistfile = dup_string(optarg);
            break;
       case OPT_TIME_FORMAT:
            c_timeformat = dup_string(optarg);

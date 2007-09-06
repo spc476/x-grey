@@ -32,6 +32,9 @@ static void	handler_sigalrm	(int);
 /**********************************************************/
 
 static volatile sig_atomic_t mf_sigalrm;
+static char                  m_dunno [] = "action=dunno\n\n";
+static char                  m_reject[] = "action=reject I reject your reality and substitute my own\n\n";
+static char                  m_defer [] = "action=defer_if_permit Service temporarily unavailable\n\n";
 
 /**********************************************************/
 
@@ -118,22 +121,30 @@ static int process_request(int sock)
     
     if (p == buffer)
     {
-      int okay;
+      int response;
       
       syslog(LOG_INFO,"tuple: [%s , %s , %s]",ip,from,to);
-      okay = check_graylist(sock,ip,from,to);
+      response = check_graylist(sock,ip,from,to);
       
-      if (okay)
+      switch(response)
       {
-        rrc = write(STDOUT_FILENO,"action=dunno\n\n",14);
-        ddt(rrc == 14);
+        case GRAYLIST_YEA:
+	     rrc = write(STDOUT_FILENO,m_dunno,sizeof(m_dunno) - 1);
+	     ddt(rrc == sizeof(m_dunno) - 1);
+	     break;
+	case GRAYLIST_NAY:
+	     rrc = write(STDOUT_FILENO,m_reject,sizeof(m_reject) - 1);
+	     ddt(rrc == sizeof(m_reject) - 1);
+	     break;
+	case GRAYLIST_LATER:
+	     rrc = write(STDOUT_FILENO,m_defer,sizeof(m_defer) - 1);
+	     ddt(rrc == sizeof(m_defer) - 1);
+	     break;
+	default:
+             ddt(0);
+	     break;
       }
-      else
-      {
-        rrc = write(STDOUT_FILENO,"action=defer_if_permit Service temporarily unavailable\n\n",56);
-        ddt(rrc == 56);
-      }
-      
+
       free(request);
       free(from);
       free(to);
@@ -223,7 +234,7 @@ int check_graylist(int sock,char *ip,char *from,char *to)
   if (rrc == -1)
   {
     (*cv_report)(LOG_ERR,"$","sendto() = %a",strerror(errno));
-    return(TRUE);
+    return(GRAYLIST_YEA);
   }
   
   alarm(c_timeout);
@@ -254,25 +265,25 @@ int check_graylist(int sock,char *ip,char *from,char *to)
     
     if (errno != EINTR)
       (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
-    return(TRUE);
+    return(GRAYLIST_YEA);
   }
   
   if (ntohs(glr->version) != VERSION)
   {
     (*cv_report)(LOG_ERR,"","received response from wrong version");
-    return(TRUE);
+    return(GRAYLIST_YEA);
   }
 
   if (ntohs(glr->MTA) != MTA_POSTFIX)
   {
     (*cv_report)(LOG_ERR,"","are we running another MTA here?");
-    return(TRUE);
+    return(GRAYLIST_YEA);
   }
   
   if (ntohs(glr->type) != CMD_GRAYLIST_RESP)
   {
     (*cv_report)(LOG_ERR,"i","received error %a",ntohs(glr->response));
-    return(TRUE);
+    return(GRAYLIST_YEA);
   }
   
   glr->response = ntohs(glr->response);
@@ -280,20 +291,25 @@ int check_graylist(int sock,char *ip,char *from,char *to)
   if (glr->response == GRAYLIST_YEA)
   {
     (*cv_report)(LOG_DEBUG,"","received okay");
-    return(TRUE);
+    return(GRAYLIST_YEA);
   }
   else if (glr->response == GRAYLIST_NAY)
   {
     (*cv_report)(LOG_DEBUG,"","received nay");
-    return(FALSE);
+    return(GRAYLIST_NAY);
+  }
+  else if (glr->response == GRAYLIST_LATER)
+  {
+    (*cv_report)(LOG_DEBUG,"","received later");
+    return(GRAYLIST_LATER);
   }
   else
   {
     (*cv_report)(LOG_DEBUG,"","received na?");
-    return(TRUE);
+    return(GRAYLIST_YEA);
   }
   ddt(0);
-  return(TRUE);
+  return(GRAYLIST_YEA);
 }
 
 /*******************************************************************/

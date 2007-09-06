@@ -16,6 +16,7 @@
 
 #include "../../common/src/util.h"
 #include "globals.h"
+#include "iplist.h"
 
 /***********************************************************************/
 
@@ -75,6 +76,8 @@ void sighandler_critical(int sig)
        sys_siglist[sig]
     );
 
+  whitelist_dump();	/* attempt to do this */
+  
   /*---------------------------------------------------------
   ; unblock all signals.
   ;--------------------------------------------------------*/
@@ -166,6 +169,7 @@ void sighandler_chld(int sig)
 static void handle_sigint(void)
 {
   (*cv_report)(LOG_DEBUG,"","Interrupt Signal");
+  whitelist_dump();
   GlobalsDeinit();
   exit(EXIT_SUCCESS);
 }
@@ -175,6 +179,7 @@ static void handle_sigint(void)
 static void handle_sigquit(void)
 {
   (*cv_report)(LOG_DEBUG,"","Quit signal");
+  whitelist_dump();
   GlobalsDeinit();
   exit(EXIT_SUCCESS);
 }
@@ -184,6 +189,7 @@ static void handle_sigquit(void)
 static void handle_sigterm(void)
 {
   (*cv_report)(LOG_DEBUG,"","Terminate Signal");
+  whitelist_dump();
   GlobalsDeinit();
   exit(EXIT_SUCCESS);
 }
@@ -227,10 +233,10 @@ static void handle_sigusr1(void)
   if (child > 0)
     return;
   
-  out = FileStreamWrite("/tmp/pool",FILE_CREATE | FILE_TRUNCATE);
+  out = FileStreamWrite(c_dumpfile,FILE_CREATE | FILE_TRUNCATE);
   if (out == NULL)
   {
-    (*cv_report)(LOG_ERR,"$","could not open %a","/tmp/pool");
+    (*cv_report)(LOG_ERR,"$","could not open %a",c_dumpfile);
     _exit(0);
   }
   
