@@ -4,9 +4,3 @@
 207.115.0.0/18		accept	# BellSouth
 209.145.140.57		accept	# Classiccomputer mailing list
 
-10.10.10.0/24		reject	# test
-10.10.0.0/18		reject	# test
-10.10.10.3/32		reject	# test
-10.8.0.0/14		reject	# test
-
-
