@@ -1,0 +1,16 @@
+2007-09-07T03:10-05:00
+
+	* Check memory allocations, I may have a small leak
+
+	* I think the help message on the server is incorrect.
+		DONE 2007-09-08T03:55-05:00
+
+2007-09-06T03:00-05:00
+
+*	If whitelist.ip doesn't end in a linefeed, it segfaults.
+
+*	There's a problem under Linux 2.6.9-023stab032.1-smp with fork(). At
+	first, I thought it was the calls to _exit() were failing, but nope,
+	it's with exit() as well.  I'm thinking I may have a long term
+	problem.  I hope I don't have a long term problem.  That would suck.
+
