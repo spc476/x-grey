@@ -87,7 +87,7 @@ void sighandler_critical(int sig)
   
   execve(g_argv[0],g_argv,environ);
   (*cv_report)(LOG_ERR,"$ $","exec('%a') = %b",g_argv[0],strerror(errno));
-  _exit(EXIT_FAILURE);	/* when all else fails! */
+  exit(EXIT_FAILURE);	/* when all else fails! */
 }
 
 /******************************************************************/
@@ -237,7 +237,7 @@ static void handle_sigusr1(void)
   if (out == NULL)
   {
     (*cv_report)(LOG_ERR,"$","could not open %a",c_dumpfile);
-    _exit(0);
+    exit(0);
   }
   
   for (i = 0 ; i < g_poolnum ; i++)
@@ -260,7 +260,7 @@ static void handle_sigusr1(void)
   }
   
   StreamFree(out);
-  _exit(0);
+  exit(0);
 }
 
 /***********************************************************************/
