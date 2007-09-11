@@ -320,7 +320,7 @@ int whitelist_load(void)
     ; this line and continue
     ;------------------------------------------------*/
     
-    if (p == NULL)
+    if (n == NULL)
     {
       MemFree(line);
       continue;

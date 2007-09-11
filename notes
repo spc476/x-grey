@@ -9,6 +9,14 @@ http://www.sendmail.org/doc/sendmail-current/libmilter/docs/
 
 -------------
 
+http://www.policyd.org/features.html	posfix
+http://www.tahina.priv.at/~cm/spam/	postfix
+http://hcpnet.free.fr/milter-greylist/	sendmail
+http://www.acme.com/software/graymilter/ sendmail (only IP)
+
+
+http://lists.puremagic.com/pipermail/greylist-users/2005-September/000995.html
+
 points at which we can check for spam:
 
 at connect time

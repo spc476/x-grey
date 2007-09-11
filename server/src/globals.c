@@ -67,6 +67,7 @@ static void		 my_exit	(void);
 
 extern char **environ;
 
+char          *c_pidfile         = "/tmp/graylist.pid";
 char          *c_host            = DEF_HOST;
 int            c_port            = DEF_PORT;
 int            c_log_facility    = LOG_LOCAL6;
@@ -82,7 +83,7 @@ char          *c_iplistfile      = "whitelist.ip";
 char          *c_timeformat      = "%c";
 size_t         c_poolmax         = 65536uL;
 unsigned int   c_time_cleanup    = 60 * 5;
-double	       c_timeout_embargo = 3600.0 * 24;	/*3600.0;*/
+double	       c_timeout_embargo = 3600.0;
 double         c_timeout_gray    = 3600.0 * 12; /* 4.0;*/
 double	       c_timeout_white   = 3600.0 * 24.0 * 36.0;
 time_t         c_starttime       = 0;
@@ -155,8 +156,6 @@ int (GlobalsInit)(int argc,char *argv[])
   parse_cmdline(argc,argv);
   openlog(c_log_id,0,c_log_facility);
 
-  atexit(my_exit);
-
   g_pool       = MemAlloc(c_poolmax * sizeof(struct tuple));
   g_tuplespace = MemAlloc(c_poolmax * sizeof(Tuple));
 
@@ -172,6 +171,8 @@ int (GlobalsInit)(int argc,char *argv[])
   if (!cf_foreground)
     daemon_init();
 
+  atexit(my_exit);	/* used to be above daemon_init(), race condition */
+
   set_signal(SIGCHLD, sighandler_chld);
   set_signal(SIGINT,  sighandler_sigs);
   set_signal(SIGQUIT, sighandler_sigs);
@@ -181,15 +182,27 @@ int (GlobalsInit)(int argc,char *argv[])
   set_signal(SIGALRM, sighandler_sigs);
   set_signal(SIGHUP,  sighandler_sigs);
 
-#if 0  
   set_signal(SIGSEGV ,sighandler_critical);
   set_signal(SIGBUS  ,sighandler_critical);
   set_signal(SIGFPE  ,sighandler_critical);
   set_signal(SIGILL  ,sighandler_critical);
   set_signal(SIGXCPU ,sighandler_critical);
   set_signal(SIGXFSZ ,sighandler_critical);
-#endif
 
+  {
+    Stream pfile;
+    
+    pfile = FileStreamWrite(c_pidfile,FILE_CREATE | FILE_TRUNCATE);
+    if (pfile == NULL)
+      (*cv_report)(LOG_ERR,"$","unable to write pid file %a",c_pidfile);
+    else
+    {
+      LineSFormat(pfile,"L","%a\n",(unsigned long)getpid());
+      StreamFlush(pfile);
+      StreamFree(pfile);
+    }
+  }
+  
   alarm(c_time_cleanup);	/* start the countdown */
   return(ERR_OKAY);
 }
@@ -241,8 +254,8 @@ static void dump_defaults(void)
   	c_whitefile,
   	c_grayfile,
   	c_host,
-  	0,
   	c_port,
+  	0,
   	(unsigned long)c_poolmax,
   	togray,
   	towhite,
@@ -444,7 +457,8 @@ static void my_exit(void)
   ; put a breakpoint to catch those unexpected
   ; calls to exit().
   ;------------------------------------------------*/
-
+  
+  unlink(c_pidfile);  
   closelog();
 }
 

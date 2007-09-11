@@ -1,6 +1,59 @@
-64.12/16		accept	# AOL
-205.188.0.0/16		accept	# AOL
-204.127.0.0/16		accept	# BellSouth
-207.115.0.0/18		accept	# BellSouth
+
+152.163.225.0/24 	accept	# AOL (via SPF)
+205.188.139.0/24	accept	# AOL (via SPF)
+205.188.144.0/24	accept	# AOL (via SPF)
+205.188.156.0/23	accept	# AOL (via SPF)
+205.188.159.0/24	accept	# AOL (via SPF)
+64.12.136.0/23		accept	# AOL (via SPF)
+64.12.138.0/24 		accept	# AOL (via SPF)
+
+64.12.137.89		accept	# AOL (via SPF)
+64.12.137.184		accept	# AOL (via SPF)
+64.12.137.249		accept	# AOL (via SPF)
+64.12.138.57		accept	# AOL (via SPF)
+64.12.138.88		accept	# AOL (via SPF)
+64.12.138.120		accept	# AOL (via SPF)
+64.12.138.153		accept	# AOL (via SPF)
+64.12.137.168		accept	# AOL (via SPF)
+
+205.188.155.89		accept	# AOL (via SPF)
+205.188.157.25		accept	# AOL (via SPF)
+205.188.157.217		accept	# AOL (via SPF)
+205.188.158.121		accept	# AOL (via SPF)
+205.188.159.57		accept	# AOL (via SPF)
+205.188.159.216		accept	# AOL (via SPF)
+
+205.152.58.0/23		accept	# BellSouth (via SPF)
+204.127.217.0/24	accept	# BellSouth (via SPF)
+207.115.11.0/26		accept	# BellSouth (via SPF)
+204.127.0.0/16		accept	# BellSouth (via WHOIS)
+207.115.0.0/18		accept	# BellSouth (via WHIOS)
+
+69.147.64.0/18		accept	# Yahoo
+209.131.32.0/19		accept	# Yahoo
+66.94.224.0/19		accept	# Yahoo
+66.218.64.0/19		accept	# Yahoo
+
+64.233.160.0/19		accept	# Gmail (via SPF)
+66.249.80.0/20		accept	# GMail (via SPF)
+66.102.0.0/20		accept	# GMail (via SPF)
+72.14.192.0/18		accept	# GMail (via SPF)
+74.125.0.0/16		accept	# GMail (via SPF)
+209.85.128.0/17		accept	# GMail (via SPF)
+216.239.32.0/19		accept	# Gmail (via SPF)
+66.249.64.0/19		accept	# GMail (via WHOIS)
+
+68.168.78.0/24		accept	# Adelphia (via SPF)
+68.168.75.0/24		accept	# Adelphia (via SPF)
+
 209.145.140.57		accept	# Classiccomputer mailing list
+140.211.11.2		accept	# Apache mailing list
+66.33.206.23		accept	# Niteowl's mailing list
+209.42.40.102		accept	# Gladesoft, that of the 30m retry
+
+#66.70.91.14		accept	# um ... spam I actually like getting
+#66.70.91.15		accept	#    "
+#69.10.237.0/24		accept	#    "
+
+#209.42.32.238		accept	# Server at Casa New Jersey
 

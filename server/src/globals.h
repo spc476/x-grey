@@ -6,7 +6,8 @@
 #include "iplist.h"
 
 	/*----------------------------------------------*/
-	
+
+extern const char *const    c_pidfile;	
 extern const char *const    c_whitefile;
 extern const char *const    c_grayfile;
 extern const char *const    c_dumpfile;

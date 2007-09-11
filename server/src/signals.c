@@ -222,7 +222,9 @@ static void handle_sigusr1(void)
 
   (*cv_report)(LOG_DEBUG,"","User 1 Signal");
   mf_sigusr1 = 0;
-  
+
+#if 0 
+
   child = fork();
   if (child == (pid_t)-1)
   {
@@ -231,13 +233,21 @@ static void handle_sigusr1(void)
   }
   
   if (child > 0)
+  {
+    (*cv_report)(LOG_DEBUG,"","parent about to go about it's business");
     return;
-  
+  }
+
+  (*cv_report)(LOG_DEBUG,"","child about to generate report");
+
+#endif
+
   out = FileStreamWrite(c_dumpfile,FILE_CREATE | FILE_TRUNCATE);
   if (out == NULL)
   {
     (*cv_report)(LOG_ERR,"$","could not open %a",c_dumpfile);
-    exit(0);
+    return;
+    /*exit(0);*/
   }
   
   for (i = 0 ; i < g_poolnum ; i++)
@@ -245,7 +255,7 @@ static void handle_sigusr1(void)
     LineSFormat(
     	out,
     	"$ $ $ $ $ $ $ $ L L",
-    	"[%a , %b , %c] %d%e%f%g%h %i %j\n",
+    	"%a %b %c %d%e%f%g%h %i %j\n",
     	ipv4(g_tuplespace[i]->ip),
     	g_tuplespace[i]->from,
     	g_tuplespace[i]->to,
@@ -260,7 +270,7 @@ static void handle_sigusr1(void)
   }
   
   StreamFree(out);
-  exit(0);
+  /*exit(0);*/
 }
 
 /***********************************************************************/
@@ -276,13 +286,18 @@ static void handle_sigusr2(void)
 
 static void handle_sighup(void)
 {
+  char *t;
+
   (*cv_report)(LOG_DEBUG,"","Sighup");
   mf_sighup = 0;
+  t = report_time(c_starttime,time(NULL));
+  (*cv_report)(LOG_INFO,"$","%a",t);
   (*cv_report)(LOG_INFO,"L10","tuples:            %a",(unsigned long)g_poolnum);
   (*cv_report)(LOG_INFO,"L10","graylisted:        %a",(unsigned long)g_graylisted);
   (*cv_report)(LOG_INFO,"L10","whitelisted:       %a",(unsigned long)g_whitelisted);
   (*cv_report)(LOG_INFO,"L10","graylist expired:  %a",(unsigned long)g_graylist_expired);
   (*cv_report)(LOG_INFO,"L10","whitelist expired: %a",(unsigned long)g_whitelist_expired);
+  MemFree(t);
 }
 
 /*********************************************************************/
