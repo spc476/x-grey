@@ -33,7 +33,7 @@ void 		 type_graylist		(struct request *);
 
 static void	 mainloop		(int);
 static void	 send_reply		(struct request *,int,int);
-static void 	 my_exit		(void);
+static void	 send_packet		(struct request *,void *,size_t);
 
 /********************************************************************/
 
@@ -50,8 +50,6 @@ int main(int argc,char *argv[])
   ; various streams opened up by the CGILIB.
   ;----------------------------------------------------*/
 
-  atexit(my_exit);
-  close_stream_on_exec(ddtstream->output);
   GlobalsInit(argc,argv);
 
   sock = create_socket(c_host,c_port);
@@ -115,6 +113,41 @@ static void mainloop(int sock)
            break;
       case CMD_GRAYLIST:
            type_graylist(&req);
+           break;
+      case CMD_MCP_SHOW_STATS:
+           {
+             struct glmcp_response_show_stats stats;
+             
+             stats.version           = htons(VERSION);
+             stats.MTA               = req.glr->MTA;
+             stats.type              = htons(CMD_MCP_SHOW_STATS_RESP);
+             stats.starttime         = htonl(c_starttime);
+             stats.nowtime           = htonl(req.now);
+             stats.tuples            = htonl(g_poolnum);
+             stats.graylisted        = htonl(g_graylisted);
+             stats.whitelisted       = htonl(g_whitelisted);
+             stats.graylist_expired  = htonl(g_graylist_expired);
+             stats.whitelist_expired = htonl(g_whitelist_expired);
+             
+             send_packet(&req,&stats,sizeof(stats));
+           }
+           break;
+      case CMD_MCP_SHOW_CONFIG:
+           {
+             struct glmcp_resonse_show_config config;
+             
+             config.version         = htons(VERSION);
+             config.MTA             = req.glr->MTA;
+             config.type            = htons(CMD_MCP_SHOW_CONFIG_RESP);
+             config.max_tuples      = htonl(c_poolmax);
+             config.max_ips         = htonl(c_ipmax);
+             config.timeout_cleanup = htonl(c_time_cleanup);
+             config.timeout_embargo = htonl(c_timeout_embargo);
+             config.timeout_gray    = htonl(c_timeout_gray);
+             config.timeout_white   = htonl(c_timeout_white);
+             
+             send_packet(&req,&config,sizeof(config));
+           }
            break;
       default:
            send_reply(&req,CMD_NONE_RESP,GLERR_TYPE_NOT_SUPPORTED);
@@ -232,14 +265,13 @@ void type_graylist(struct request *req)
     return;
   }
   
-  if (difftime(req->now,stored->atime) < c_timeout_embargo)
+  stored->atime = req->now;
+
+  if (difftime(req->now,stored->ctime) < c_timeout_embargo)
   {
-    stored->atime = req->now;
     send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_LATER);
     return;
   }
-  
-  stored->atime = req->now;
   
   if ((stored->f & F_WHITELIST) == 0)
   {
@@ -255,7 +287,6 @@ void type_graylist(struct request *req)
 static void send_reply(struct request *req,int type,int response)
 {
   struct graylist_response resp;
-  ssize_t                  rrc;
   
   ddt(req      != NULL);
   ddt(type     >= 0);
@@ -266,6 +297,9 @@ static void send_reply(struct request *req,int type,int response)
   resp.type     = htons(type);
   resp.response = htons(response);
   
+  send_packet(req,&resp,sizeof(struct graylist_response));
+  
+#if 0
   do
   {
     rrc = sendto(
@@ -287,15 +321,39 @@ static void send_reply(struct request *req,int type,int response)
       sleep(1);
     }
   } while (rrc == -1);
+#endif
+
 }
 
 /********************************************************************/
 
-static void my_exit(void)
+static void send_packet(struct request *req,void *packet,size_t size)
 {
-  StreamFlush(StdoutStream);
-  StreamFlush(StderrStream);
+  ssize_t rrc;
+  
+  ddt(req    != NULL);
+  ddt(packet != NULL);
+  ddt(size   >  0);
+  
+  do
+  {
+    rrc = sendto(
+    		req->sock,
+    		packet,
+    		size,
+    		0,
+    		&req->remote,
+    		req->rsize
+    	);
+    
+    if (rrc == -1)
+    {
+      if (errno == EINTR)
+        continue;
+      (*cv_report)(LOG_ERR,"$","sendto() = %a",strerror(errno));
+      if (errno == EINVAL)
+        break;
+      sleep(1);
+    }
+  } while (rrc == -1);
 }
-
-/**********************************************************************/
-

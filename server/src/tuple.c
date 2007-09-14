@@ -12,14 +12,43 @@
 
 /**********************************************************************/
 
-int tuple_cmp(const void *left,const void *right)
+int tuple_cmp_ft(const void *left,const void *right)
 {
   const struct tuple *l = left;
   const struct tuple *r = right;
   int                 rc;
   
-  ddt(left  != NULL);
-  ddt(right != NULL);
+  ddt(left   != NULL);
+  ddt(right  != NULL);
+  ddt(l->pad == 0xDECAFBAD);
+  ddt(r->pad == 0xDECAFBAD);
+
+  if (l->fromsize < r->fromsize)
+    return(-1);
+  else if (l->fromsize > r->fromsize)
+    return(1);
+  
+  if ((rc = memcmp(l->from,r->from,l->fromsize)) != 0) return(rc);
+  
+  if (l->tosize < r->tosize)
+    return(-1);
+  else if (l->tosize > r->tosize)
+    return(1);
+  
+  rc = memcmp(l->to,r->to,l->tosize);
+  return(rc);
+}
+
+/*********************************************************************/
+  
+int tuple_cmp_ift(const void *left,const void *right)
+{
+  const struct tuple *l = left;
+  const struct tuple *r = right;
+  int                 rc;
+  
+  ddt(left   != NULL);
+  ddt(right  != NULL);
   ddt(l->pad == 0xDECAFBAD);
   ddt(r->pad == 0xDECAFBAD);
   
@@ -51,7 +80,7 @@ int tuple_qsort_cmp(const void *left, const void *right)
   ddt(left  != NULL);
   ddt(right != NULL);
   
-  return(tuple_cmp(*l,*r));
+  return(tuple_cmp_ift(*l,*r));
 }
 
 /**************************************************************************/
@@ -84,7 +113,7 @@ Tuple tuple_search(Tuple key,size_t *pidx)
     
     delta = high - low;
     mid   = (low + high) / 2;
-    q     = tuple_cmp(key,g_tuplespace[mid]);
+    q     = tuple_cmp_ift(key,g_tuplespace[mid]);
     
     if (q < 0)
     {

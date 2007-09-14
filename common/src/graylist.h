@@ -4,7 +4,7 @@
 
 #include <time.h>
 
-#define VERSION		0x0100
+#define VERSION		0x0101
 
 #define DEF_HOST	"localhost"
 #define DEF_PORT	9990
@@ -20,9 +20,26 @@ typedef unsigned long  IP;
 typedef unsigned long  flags;
 typedef unsigned short Port;
 typedef unsigned short unet16;
+typedef unsigned long  unet32;
 
 enum
 {
+  OPT_NONE,
+  OPT_HELP,
+  OPT_DEBUG,
+  OPT_LOG_FACILITY,
+  OPT_LOG_LEVEL,
+  OPT_LOG_ID,
+  OPT_HOST,	/* local host */
+  OPT_PORT,	/* local port */
+  OPT_RHOST,	/* remote host */
+  OPT_RPORT,	/* remote port */
+  OPT_USER
+};
+
+enum
+{
+  MTA_MCP,
   MTA_SENDMAIL,
   MTA_QMAIL,
   MTA_POSTFIX,
@@ -35,6 +52,10 @@ enum
   CMD_NONE_RESP,
   CMD_GRAYLIST,
   CMD_GRAYLIST_RESP,
+  CMD_MCP_SHOW_STATS,
+  CMD_MCP_SHOW_STATS_RESP,
+  CMD_MCP_SHOW_CONFIG,
+  CMD_MCP_SHOW_CONFIG_RESP,
   CMD_MAX
 };
 
@@ -74,6 +95,52 @@ struct graylist_request
   byte   data[1];
 };
 
+struct glmcp_request
+{
+  unet16 version;
+  unet16 MTA;
+  unet16 type;
+  unet16 pad;
+};
+
+struct glmcp_response
+{
+  unet16 version;
+  unet16 MTA;
+  unet16 type;
+};
+
+struct glmcp_response_show_stats
+{
+  unet16 version;
+  unet16 MTA;
+  unet16 type;
+  unet16 pad;
+  unet32 starttime;
+  unet32 nowtime;
+  unet32 tuples;
+  unet32 graylisted;
+  unet32 whitelisted;
+  unet32 graylist_expired;
+  unet32 whitelist_expired;
+};
+
+struct glmcp_resonse_show_config
+{
+  unet16 version;
+  unet16 MTA;
+  unet16 type;
+  unet16 pad;
+  unet32 max_tuples;
+  unet32 max_ips;
+  unet32 timeout_cleanup;
+  unet32 timeout_embargo;
+  unet32 timeout_gray;
+  unet32 timeout_white;
+};
+
+#if 0
+
 #define F_WHITELIST	(1uL << 0)
 #define F_GRAYLIST	(1uL << 1)
 #define F_TRUNCFROM	(1uL << 2)
@@ -92,6 +159,8 @@ typedef struct tuple
   char         from[108];
   char         to  [108];
 } *Tuple;
+
+#endif
 
 /***************************************************************/
 

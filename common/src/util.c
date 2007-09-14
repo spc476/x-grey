@@ -69,40 +69,10 @@ int create_socket(const char *host,int port)
   
   log_address((struct sockaddr *)&sin);
   
-  close_on_exec(s);
-  
   return(s);
 }
 
 /*******************************************************************/
-
-void close_on_exec(int fh)
-{
-  int val;
-
-  ddt(fh >= 0);
-  
-  val = fcntl(fh,F_GETFD,0);
-  if (val < 0)
-  {
-    (*cv_report)(LOG_ERR,"$","fcntl(get) = %a",strerror(errno));
-    return;
-  }
-  
-  val |= FD_CLOEXEC;
-  
-  if (fcntl(fh,F_SETFD,val) < 0)
-    (*cv_report)(LOG_ERR,"$","fcntl(set) = %a",strerror(errno));
-}
-
-/*****************************************************************/
-
-void close_stream_on_exec(Stream s)
-{
-  close_on_exec(((struct fhmod *)s)->fh);
-}
-
-/******************************************************************/
 
 int ci_map_int(const char *name,const struct chars_int *list,size_t size)
 {

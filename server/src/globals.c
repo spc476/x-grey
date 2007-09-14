@@ -33,11 +33,8 @@
 
 enum
 {
-  OPT_NONE,
-  OPT_LIST_WHITE,
+  OPT_LIST_WHITE = OPT_USER,
   OPT_LIST_GRAY,
-  OPT_HOST,
-  OPT_PORT,
   OPT_MAX_TUPLES,
   OPT_TIME_CLEANUP,
   OPT_TIMEOUT_EMBARGO,
@@ -46,13 +43,8 @@ enum
   OPT_FILE_IPLIST,
   OPT_REPORT_FORMAT,
   OPT_TIME_FORMAT,  
-  OPT_DEBUG,
-  OPT_LOG_FACILITY,
-  OPT_LOG_LEVEL,
-  OPT_LOG_ID,
   OPT_FOREGROUND,
   OPT_STDERR,
-  OPT_HELP,
   OPT_MAX
 };
 
@@ -82,9 +74,9 @@ char          *c_dumpfile        = "/tmp/dump.txt";
 char          *c_iplistfile      = "whitelist.ip";
 char          *c_timeformat      = "%c";
 size_t         c_poolmax         = 65536uL;
-unsigned int   c_time_cleanup    = 60 * 5;
-double	       c_timeout_embargo = 3600.0;
-double         c_timeout_gray    = 3600.0 * 12; /* 4.0;*/
+unsigned int   c_time_cleanup    =   60   * 5;
+double	       c_timeout_embargo =   60.0 * 25.0; /* down from an hour */
+double         c_timeout_gray    = 3600.0 * 6.0; /* 4.0;*/
 double	       c_timeout_white   = 3600.0 * 24.0 * 36.0;
 time_t         c_starttime       = 0;
 int            cf_foreground     = 0;
@@ -460,6 +452,12 @@ static void my_exit(void)
   
   unlink(c_pidfile);  
   closelog();
+  
+  if (cf_foreground)
+  {
+    StreamFlush(StdoutStream);
+    StreamFlush(StderrStream);
+  }
 }
 
 /*************************************************************************/

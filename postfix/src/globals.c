@@ -22,14 +22,7 @@
 
 enum
 {
-  OPT_NONE,
-  OPT_TIMEOUT,
-  OPT_LOG_FACILITY,
-  OPT_LOG_LEVEL,
-  OPT_LOG_ID,
-  OPT_DEBUG,
-  OPT_HELP,
-  OPT_MAX
+  OPT_TIMEOUT = OPT_USER,
 };
 
 /*****************************************************************/

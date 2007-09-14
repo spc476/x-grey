@@ -85,7 +85,7 @@ void sighandler_critical(int sig)
   sigfillset(&sigset);
   sigprocmask(SIG_UNBLOCK,&sigset,NULL);
   
-  execve(g_argv[0],g_argv,environ);
+  execve((const char *)g_argv[0],(char **const)g_argv,environ);
   (*cv_report)(LOG_ERR,"$ $","exec('%a') = %b",g_argv[0],strerror(errno));
   exit(EXIT_FAILURE);	/* when all else fails! */
 }
@@ -223,8 +223,6 @@ static void handle_sigusr1(void)
   (*cv_report)(LOG_DEBUG,"","User 1 Signal");
   mf_sigusr1 = 0;
 
-#if 0 
-
   child = fork();
   if (child == (pid_t)-1)
   {
@@ -240,14 +238,11 @@ static void handle_sigusr1(void)
 
   (*cv_report)(LOG_DEBUG,"","child about to generate report");
 
-#endif
-
   out = FileStreamWrite(c_dumpfile,FILE_CREATE | FILE_TRUNCATE);
   if (out == NULL)
   {
     (*cv_report)(LOG_ERR,"$","could not open %a",c_dumpfile);
-    return;
-    /*exit(0);*/
+    _exit(0);
   }
   
   for (i = 0 ; i < g_poolnum ; i++)
@@ -270,7 +265,7 @@ static void handle_sigusr1(void)
   }
   
   StreamFree(out);
-  /*exit(0);*/
+  _exit(0);
 }
 
 /***********************************************************************/
