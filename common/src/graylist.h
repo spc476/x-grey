@@ -119,13 +119,14 @@ struct glmcp_response_show_stats
   unet32 starttime;
   unet32 nowtime;
   unet32 tuples;
+  unet32 ips;
   unet32 graylisted;
   unet32 whitelisted;
   unet32 graylist_expired;
   unet32 whitelist_expired;
 };
 
-struct glmcp_resonse_show_config
+struct glmcp_response_show_config
 {
   unet16 version;
   unet16 MTA;

@@ -124,6 +124,7 @@ static void mainloop(int sock)
              stats.starttime         = htonl(c_starttime);
              stats.nowtime           = htonl(req.now);
              stats.tuples            = htonl(g_poolnum);
+	     stats.ips               = htonl(g_ipcnt);
              stats.graylisted        = htonl(g_graylisted);
              stats.whitelisted       = htonl(g_whitelisted);
              stats.graylist_expired  = htonl(g_graylist_expired);
@@ -134,7 +135,7 @@ static void mainloop(int sock)
            break;
       case CMD_MCP_SHOW_CONFIG:
            {
-             struct glmcp_resonse_show_config config;
+             struct glmcp_response_show_config config;
              
              config.version         = htons(VERSION);
              config.MTA             = req.glr->MTA;

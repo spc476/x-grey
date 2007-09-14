@@ -21,6 +21,8 @@
 static int	cmdline		(void);
 static int	send_request	(struct glmcp_request *,void *,size_t,int);
 static void	handler_sigalrm	(int);
+static void	show_stats	(void);
+static void	show_config	(void);
 
 /*************************************************************/
 
@@ -64,54 +66,16 @@ static int cmdline(void)
     if (strcmp(cmd,"exit") == 0)
       break;
       
+    if (strcmp(cmd,"quit") == 0)
+      break;
+      
     if (!emptynull_string(cmd))
       add_history(cmd);
 
     if (strcmp(cmd,"show stats") == 0)
-    {
-      struct glmcp_request              request;
-      struct glmcp_response_show_stats *gss;
-      byte                              data[1500];
-      int                               rc;
-      char                             *t;
-      
-      gss             = (struct glmcp_response_show_stats *)&data;
-      request.version = htons(VERSION);
-      request.MTA     = htons(MTA_MCP);
-      request.type    = htons(CMD_MCP_SHOW_STATS);
-      
-      rc = send_request(&request,&data,sizeof(data),CMD_MCP_SHOW_STATS_RESP);
-  
-      if (rc != ERR_OKAY)
-      {
-        LineS(StdoutStream,"bad response\n");
-        continue;
-      }
-      
-      t = report_time(ntohl(gss->starttime),ntohl(gss->nowtime));
-      
-      LineSFormat(
-      	StdoutStream,
-      	"$ L L L L L",
-      	"%a\n"
-      	"Tuples:            %b\n"
-      	"Graylisted:        %c\n"
-      	"Whitelisted:       %d\n"
-      	"Graylist-Expired:  %e\n"
-      	"Whitelist-Expired: %f\n"
-      	"\n",
-        t,
-        (unsigned long)ntohl(gss->tuples),
-        (unsigned long)ntohl(gss->graylisted),
-        (unsigned long)ntohl(gss->whitelisted),
-        (unsigned long)ntohl(gss->graylist_expired),
-        (unsigned long)ntohl(gss->whitelist_expired)
-       );
-      MemFree(t);
-    }
+      show_stats();
     else if (strcmp(cmd,"show config") == 0)
-    {
-    }
+      show_config();
       
     free(cmd);
   }
@@ -202,4 +166,108 @@ static void handler_sigalrm(int sig)
 }
 
 /********************************************************************/
+
+static void show_stats(void)
+{
+  struct glmcp_request              request;
+  struct glmcp_response_show_stats *gss;
+  byte                              data[1500];
+  int                               rc;
+  char                             *t;
+
+  gss             = (struct glmcp_response_show_stats *)&data;
+  request.version = htons(VERSION);
+  request.MTA     = htons(MTA_MCP);
+  request.type    = htons(CMD_MCP_SHOW_STATS);
+
+  rc = send_request(&request,&data,sizeof(data),CMD_MCP_SHOW_STATS_RESP);
+  
+  if (rc != ERR_OKAY)
+  {
+    LineS(StdoutStream,"bad response\n");
+    return;
+  }
+
+  t = report_time(ntohl(gss->starttime),ntohl(gss->nowtime));
+      
+  LineSFormat(
+      	StdoutStream,
+      	"$ L L L L L L",
+      	"\n"
+      	"%a\n"
+      	"Tuples:            %b\n"
+      	"IPs:               %c\n"
+      	"Graylisted:        %d\n"
+      	"Whitelisted:       %e\n"
+      	"Graylist-Expired:  %f\n"
+      	"Whitelist-Expired: %g\n"
+      	"\n",
+        t,
+        (unsigned long)ntohl(gss->tuples),
+        (unsigned long)ntohl(gss->ips),
+        (unsigned long)ntohl(gss->graylisted),
+        (unsigned long)ntohl(gss->whitelisted),
+        (unsigned long)ntohl(gss->graylist_expired),
+        (unsigned long)ntohl(gss->whitelist_expired)
+       );
+  MemFree(t);
+}
+
+/******************************************************************/
+
+static void show_config(void)
+{
+  struct glmcp_request               request;
+  struct glmcp_response_show_config *gsc;
+  byte                               data[1500];
+  int                                rc;
+  char                              *cleanup;
+  char                              *embargo;
+  char                              *graylist;
+  char                              *whitelist;
+  
+  gsc = (struct glmcp_response_show_config *)&data;
+  request.version = htons(VERSION);
+  request.MTA     = htons(MTA_MCP);
+  request.type    = htons(CMD_MCP_SHOW_CONFIG);
+  
+  rc = send_request(&request,&data,sizeof(data),CMD_MCP_SHOW_CONFIG_RESP);
+  
+  if (rc != ERR_OKAY)
+  {
+    LineS(StdoutStream,"bad response\n");
+    return;
+  }
+  
+  cleanup   = report_delta(ntohl(gsc->timeout_cleanup));
+  embargo   = report_delta(ntohl(gsc->timeout_embargo));
+  graylist  = report_delta(ntohl(gsc->timeout_gray));
+  whitelist = report_delta(ntohl(gsc->timeout_white));
+  
+  LineSFormat(
+  	StdoutStream,
+  	"L L $ $ $ $",
+  	"\n"
+  	"Max-Tuples:        %a\n"
+  	"Max-IP:            %b\n"
+  	"Timeout-Cleanup:   %c\n"
+  	"Timeout-Embargo:   %d\n"
+  	"Timeout-Graylist:  %e\n"
+  	"Timeout-Whitelist: %f\n"
+  	"\n",
+  	(unsigned long)ntohl(gsc->max_tuples),
+  	(unsigned long)ntohl(gsc->max_ips),
+  	cleanup,
+  	embargo,
+  	graylist,
+  	whitelist
+    );
+
+  MemFree(whitelist);
+  MemFree(graylist);
+  MemFree(embargo);
+  MemFree(cleanup);
+}
+
+/*************************************************************/
 
