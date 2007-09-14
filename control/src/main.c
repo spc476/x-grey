@@ -210,6 +210,7 @@ static void show_stats(void)
         (unsigned long)ntohl(gss->graylist_expired),
         (unsigned long)ntohl(gss->whitelist_expired)
        );
+  StreamFlush(StdoutStream);
   MemFree(t);
 }
 
@@ -263,6 +264,7 @@ static void show_config(void)
   	whitelist
     );
 
+  StreamFlush(StdoutStream);
   MemFree(whitelist);
   MemFree(graylist);
   MemFree(embargo);
