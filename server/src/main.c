@@ -309,31 +309,6 @@ static void send_reply(struct request *req,int type,int response)
   resp.response = htons(response);
   
   send_packet(req,&resp,sizeof(struct graylist_response));
-  
-#if 0
-  do
-  {
-    rrc = sendto(
-  		req->sock,
-  		&resp,
-  		sizeof(struct graylist_response),
-  		0,
-  		&req->remote,
-  		req->rsize
-  	);
-  
-    if (rrc == -1)
-    {
-      if (errno == EINTR)
-        continue;
-      (*cv_report)(LOG_ERR,"$","sendto() = %a",strerror(errno));
-      if (errno == EINVAL)
-        break;
-      sleep(1);
-    }
-  } while (rrc == -1);
-#endif
-
 }
 
 /********************************************************************/

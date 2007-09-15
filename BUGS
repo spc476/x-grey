@@ -1,3 +1,6 @@
+2007-09-15T01:32-05:00
+	* duplicates in the whitelist.txt aren't detected and removed.
+
 2007-09-07T03:10-05:00
 
 	* Check memory allocations, I may have a small leak
