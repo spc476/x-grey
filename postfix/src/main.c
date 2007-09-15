@@ -51,7 +51,7 @@ int main(int argc,char *argv[])
 
   set_signal(SIGALRM,handler_sigalrm);
   
-  sock = create_socket(c_host,c_port);
+  sock = create_socket(c_host,c_port,SOCK_DGRAM);
   
   while(process_request(sock))
     ;

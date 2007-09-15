@@ -34,6 +34,7 @@ void 		 type_graylist		(struct request *);
 static void	 mainloop		(int);
 static void	 send_reply		(struct request *,int,int);
 static void	 send_packet		(struct request *,void *,size_t);
+static void	 cmd_mcp_report		(struct request *,int (*)(Stream),int);
 
 /********************************************************************/
 
@@ -52,7 +53,7 @@ int main(int argc,char *argv[])
 
   GlobalsInit(argc,argv);
 
-  sock = create_socket(c_host,c_port);
+  sock = create_socket(c_host,c_port,SOCK_DGRAM);
   
   {
     char *t = timetoa(c_starttime);
@@ -149,6 +150,15 @@ static void mainloop(int sock)
              
              send_packet(&req,&config,sizeof(config));
            }
+           break;
+      case CMD_MCP_SHOW_IPLIST:
+           cmd_mcp_report(&req,iplist_dump_stream,CMD_MCP_SHOW_IPLIST_RESP);
+           break;
+      case CMD_MCP_SHOW_TUPLE_ALL:
+           cmd_mcp_report(&req,tuple_dump_stream,CMD_MCP_SHOW_TUPLE_ALL_RESP);
+           break;
+      case CMD_MCP_SHOW_WHITELIST:
+           cmd_mcp_report(&req,whitelist_dump_stream,CMD_MCP_SHOW_WHITELIST_RESP);
            break;
       default:
            send_reply(&req,CMD_NONE_RESP,GLERR_TYPE_NOT_SUPPORTED);
@@ -358,3 +368,64 @@ static void send_packet(struct request *req,void *packet,size_t size)
     }
   } while (rrc == -1);
 }
+
+/*********************************************************************/
+
+static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
+{
+  struct sockaddr remote;
+  socklen_t       rsize;
+  pid_t           pid;
+  int             tcp;
+  int             conn;
+  Stream          out;
+  
+  ddt(req != NULL);
+  
+  memcpy(&remote,&req->remote,sizeof(struct sockaddr));
+  tcp = create_socket(c_host,c_port,SOCK_STREAM);
+  listen(tcp,5);
+  
+  pid = fork();
+  if (pid == -1)
+  {
+    close(tcp);
+    send_reply(req,CMD_NONE_RESP,GLERR_CANT_GENERATE_REPORT);
+    return;
+  }
+  else if (pid > 0)	/* parent process */
+  {
+    send_reply(req,resp,0);
+    close(tcp);
+    return;
+  }
+  
+  do
+  {
+    rsize = sizeof(struct sockaddr);
+    conn  = accept(tcp,&remote,&rsize);
+    if (conn == -1)
+    {
+      if (errno == EINTR)
+        continue;
+      (*cv_report)(LOG_ERR,"$","accept() = %a",strerror(errno));
+    }
+  } while (conn == -1);
+  
+  close(tcp);
+  out = FHStreamWrite(conn);
+  if (out == NULL)
+  {
+    (*cv_report)(LOG_ERR,"","out of memory?");
+    close(conn);
+    _exit(0);
+  }
+  
+  (*cb)(out);
+  
+  StreamFree(out);
+  _exit(0);
+}
+
+/****************************************************************/
+

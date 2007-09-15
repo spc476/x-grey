@@ -56,6 +56,12 @@ enum
   CMD_MCP_SHOW_STATS_RESP,
   CMD_MCP_SHOW_CONFIG,
   CMD_MCP_SHOW_CONFIG_RESP,
+  CMD_MCP_SHOW_IPLIST,
+  CMD_MCP_SHOW_IPLIST_RESP,
+  CMD_MCP_SHOW_TUPLE_ALL,
+  CMD_MCP_SHOW_TUPLE_ALL_RESP,
+  CMD_MCP_SHOW_WHITELIST,
+  CMD_MCP_SHOW_WHITELIST_RESP,
   CMD_MAX
 };
 
@@ -66,6 +72,7 @@ enum
   GLERR_MTA_NOT_SUPPORTED,
   GLERR_TYPE_NOT_SUPPORTED,
   GLERR_BAD_DATA,
+  GLERR_CANT_GENERATE_REPORT,
   GLERR_MAX
 };
 
@@ -100,7 +107,6 @@ struct glmcp_request
   unet16 version;
   unet16 MTA;
   unet16 type;
-  unet16 pad;
 };
 
 struct glmcp_response
@@ -139,29 +145,6 @@ struct glmcp_response_show_config
   unet32 timeout_gray;
   unet32 timeout_white;
 };
-
-#if 0
-
-#define F_WHITELIST	(1uL << 0)
-#define F_GRAYLIST	(1uL << 1)
-#define F_TRUNCFROM	(1uL << 2)
-#define F_TRUNCTO	(1uL << 3)
-#define F_IPv6		(1uL << 4)
-
-typedef struct tuple
-{
-  time_t       ctime;
-  time_t       atime;
-  size_t       fromsize;
-  size_t       tosize;
-  unsigned int pad;
-  flags        f;
-  byte         ip  [16];
-  char         from[108];
-  char         to  [108];
-} *Tuple;
-
-#endif
 
 /***************************************************************/
 

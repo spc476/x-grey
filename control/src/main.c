@@ -23,6 +23,8 @@ static int	send_request	(struct glmcp_request *,void *,size_t,int);
 static void	handler_sigalrm	(int);
 static void	show_stats	(void);
 static void	show_config	(void);
+static void	show_report	(int,int);
+static void	help		(void);
 
 /*************************************************************/
 
@@ -40,7 +42,7 @@ int main(int argc,char *argv[])
   GlobalsInit(argc,argv);
   
   set_signal(SIGALRM,handler_sigalrm);
-  m_sock = create_socket(c_host,c_port);
+  m_sock = create_socket(c_host,c_port,SOCK_DGRAM);
 
   cmdline();
   
@@ -76,7 +78,20 @@ static int cmdline(void)
       show_stats();
     else if (strcmp(cmd,"show config") == 0)
       show_config();
-      
+    else if (strcmp(cmd,"show iplist") == 0)
+      show_report(CMD_MCP_SHOW_IPLIST,CMD_MCP_SHOW_IPLIST_RESP);
+    else if (strcmp(cmd,"show tuples") == 0)
+      show_report(CMD_MCP_SHOW_TUPLE_ALL,CMD_MCP_SHOW_TUPLE_ALL_RESP);
+    else if (strcmp(cmd,"show tuples all") == 0)
+      show_report(CMD_MCP_SHOW_TUPLE_ALL,CMD_MCP_SHOW_TUPLE_ALL_RESP);
+    else if (strcmp(cmd,"show tuples whitelist") == 0)
+      show_report(CMD_MCP_SHOW_WHITELIST,CMD_MCP_SHOW_WHITELIST_RESP);
+    else if (strcmp(cmd,"help") == 0)
+      help();
+    else if (strcmp(cmd,"?") == 0)
+      help();
+    
+    StreamFlush(StdoutStream);  
     free(cmd);
   }
   free(cmd);
@@ -175,7 +190,7 @@ static void show_stats(void)
   int                               rc;
   char                             *t;
 
-  gss             = (struct glmcp_response_show_stats *)&data;
+  gss             = (struct glmcp_response_show_stats *)data;
   request.version = htons(VERSION);
   request.MTA     = htons(MTA_MCP);
   request.type    = htons(CMD_MCP_SHOW_STATS);
@@ -210,7 +225,6 @@ static void show_stats(void)
         (unsigned long)ntohl(gss->graylist_expired),
         (unsigned long)ntohl(gss->whitelist_expired)
        );
-  StreamFlush(StdoutStream);
   MemFree(t);
 }
 
@@ -227,7 +241,7 @@ static void show_config(void)
   char                              *graylist;
   char                              *whitelist;
   
-  gsc = (struct glmcp_response_show_config *)&data;
+  gsc = (struct glmcp_response_show_config *)data;
   request.version = htons(VERSION);
   request.MTA     = htons(MTA_MCP);
   request.type    = htons(CMD_MCP_SHOW_CONFIG);
@@ -264,7 +278,6 @@ static void show_config(void)
   	whitelist
     );
 
-  StreamFlush(StdoutStream);
   MemFree(whitelist);
   MemFree(graylist);
   MemFree(embargo);
@@ -273,3 +286,75 @@ static void show_config(void)
 
 /*************************************************************/
 
+static void show_report(int req,int resp)
+{
+  struct glmcp_request   request;
+  struct glmcp_response *gr;
+  int                    conn;
+  Stream                 in;
+  byte                   data[1500];
+  char                  *line;
+  int                    rc;
+  
+  gr = (struct glmcp_response *)data;
+  
+  request.version = htons(VERSION);
+  request.MTA     = htons(MTA_MCP);
+  request.type    = htons(req);
+  
+  rc = send_request(&request,&data,sizeof(data),resp);
+  
+  if (rc != ERR_OKAY)
+  {
+    LineS(StdoutStream,"bad response\n");
+    return;
+  }
+  
+  conn = create_socket(c_host,c_port,SOCK_STREAM);
+  if (conn == -1)
+  {
+    LineS(StdoutStream,"cannot connect to gld");
+    return;
+  }
+  
+  rc = connect(conn,(struct sockaddr *)&c_raddr,c_raddrsize);
+  if (rc == -1)
+  {
+    LineS(StdoutStream,"cannot connect to gld");
+    return;
+  }
+  
+  in = FHStreamRead(conn);
+  
+  StreamWrite(StdoutStream,'\n');
+  
+  while(!StreamEOF(in))
+  {
+    line = LineSRead(in);
+    if (empty_string(line)) continue;
+    LineS(StdoutStream,line);
+    StreamWrite(StdoutStream,'\n');
+    MemFree(line);
+  }
+  
+  StreamWrite(StdoutStream,'\n');
+  StreamFree(in);
+}
+
+/************************************************************/
+
+static void help(void)
+{
+  LineS(
+  	StdoutStream,
+  	"exit | quit\t\tquit program\n"
+  	"show config\t\tshow configuration settings\n"
+  	"show stats\t\tshow current statistics\n"
+  	"show tuples [all]\tshow all tuples\n"
+  	"show tuples whitelist\tshow tuples on whitelist\n"
+  	"show iplist\t\tshow accepted/rejected IP addresses\n"
+  	"help | ?\t\tthis text\n"
+  );
+}
+
+/**************************************************************/

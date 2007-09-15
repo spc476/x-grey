@@ -24,7 +24,7 @@
 
 /*****************************************************************/
 
-int create_socket(const char *host,int port)
+int create_socket(const char *host,int port,int type)
 {
   struct sockaddr_in  sin;
   struct hostent     *localhost;
@@ -47,7 +47,7 @@ int create_socket(const char *host,int port)
   sin.sin_family = AF_INET;
   sin.sin_port   = htons(port);
   
-  s = socket(AF_INET,SOCK_DGRAM,0);
+  s = socket(AF_INET,type,0);
   if (s < -1)
   {
     (*cv_report)(LOG_ERR,"$","socket() = %a",strerror(errno));

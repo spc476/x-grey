@@ -250,10 +250,39 @@ int iplist_check(byte *addr,size_t size)
 
 /*****************************************************************/
 
+int iplist_dump_stream(Stream out)
+{
+  size_t  i;
+  char    tip  [20];
+  char    tmask[20];
+  char   *t;
+
+  for (i = 0 ; i < g_ipcnt ; i++)
+  {
+    t = ipv4(g_iplist[i].addr);
+    strcpy(tip,t);
+    t = ipv4(g_iplist[i].mask);
+    strcpy(tmask,t);
+    
+    LineSFormat(
+    	out,
+    	"$ $ $",
+    	"%a %b %c\n",
+    	(g_iplist[i].cmd == IPCMD_ACCEPT)
+    		? m_accept
+    		: m_reject,
+    	tip,
+    	tmask
+    );
+  }
+  return(ERR_OKAY);
+}
+
+/*************************************************************/
+
 int whitelist_dump(void)
 {
   Stream out;
-  size_t i;
   
   out = FileStreamWrite(c_whitefile,FILE_CREATE | FILE_TRUNCATE);
   if (out == NULL)
@@ -261,6 +290,20 @@ int whitelist_dump(void)
     (*cv_report)(LOG_ERR,"$","could not open %a",c_whitefile);
     return(ERR_ERR);
   }
+
+  whitelist_dump_stream(out);
+  
+  StreamFree(out);
+  return(ERR_OKAY);
+}
+
+/******************************************************************/
+
+int whitelist_dump_stream(Stream out)
+{
+  size_t i;
+
+  ddt(out != NULL);
   
   for (i = 0 ; i < g_poolnum ; i++)
   {
@@ -276,12 +319,57 @@ int whitelist_dump(void)
       	);
     }
   }
-  
-  StreamFree(out);
   return(ERR_OKAY);
 }
 
 /********************************************************************/
+
+int tuple_dump(void)
+{
+  Stream out;
+  
+  out = FileStreamWrite(c_dumpfile,FILE_CREATE | FILE_TRUNCATE);
+  if (out == NULL)
+  {
+    (*cv_report)(LOG_ERR,"$","could not open %a",c_dumpfile);
+    return(ERR_ERR);
+  }
+  
+  tuple_dump_stream(out);
+  StreamFree(out);
+  return(ERR_OKAY);
+}
+
+/*******************************************************************/
+
+int tuple_dump_stream(Stream out)
+{
+  size_t i;
+
+  ddt(out != NULL);
+
+  for (i = 0 ; i < g_poolnum ; i++)
+  {
+    LineSFormat(
+        out,
+        "$ $ $ $ $ $ $ $ L L",
+        "%a %b %c %d%e%f%g%h %i %j\n",
+        ipv4(g_tuplespace[i]->ip),
+        g_tuplespace[i]->from,
+        g_tuplespace[i]->to,
+        (g_tuplespace[i]->f & F_WHITELIST) ? "W" : "-",
+        (g_tuplespace[i]->f & F_GRAYLIST)  ? "G" : "-",
+        (g_tuplespace[i]->f & F_TRUNCFROM) ? "F" : "-",
+        (g_tuplespace[i]->f & F_TRUNCTO)   ? "T" : "-",
+        (g_tuplespace[i]->f & F_IPv6)      ? "6" : "-",
+        (unsigned long)g_tuplespace[i]->ctime,
+        (unsigned long)g_tuplespace[i]->atime
+    );
+  }
+  return(ERR_OKAY);
+}
+
+/******************************************************************/
 
 int whitelist_load(void)
 {

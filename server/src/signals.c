@@ -238,6 +238,10 @@ static void handle_sigusr1(void)
 
   (*cv_report)(LOG_DEBUG,"","child about to generate report");
 
+
+  tuple_dump();
+
+#if 0
   out = FileStreamWrite(c_dumpfile,FILE_CREATE | FILE_TRUNCATE);
   if (out == NULL)
   {
@@ -265,6 +269,7 @@ static void handle_sigusr1(void)
   }
   
   StreamFree(out);
+#endif
   _exit(0);
 }
 

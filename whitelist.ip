@@ -1,4 +1,5 @@
 
+10.0.0.0/8		reject
 152.163.225.0/24 	accept	# AOL (via SPF)
 205.188.139.0/24	accept	# AOL (via SPF)
 205.188.144.0/24	accept	# AOL (via SPF)
