@@ -62,6 +62,8 @@ enum
   CMD_MCP_SHOW_TUPLE_ALL_RESP,
   CMD_MCP_SHOW_WHITELIST,
   CMD_MCP_SHOW_WHITELIST_RESP,
+  CMD_MCP_IPLIST,
+  CMD_MCP_IPLIST_RESP,
   CMD_MAX
 };
 
@@ -73,6 +75,7 @@ enum
   GLERR_TYPE_NOT_SUPPORTED,
   GLERR_BAD_DATA,
   GLERR_CANT_GENERATE_REPORT,
+  GLERR_IPADDR_NOT_SUPPORTED,
   GLERR_MAX
 };
 
@@ -81,6 +84,14 @@ enum
   GRAYLIST_NAY,
   GRAYLIST_YEA,
   GRAYLIST_LATER
+};
+
+enum
+{
+  IPCMD_NONE,
+  IPCMD_ACCEPT,
+  IPCMD_REJECT,
+  IPCMD_GRAYLIST
 };
 
 struct graylist_response
@@ -139,11 +150,21 @@ struct glmcp_response_show_config
   unet16 type;
   unet16 pad;
   unet32 max_tuples;
-  unet32 max_ips;
   unet32 timeout_cleanup;
   unet32 timeout_embargo;
   unet32 timeout_gray;
   unet32 timeout_white;
+};
+
+struct glmcp_request_iplist
+{
+  unet16 version;
+  unet16 MTA;
+  unet16 type;
+  unet16 cmd;
+  unet16 ipsize;
+  unet16 mask;	/* the "/X" part of A.B.C.D/X */
+  byte   data[16];
 };
 
 /***************************************************************/

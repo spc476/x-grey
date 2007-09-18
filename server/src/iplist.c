@@ -14,6 +14,7 @@
 #include "../../common/src/util.h"
 #include "globals.h"
 #include "iplist.h"
+#include "iptable.h"
 
 /*****************************************************************/
 
@@ -21,60 +22,22 @@ typedef byte maskval[4];
 
 /********************************************************************/
 
-static int	iplist_cmp	(const void *,const void *);
-
-/********************************************************************/
-
+static const char    m_dunno[]    = "GREYLIST";
 static const char    m_accept[]   = "ACCEPT";
 static const char    m_reject[]   = "REJECT";
-static const maskval m_masks [33] = 
-{
-  { 0x00 , 0x00 , 0x00 , 0x00 } ,
-  { 0x80 , 0x00 , 0x00 , 0x00 } ,
-  { 0xC0 , 0x00 , 0x00 , 0x00 } ,
-  { 0xE0 , 0x00 , 0x00 , 0x00 } ,
-  { 0xF0 , 0x00 , 0x00 , 0x00 } ,
-  { 0xF8 , 0x00 , 0x00 , 0x00 } ,
-  { 0xFC , 0x00 , 0x00 , 0x00 } ,
-  { 0xFE , 0x00 , 0x00 , 0x00 } ,
-  { 0xFF , 0x00 , 0x00 , 0x00 } ,
-  { 0xFF , 0x80 , 0x00 , 0x00 } ,
-  { 0xFF , 0xC0 , 0x00 , 0x00 } ,
-  { 0xFF , 0xE0 , 0x00 , 0x00 } ,
-  { 0xFF , 0xF0 , 0x00 , 0x00 } ,
-  { 0xFF , 0xF8 , 0x00 , 0x00 } ,
-  { 0xFF , 0xFC , 0x00 , 0x00 } ,
-  { 0xFF , 0xFE , 0x00 , 0x00 } ,
-  { 0xFF , 0xFF , 0x00 , 0x00 } ,
-  { 0xFF , 0xFF , 0x80 , 0x00 } ,
-  { 0xFF , 0xFF , 0xC0 , 0x00 } ,
-  { 0xFF , 0xFF , 0xE0 , 0x00 } ,
-  { 0xFF , 0xFF , 0xF0 , 0x00 } ,
-  { 0xFF , 0xFF , 0xF8 , 0x00 } ,
-  { 0xFF , 0xFF , 0xFC , 0x00 } ,
-  { 0xFF , 0xFF , 0xFE , 0x00 } ,
-  { 0xFF , 0xFF , 0xFF , 0x00 } ,
-  { 0xFF , 0xFF , 0xFF , 0x80 } ,
-  { 0xFF , 0xFF , 0xFF , 0xC0 } ,
-  { 0xFF , 0xFF , 0xFF , 0xE0 } ,
-  { 0xFF , 0xFF , 0xFF , 0xF0 } ,
-  { 0xFF , 0xFF , 0xFF , 0xF8 } ,
-  { 0xFF , 0xFF , 0xFF , 0xFC } ,
-  { 0xFF , 0xFF , 0xFF , 0xFE } ,
-  { 0xFF , 0xFF , 0xFF , 0xFF }
-};
 
 /*******************************************************************/
 
 int iplist_read(const char *fname)
 {
+  byte           ip   [16];
   Stream         in;
   char          *line;
   char          *tline;
   int            lcount = 0;
   size_t         octetcount;
   int            mask;
-  size_t         i;
+  int            cmd;
   
   ddt(fname != NULL);
   
@@ -87,12 +50,6 @@ int iplist_read(const char *fname)
   
   while(!StreamEOF(in))
   {
-    if (g_ipcnt == c_ipmax)
-    {
-      (*cv_report)(LOG_WARNING,"L","IP list is limited to %a entries",(unsigned long)c_ipmax);
-      break;
-    }
-    
     line  = LineSRead(in);
     tline = trim_space(line);
     
@@ -124,7 +81,7 @@ int iplist_read(const char *fname)
     
     do
     {
-      g_iplist[g_ipcnt].addr[octetcount] = strtoul(tline,&tline,10);
+      ip[octetcount] = strtoul(tline,&tline,10);
       if (tline[0] == '/') break;
       if (isspace(tline[0])) break;
       if (tline[0] != '.')
@@ -156,9 +113,11 @@ int iplist_read(const char *fname)
       ;
     
     if (strncmp(tline,m_accept,6) == 0)
-      g_iplist[g_ipcnt].cmd = IPCMD_ACCEPT;
+      cmd = IPCMD_ACCEPT;
     else if (strncmp(tline,m_reject,6) == 0)
-      g_iplist[g_ipcnt].cmd = IPCMD_REJECT;
+      cmd = IPCMD_REJECT;
+    else if (strncmp(tline,m_dunno,5) == 0)
+      cmd = IPCMD_GRAYLIST;
     else
     {
       (*cv_report)(LOG_ERR,"$ i $","syntax error on %a(%b)-needs to be ACCEPT or REJECT but not %c",fname,lcount,tline);
@@ -167,45 +126,60 @@ int iplist_read(const char *fname)
       return(ERR_ERR);
     }
 
-    g_iplist[g_ipcnt].size = 4;
-    memcpy(g_iplist[g_ipcnt].mask,m_masks[mask],4);
-      
-    g_ipcnt++;
+    ip_add_sm(ip,4,mask,cmd);
     MemFree(line);
   }
   
   StreamFree(in);
-  qsort(g_iplist,g_ipcnt,sizeof(struct ipblock),iplist_cmp);
 
-  for (i = 0 ; i < g_ipcnt ; i++)
+  if (cf_debug)
   {
-    char tip  [20];
-    char tmask[20];
-    char *t;
+    struct ipblock *iplist;
+    size_t          ipsize;
+    size_t          i;
+    
+    iplist = ip_table(&ipsize);
+
+    for (i = 0 ; i < ipsize ; i++)
+    {
+      char tip  [20];
+      char tmask[20];
+      char *t;
+      char *cmd;
       
-    t = ipv4(g_iplist[i].addr);
-    strcpy(tip,t);
-    t = ipv4(g_iplist[i].mask);
-    strcpy(tmask,t);
+      t = ipv4(iplist[i].addr);
+      strcpy(tip,t);
+      t = ipv4(iplist[i].mask);
+      strcpy(tmask,t);
       
-    (*cv_report)(
+      switch(iplist[i].cmd)
+      {
+        case IPCMD_NONE:     cmd = "NONE (this is a bug)"; break;
+        case IPCMD_ACCEPT:   cmd = "ACCEPT";   break;
+        case IPCMD_REJECT:   cmd = "REJECT";   break;
+        case IPCMD_GRAYLIST: cmd = "GRAYLIST"; break;
+        default: ddt(0);
+      }
+      
+      (*cv_report)(
       		LOG_DEBUG,
-      		"$ $ $",
+      		"$8.8l $15.15l $15.15l",
       		"%a %b %c",
-      		(g_iplist[i].cmd == IPCMD_ACCEPT)
-      			? m_accept
-      			: m_reject,
+      		cmd,
 		tip,
 		tmask
     	);
-  }
+    }
 
+    MemFree(iplist);
+  }
+  
   return(ERR_OKAY);
 }
 
 /**************************************************************/
 
-static int iplist_cmp(const void *left,const void *right)
+int iplist_cmp(const void *left,const void *right)
 {
   const struct ipblock *l = left;
   const struct ipblock *r = right;
@@ -226,55 +200,14 @@ static int iplist_cmp(const void *left,const void *right)
 
 int iplist_check(byte *addr,size_t size)
 {
-  size_t i;
-  IP     a;
-  IP     mask;
-  IP     net;
-  
-  ddt(addr != NULL);
-  ddt(size == 4);
-  
-  a = *(IP *)addr;
-  
-  for (i = 0 ; i < g_ipcnt ; i++)
-  {
-    mask = *(IP *)&g_iplist[i].mask;
-    net  = *(IP *)&g_iplist[i].addr;
-
-    if ((a & mask) == net)
-      return(g_iplist[i].cmd);
-  }
-  
-  return (IPCMD_DUNNO);
+  return ip_match(addr,size);
 }
 
 /*****************************************************************/
 
 int iplist_dump_stream(Stream out)
 {
-  size_t  i;
-  char    tip  [20];
-  char    tmask[20];
-  char   *t;
-
-  for (i = 0 ; i < g_ipcnt ; i++)
-  {
-    t = ipv4(g_iplist[i].addr);
-    strcpy(tip,t);
-    t = ipv4(g_iplist[i].mask);
-    strcpy(tmask,t);
-    
-    LineSFormat(
-    	out,
-    	"$ $ $",
-    	"%a %b %c\n",
-    	(g_iplist[i].cmd == IPCMD_ACCEPT)
-    		? m_accept
-    		: m_reject,
-    	tip,
-    	tmask
-    );
-  }
+  ip_print(out);
   return(ERR_OKAY);
 }
 
@@ -305,7 +238,7 @@ int whitelist_dump_stream(Stream out)
 
   ddt(out != NULL);
   
-  for (i = 0 ; i < g_poolnum ; i++)
+  for (i = 0 ; (!StreamEOF(out)) && (i < g_poolnum) ; i++)
   {
     if ((g_tuplespace[i]->f & F_WHITELIST))
     {
@@ -348,7 +281,7 @@ int tuple_dump_stream(Stream out)
 
   ddt(out != NULL);
 
-  for (i = 0 ; i < g_poolnum ; i++)
+  for (i = 0 ; (!StreamEOF(out)) && (i < g_poolnum) ; i++)
   {
     LineSFormat(
         out,

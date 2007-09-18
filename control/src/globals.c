@@ -39,6 +39,7 @@ int                  c_log_level    = LOG_INFO;
 const char          *c_log_id       = "gld-mcp";
 int                  cf_debug       = FALSE;
 const char          *c_timeformat   = "%c";
+const char          *c_pager        = "/bin/more";
 void               (*cv_report)(int,char *,char *, ... ) = report_stderr;
 
 /**********************************************************/
@@ -62,10 +63,15 @@ static const struct option mc_options[] =
 int (GlobalsInit)(int argc,char *argv[])
 {
   struct hostent *remote;
+  char           *pager;
   
   ddt(argc >  0);
   ddt(argv != NULL);
-  
+
+  pager = getenv("PAGER");
+  if (pager)
+    c_pager = dup_string(pager);
+
   parse_cmdline(argc,argv);
 
   remote = gethostbyname(c_rhost);

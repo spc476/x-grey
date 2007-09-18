@@ -92,6 +92,17 @@ void sighandler_critical(int sig)
 
 /******************************************************************/
 
+void sighandler_critical_child(int sig)
+{
+  /*----------------------------------------------
+  ; just exit, no logging for now
+  ;-----------------------------------------------*/
+  
+  _exit(EXIT_FAILURE);
+}
+
+/*****************************************************************/
+
 void sighandler_sigs(int sig)
 {
   switch(sig)
@@ -216,9 +227,7 @@ static void handle_sigalrm(void)
 
 static void handle_sigusr1(void)
 {
-  Stream out;
   pid_t  child;
-  size_t i;
 
   (*cv_report)(LOG_DEBUG,"","User 1 Signal");
   mf_sigusr1 = 0;
@@ -236,40 +245,20 @@ static void handle_sigusr1(void)
     return;
   }
 
+  /*-------------------------------------------------
+  ; for child processes, we don't want to re-exec()
+  ; ourselves, so we just bail on these signals.
+  ;------------------------------------------------*/
+
+  set_signal(SIGSEGV ,sighandler_critical_child);
+  set_signal(SIGBUS,  sighandler_critical_child);
+  set_signal(SIGFPE,  sighandler_critical_child);
+  set_signal(SIGILL,  sighandler_critical_child);
+  set_signal(SIGXCPU ,sighandler_critical_child);
+  set_signal(SIGXFSZ ,sighandler_critical_child);
+
   (*cv_report)(LOG_DEBUG,"","child about to generate report");
-
-
   tuple_dump();
-
-#if 0
-  out = FileStreamWrite(c_dumpfile,FILE_CREATE | FILE_TRUNCATE);
-  if (out == NULL)
-  {
-    (*cv_report)(LOG_ERR,"$","could not open %a",c_dumpfile);
-    _exit(0);
-  }
-  
-  for (i = 0 ; i < g_poolnum ; i++)
-  {
-    LineSFormat(
-    	out,
-    	"$ $ $ $ $ $ $ $ L L",
-    	"%a %b %c %d%e%f%g%h %i %j\n",
-    	ipv4(g_tuplespace[i]->ip),
-    	g_tuplespace[i]->from,
-    	g_tuplespace[i]->to,
-    	(g_tuplespace[i]->f & F_WHITELIST) ? "W" : "-",
-    	(g_tuplespace[i]->f & F_GRAYLIST)  ? "G" : "-",
-    	(g_tuplespace[i]->f & F_TRUNCFROM) ? "F" : "-",
-    	(g_tuplespace[i]->f & F_TRUNCTO)   ? "T" : "-",
-    	(g_tuplespace[i]->f & F_IPv6)      ? "6" : "-",
-    	(unsigned long)g_tuplespace[i]->ctime,
-    	(unsigned long)g_tuplespace[i]->atime
-    );
-  }
-  
-  StreamFree(out);
-#endif
   _exit(0);
 }
 

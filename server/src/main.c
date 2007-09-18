@@ -24,6 +24,7 @@
 #include "util.h"
 #include "server.h"
 #include "iplist.h"
+#include "iptable.h"
 
 #define min(a,b)	((a) < (b)) ? (a) : (b)
 
@@ -142,7 +143,6 @@ static void mainloop(int sock)
              config.MTA             = req.glr->MTA;
              config.type            = htons(CMD_MCP_SHOW_CONFIG_RESP);
              config.max_tuples      = htonl(c_poolmax);
-             config.max_ips         = htonl(c_ipmax);
              config.timeout_cleanup = htonl(c_time_cleanup);
              config.timeout_embargo = htonl(c_timeout_embargo);
              config.timeout_gray    = htonl(c_timeout_gray);
@@ -159,6 +159,26 @@ static void mainloop(int sock)
            break;
       case CMD_MCP_SHOW_WHITELIST:
            cmd_mcp_report(&req,whitelist_dump_stream,CMD_MCP_SHOW_WHITELIST_RESP);
+           break;
+      case CMD_MCP_IPLIST:
+           {
+             struct glmcp_request_iplist *pip = (struct glmcp_request_iplist *)req.glr;
+             int   cmd  = ntohs(pip->cmd);
+             int   mask = ntohs(pip->mask);
+	     char *t;
+             
+             if (ntohs(pip->ipsize) != 4)
+             {
+               send_reply(&req,CMD_NONE_RESP,GLERR_IPADDR_NOT_SUPPORTED);
+               break;
+             }
+
+	     t = ipv4(pip->data);
+	     (*cv_report)(LOG_DEBUG,"$ i i","about to add %a/%b %c",t,mask,cmd);
+             
+             ip_add_sm(pip->data,4,mask,cmd);
+             send_reply(&req,CMD_MCP_IPLIST_RESP,0);
+           }
            break;
       default:
            send_reply(&req,CMD_NONE_RESP,GLERR_TYPE_NOT_SUPPORTED);
@@ -360,7 +380,7 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
   memcpy(&remote,&req->remote,sizeof(struct sockaddr));
   tcp = create_socket(c_host,c_port,SOCK_STREAM);
   listen(tcp,5);
-  
+
   pid = fork();
   if (pid == -1)
   {
@@ -374,6 +394,18 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
     close(tcp);
     return;
   }
+
+  /*-------------------------------------------------
+  ; for the child, we don't want to re-exec(), just
+  ; bail for any of these signals.
+  ;--------------------------------------------------*/
+
+  set_signal(SIGSEGV ,sighandler_critical_child);
+  set_signal(SIGBUS,  sighandler_critical_child);
+  set_signal(SIGFPE,  sighandler_critical_child);
+  set_signal(SIGILL,  sighandler_critical_child);
+  set_signal(SIGXCPU ,sighandler_critical_child);
+  set_signal(SIGXFSZ ,sighandler_critical_child);
   
   do
   {

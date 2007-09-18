@@ -27,7 +27,6 @@ extern const time_t         c_starttime;
 extern const int            cf_debug;
 extern const int            cf_foreground;
 extern void               (*cv_report)(int,char *,char *, ... );
-extern const size_t         c_ipmax;
 
 	/*---------------------------------------------*/
 	
@@ -41,7 +40,7 @@ extern size_t	      g_whitelisted;
 extern size_t	      g_whitelist_expired;
 extern size_t	      g_graylist_expired;
 
-extern struct ipblock g_iplist[100];
+extern struct ipnode *g_tree;
 extern size_t         g_ipcnt;
 
 /*****************************************************************/

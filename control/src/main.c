@@ -4,6 +4,9 @@
 
 #include <syslog.h>
 #include <signal.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -19,14 +22,18 @@
 /**************************************************************/
 
 static int	cmdline		(void);
-static int	send_request	(struct glmcp_request *,void *,size_t,int);
+static int	send_request	(void *,size_t,void *,size_t,int);
 static void	handler_sigalrm	(int);
 static void	show_stats	(void);
 static void	show_config	(void);
 static void	show_report	(int,int);
 static void	help		(void);
+static void	pager		(int);
+static void	iplist		(char *);
 
 /*************************************************************/
+
+extern char **environ;
 
 static volatile sig_atomic_t mf_sigalrm;
 static int                   m_sock;
@@ -86,6 +93,8 @@ static int cmdline(void)
       show_report(CMD_MCP_SHOW_TUPLE_ALL,CMD_MCP_SHOW_TUPLE_ALL_RESP);
     else if (strcmp(cmd,"show tuples whitelist") == 0)
       show_report(CMD_MCP_SHOW_WHITELIST,CMD_MCP_SHOW_WHITELIST_RESP);
+    else if (strncmp(cmd,"iplist ",7) == 0)
+      iplist(&cmd[7]);
     else if (strcmp(cmd,"help") == 0)
       help();
     else if (strcmp(cmd,"?") == 0)
@@ -101,10 +110,11 @@ static int cmdline(void)
 /****************************************************************/
 
 static int send_request(
-			 struct glmcp_request *req,
-			 void                 *result,
-			 size_t                size,
-			 int                   expected_response
+                         void   *req,
+                         size_t  reqsize,
+			 void   *result,
+			 size_t  size,
+			 int     expected_response
 		       )
 
 {
@@ -120,7 +130,7 @@ static int send_request(
   rrc = sendto(
   		m_sock,
   		req,
-  		sizeof(struct glmcp_request),
+  		reqsize,
   		0,
   		(struct sockaddr *)&c_raddr,
   		c_raddrsize
@@ -195,7 +205,7 @@ static void show_stats(void)
   request.MTA     = htons(MTA_MCP);
   request.type    = htons(CMD_MCP_SHOW_STATS);
 
-  rc = send_request(&request,&data,sizeof(data),CMD_MCP_SHOW_STATS_RESP);
+  rc = send_request(&request,sizeof(request),&data,sizeof(data),CMD_MCP_SHOW_STATS_RESP);
   
   if (rc != ERR_OKAY)
   {
@@ -207,11 +217,11 @@ static void show_stats(void)
       
   LineSFormat(
       	StdoutStream,
-      	"$ L L L L L L",
+      	"$ L10 L10 L10 L10 L10 L10",
       	"\n"
       	"%a\n"
-      	"Tuples:            %b\n"
       	"IPs:               %c\n"
+      	"Tuples:            %b\n"
       	"Graylisted:        %d\n"
       	"Whitelisted:       %e\n"
       	"Graylist-Expired:  %f\n"
@@ -246,7 +256,7 @@ static void show_config(void)
   request.MTA     = htons(MTA_MCP);
   request.type    = htons(CMD_MCP_SHOW_CONFIG);
   
-  rc = send_request(&request,&data,sizeof(data),CMD_MCP_SHOW_CONFIG_RESP);
+  rc = send_request(&request,sizeof(request),&data,sizeof(data),CMD_MCP_SHOW_CONFIG_RESP);
   
   if (rc != ERR_OKAY)
   {
@@ -261,17 +271,15 @@ static void show_config(void)
   
   LineSFormat(
   	StdoutStream,
-  	"L L $ $ $ $",
+  	"L10 $ $ $ $",
   	"\n"
   	"Max-Tuples:        %a\n"
-  	"Max-IP:            %b\n"
-  	"Timeout-Cleanup:   %c\n"
-  	"Timeout-Embargo:   %d\n"
-  	"Timeout-Graylist:  %e\n"
-  	"Timeout-Whitelist: %f\n"
+  	"Timeout-Cleanup:   %b\n"
+  	"Timeout-Embargo:   %c\n"
+  	"Timeout-Graylist:  %d\n"
+  	"Timeout-Whitelist: %e\n"
   	"\n",
   	(unsigned long)ntohl(gsc->max_tuples),
-  	(unsigned long)ntohl(gsc->max_ips),
   	cleanup,
   	embargo,
   	graylist,
@@ -302,7 +310,7 @@ static void show_report(int req,int resp)
   request.MTA     = htons(MTA_MCP);
   request.type    = htons(req);
   
-  rc = send_request(&request,&data,sizeof(data),resp);
+  rc = send_request(&request,sizeof(request),&data,sizeof(data),resp);
   
   if (rc != ERR_OKAY)
   {
@@ -323,22 +331,11 @@ static void show_report(int req,int resp)
     LineS(StdoutStream,"cannot connect to gld");
     return;
   }
-  
-  in = FHStreamRead(conn);
-  
+
   StreamWrite(StdoutStream,'\n');
-  
-  while(!StreamEOF(in))
-  {
-    line = LineSRead(in);
-    if (empty_string(line)) continue;
-    LineS(StdoutStream,line);
-    StreamWrite(StdoutStream,'\n');
-    MemFree(line);
-  }
-  
+  pager(conn);
+  close(conn); 
   StreamWrite(StdoutStream,'\n');
-  StreamFree(in);
 }
 
 /************************************************************/
@@ -348,6 +345,9 @@ static void help(void)
   LineS(
   	StdoutStream,
   	"exit | quit\t\tquit program\n"
+  	"iplist accept a.b.c.d/M\taccept IP addresses\n"
+  	"iplist reject a.b.c.d/M\treject IP addresses\n"
+  	"iplist graylist a.b.c.d/M\tgreylist IP addresses\n"
   	"show config\t\tshow configuration settings\n"
   	"show stats\t\tshow current statistics\n"
   	"show tuples [all]\tshow all tuples\n"
@@ -358,3 +358,90 @@ static void help(void)
 }
 
 /**************************************************************/
+
+static void pager(int fh)
+{
+  pid_t  child;
+  pid_t  pid;
+  char  *argv[2];
+  int    status;
+  int    rc;
+  
+  ddt(fh >= 0);
+  
+  pid = fork();
+  if (pid == -1)	/* error */
+    (*cv_report)(LOG_ERR,"$","fork() = %a",strerror(errno));
+  else if (pid > 0)	/* parent */
+  {
+    child = waitpid(pid,&status,0);
+    if (child == (pid_t)-1)
+      (*cv_report)(LOG_ERR,"$","waitpid() = %a",strerror(errno));
+  }
+  else			/* child */
+  {
+    rc = dup2(fh,STDIN_FILENO);
+    if (rc == -1)
+      _exit(EXIT_FAILURE);
+    
+    argv[0] = (char *)c_pager;
+    argv[1] = NULL;
+    
+    execve(c_pager,argv,environ);
+    _exit(EXIT_FAILURE);
+  }
+}
+
+/**********************************************************/
+
+static void iplist(char *cmd)
+{
+  struct glmcp_request_iplist  ipr;
+  byte                         data[1500];
+  size_t                       octet;
+  char                        *p;
+  int                          rc;
+  
+  ddt(cmd != NULL);
+  
+  memset(ipr.data,0,16);
+  
+  ipr.version = htons(VERSION);
+  ipr.MTA     = htons(MTA_MCP);
+  ipr.type    = htons(CMD_MCP_IPLIST);
+  ipr.ipsize  = htons(4);
+  ipr.mask    = htons(32);	/* default mask */
+  
+  p = strchr(cmd,' ');
+  if (p == NULL)
+    return;
+
+  *p++ = '\0';
+  
+  if (strcmp(cmd,"accept") == 0)
+    ipr.cmd = htons(IPCMD_ACCEPT);
+  else if (strcmp(cmd,"reject") == 0)
+    ipr.cmd = htons(IPCMD_REJECT);
+  else if (strcmp(cmd,"graylist") == 0)
+    ipr.cmd = htons(IPCMD_GRAYLIST);
+  else
+    return;
+
+  for (octet = 0 ; octet < 4 ; octet++)
+  {
+    ipr.data[octet] = strtoul(p,&p,10);
+    if (*p != '.') break;
+    p++;
+  }
+  
+  if (*p == '/')
+    ipr.mask = htons(strtoul(p+1,NULL,10));
+  
+  rc = send_request(&ipr,sizeof(ipr),&data,sizeof(data),CMD_MCP_IPLIST_RESP);
+  
+  if (rc != ERR_OKAY)
+  LineS(StdoutStream,"bad response\n");
+}
+
+/******************************************************************/
+

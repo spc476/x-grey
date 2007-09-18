@@ -30,6 +30,7 @@
 #include "signals.h"
 #include "util.h"
 #include "iplist.h"
+#include "iptable.h"
 
 enum
 {
@@ -80,7 +81,6 @@ double         c_timeout_gray    = 3600.0 * 6.0; /* 4.0;*/
 double	       c_timeout_white   = 3600.0 * 24.0 * 36.0;
 time_t         c_starttime       = 0;
 int            cf_foreground     = 0;
-size_t         c_ipmax           = 100;
 
 	/*---------------------------------------------------*/
 	
@@ -94,7 +94,7 @@ size_t          g_whitelisted;
 size_t          g_whitelist_expired;
 size_t          g_graylist_expired;
 
-struct ipblock  g_iplist[100];
+struct ipnode  *g_tree;
 size_t          g_ipcnt;
 
 /*******************************************************************/
@@ -154,6 +154,13 @@ int (GlobalsInit)(int argc,char *argv[])
   memset(g_pool,      0,c_poolmax * sizeof(struct tuple));
   memset(g_tuplespace,0,c_poolmax * sizeof(Tuple));
 
+  g_tree         = MemAlloc(sizeof(struct ipnode));
+  g_tree->parent = NULL;
+  g_tree->zero   = NULL;
+  g_tree->one    = NULL;
+  g_tree->count  = 0;
+  g_tree->match  = IPCMD_GRAYLIST;
+  
   if (cf_debug)
     dump_defaults();
   

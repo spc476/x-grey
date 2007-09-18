@@ -4,10 +4,11 @@
 
 #include <signal.h>
 
-void	check_signals		(void);
-void	sighandler_critical	(int);
-void	sighandler_sigs		(int);
-void	sighandler_chld		(int);
+void	check_signals			(void);
+void	sighandler_critical		(int);
+void	sighandler_critical_child	(int);
+void	sighandler_sigs			(int);
+void	sighandler_chld			(int);
 
 #endif
 

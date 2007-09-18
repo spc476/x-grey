@@ -16,6 +16,7 @@ extern const int                  c_log_levels;
 extern const char *const          c_log_id;
 extern const int                  cf_debug;
 extern const char *const          c_timeformat;
+extern const char *const          c_pager;
 extern void                     (*cv_report)(int,char *,char *, ... );
 
 /*************************************************************/
