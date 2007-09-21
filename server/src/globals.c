@@ -39,6 +39,7 @@ enum
   OPT_LIST_GRAY,
   OPT_MAX_TUPLES,
   OPT_TIME_CLEANUP,
+  OPT_TIME_SAVESTATE,
   OPT_TIMEOUT_EMBARGO,
   OPT_TIMEOUT_GRAY,
   OPT_TIMEOUT_WHITE,
@@ -81,8 +82,9 @@ char          *c_fromdfile       = "/tmp/from-domain.txt";
 char          *c_timeformat      = "%c";
 size_t         c_poolmax         = 65536uL;
 unsigned int   c_time_cleanup    =    60   * 5;
+double         c_time_savestate  =  3600.0;
 double	       c_timeout_embargo =    60.0 * 25.0; /* down from an hour */
-double         c_timeout_gray    =  3600.0 * 6.0; /* 4.0;*/
+double         c_timeout_gray    =  3600.0 * 6.0;  /* 4.0;*/
 double	       c_timeout_white   =  3600.0 * 24.0 * 36.0;
 time_t         c_starttime       =     0;
 int            cf_foreground     =     0;
@@ -116,6 +118,8 @@ size_t               g_smaxtod;
 size_t               g_stod;
 struct emaildomain  *g_tod;
 
+time_t               g_time_savestate;
+
 /*******************************************************************/
 
 volatile int m_debug = 1;
@@ -129,6 +133,7 @@ static const struct option mc_options[] =
   { "port"		, required_argument	, NULL	, OPT_PORT		} ,
   { "max-tuples"	, required_argument	, NULL	, OPT_MAX_TUPLES	} ,
   { "time-cleanup" 	, required_argument	, NULL	, OPT_TIME_CLEANUP	} ,
+  { "time-checkpoint"	, required_argument	, NULL	, OPT_TIME_SAVESTATE	} ,
   { "timeout-embargo"	, required_argument	, NULL	, OPT_TIMEOUT_EMBARGO	} ,
   { "timeout-gray"	, required_argument	, NULL	, OPT_TIMEOUT_GRAY	} ,
   { "timeout-grey"	, required_argument	, NULL	, OPT_TIMEOUT_GRAY	} ,
@@ -162,7 +167,7 @@ int (GlobalsInit)(int argc,char *argv[])
   ;--------------------------------------------------------------*/
   
   g_argv      = argv;
-  c_starttime = time(NULL);
+  c_starttime = g_time_savestate = time(NULL);
   
   parse_cmdline(argc,argv);
   openlog(c_log_id,0,c_log_facility);
@@ -185,6 +190,10 @@ int (GlobalsInit)(int argc,char *argv[])
   
   iplist_read(c_iplistfile);
   whitelist_load();
+  to_read();
+  tod_read();
+  from_read();
+  fromd_read();
   
   if (!cf_foreground)
     daemon_init();
@@ -329,6 +338,9 @@ static void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_TIME_CLEANUP:
            c_time_cleanup = (int)read_dtime(optarg);
+           break;
+      case OPT_TIME_SAVESTATE:
+           c_time_savestate = read_dtime(optarg);
            break;
       case OPT_TIMEOUT_EMBARGO:
            c_timeout_embargo = read_dtime(optarg);
@@ -475,13 +487,6 @@ static void my_exit(void)
   ; put a breakpoint to catch those unexpected
   ; calls to exit().
   ;------------------------------------------------*/
-  
-  whitelist_dump();
-  iplist_dump();
-  to_dump();
-  tod_dump();
-  from_dump();
-  fromd_dump();
   
   unlink(c_pidfile);  
   closelog();

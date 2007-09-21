@@ -5,6 +5,7 @@
 
 #include <cgilib/memory.h>
 #include <cgilib/stream.h>
+#include <cgilib/util.h>
 #include <cgilib/ddt.h>
 
 #include "../../common/src/globals.h"
@@ -16,6 +17,16 @@
 #define ED_DELTA	100
 
 static void tofrom_dump_stream	(Stream,EDomain,size_t);
+static int  tofrom_read		(
+				  const char *,
+				  EDomain (*)(EDomain,size_t *),
+				  void    (*)(EDomain,size_t)
+				);
+static void tofrom_read_stream	(
+				  Stream,
+				  EDomain (*)(EDomain,size_t *),
+				  void    (*)(EDomain,size_t)
+				);
 
 /******************************************************************/
 
@@ -35,6 +46,46 @@ int edomain_cmp(EDomain key,EDomain node)
 }
 
 /*********************************************************************/
+
+EDomain edomain_search_to(EDomain key,size_t *pidx)
+{
+  ddt(key  != NULL);
+  ddt(pidx != NULL);
+  
+  return (edomain_search(key,pidx,g_to,g_sto));
+}
+
+/***********************************************************************/
+
+EDomain edomain_search_tod(EDomain key,size_t *pidx)
+{
+  ddt(key  != NULL);
+  ddt(pidx != NULL);
+  
+  return (edomain_search(key,pidx,g_tod,g_stod));
+}
+
+/********************************************************************/
+
+EDomain edomain_search_from(EDomain key,size_t *pidx)
+{
+  ddt(key  != NULL);
+  ddt(pidx != NULL);
+  
+  return(edomain_search(key,pidx,g_from,g_sfrom));
+}
+
+/******************************************************************/
+
+EDomain edomain_search_fromd(EDomain key,size_t *pidx)
+{
+  ddt(key  != NULL);
+  ddt(pidx != NULL);
+  
+  return(edomain_search(key,pidx,g_fromd,g_sfromd));
+}
+
+/*******************************************************************/
 
 EDomain edomain_search(EDomain key,size_t *pidx,EDomain array,size_t asize)
 {
@@ -333,3 +384,118 @@ static void tofrom_dump_stream(Stream out,EDomain list,size_t size)
 }
 
 /*********************************************************************/
+
+int to_read(void)
+{
+  return (tofrom_read(c_tofile,edomain_search_to,edomain_add_to));
+}
+
+/*******************************************************************/
+
+int tod_read(void)
+{
+  return (tofrom_read(c_todfile,edomain_search_tod,edomain_add_tod));
+}
+
+/******************************************************************/
+
+int from_read(void)
+{
+  return (tofrom_read(c_fromfile,edomain_search_from,edomain_add_from));
+}
+
+/*****************************************************************/
+
+int fromd_read(void)
+{
+  return (tofrom_read(c_fromdfile,edomain_search_fromd,edomain_add_fromd));
+}
+
+/******************************************************************/
+
+static int tofrom_read(
+		const char  *fname,
+		EDomain    (*search)(EDomain,size_t *),
+		void       (*add)   (EDomain,size_t)
+	)
+{
+  Stream in;
+  
+  ddt(fname != NULL);
+  ddt(search);
+  ddt(add);
+  
+  in = FileStreamRead(fname);
+  if (in == NULL)
+  {
+    (*cv_report)(LOG_ERR,"$","could not open %a",fname);
+    return(ERR_ERR);
+  }
+  
+  tofrom_read_stream(in,search,add);
+  StreamFree(in);
+  return(ERR_OKAY);
+}
+
+/*******************************************************************/
+
+static void tofrom_read_stream(
+		Stream    in,
+		EDomain (*search)(EDomain,size_t *),
+		void    (*add)   (EDomain,size_t)
+	)
+{
+  struct emaildomain  ed;
+  EDomain             value;
+  String             *fields;
+  size_t              fsize;
+  char               *line;
+  size_t              idx;
+  
+  ddt(in != NULL);
+  ddt(search);
+  ddt(add);
+  
+  line    = dup_string("");
+  fields  = MemAlloc(sizeof(String));
+  
+  while(!StreamEOF(in))
+  {
+    MemFree(fields);
+    MemFree(line);
+    
+    line = LineSRead(in);
+    if (empty_string(line))
+      continue;
+    
+    line = trim_space(line);
+    
+    if (line[0] == '#')
+      continue;
+      
+    fields = split(&fsize,line);
+    if (fsize < 3)
+    {
+      (*cv_report)(LOG_ERR,"","bad input in one of the email files");
+      continue;
+    }
+    
+    ed.text  = (char *)fields[2].d;
+    ed.tsize = fields[2].s;
+    ed.count = strtoul(fields[0].d,NULL,10);
+    ed.cmd   = ci_map_int(fields[1].d,c_ipcmds,C_IPCMDS);
+    
+    (*cv_report)(LOG_DEBUG,"$ i","adding %a as %b",ed.text,ed.cmd);
+
+    value = (*search)(&ed,&idx);
+
+    if (value == NULL)
+    {
+      ed.text = dup_string(ed.text);
+      (*add)(&ed,idx);
+    }
+  }
+}
+
+/******************************************************************/
+

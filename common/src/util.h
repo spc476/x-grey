@@ -21,6 +21,12 @@ struct chars_int
   const int   value;
 };
 
+typedef struct mystring
+{
+  size_t      s;
+  const char *d;
+} String;
+
 /***************************************************************/
 
 int	    create_socket		(const char *,int,int);
@@ -38,6 +44,8 @@ char       *ipptoa			(IP,Port);
 char       *timetoa			(time_t);
 char       *report_time			(time_t,time_t);
 char       *report_delta		(double);
+
+String	   *split			(size_t *,char *);
 
 /***************************************************************/
 

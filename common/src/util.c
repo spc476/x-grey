@@ -409,3 +409,48 @@ char *report_delta(double diff)
 
 /*********************************************************************/
 
+String *split(size_t *pnum,char *txt)
+{
+  size_t  num  = 0;
+  size_t  max  = 0;
+  String *pool = NULL;
+  char   *p;
+  
+  ddt(pnum != NULL);
+  ddt(txt  != NULL);
+  
+  while(*txt)
+  {
+    if (num == max)
+    {
+      max += 1024;
+      pool = MemResize(pool,max * sizeof(String));
+    }
+    
+    for ( ; (*txt) && isspace(*txt) ; txt++)
+      ;
+
+    for ( p = txt ; (*p) && !isspace(*p) ; p++)
+      ;
+    
+    if (p == txt) break;
+    
+    pool[num].d   = txt;
+    pool[num++].s = p - txt;
+
+    
+    if (*p == '\0')
+      break;
+    
+    *p++ = '\0';
+    txt  = p;
+    (*cv_report)(LOG_DEBUG,"i $ i i","%a '%b' %c %d",num - 1,pool[num-1].d,pool[num-1].s,strlen(pool[num-1].d));
+  }
+  
+  (*cv_report)(LOG_DEBUG,"i $ i i","%a '%b' %c %d",num - 1,pool[num-1].d,pool[num-1].s,strlen(pool[num-1].d));
+  *pnum = num;
+  return(pool);
+}
+
+/********************************************************************/
+

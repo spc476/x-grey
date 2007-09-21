@@ -243,9 +243,45 @@ static void handle_sigpipe(void)
 
 static void handle_sigalrm(void)
 {
+  time_t now;
+  
   (*cv_report)(LOG_DEBUG,"","Alarm-time for house cleaning!");
   mf_sigalrm = 0;
   tuple_expire(time(NULL));
+  
+  now = time(NULL);
+  if (difftime(now,g_time_savestate) >= c_time_savestate)
+  {
+    pid_t child;
+  
+    (*cv_report)(LOG_DEBUG,"","saving state");
+  
+    g_time_savestate = now;
+    child            = fork();
+    
+    if (child == (pid_t)-1)
+      (*cv_report)(LOG_CRIT,"$","could not save state-fork() = %a",strerror(errno));
+
+    else if (child == 0)	/* child process */
+    {
+      set_signal(SIGSEGV,sighandler_critical_child);
+      set_signal(SIGBUS, sighandler_critical_child);
+      set_signal(SIGFPE, sighandler_critical_child);
+      set_signal(SIGILL, sighandler_critical_child);
+      set_signal(SIGXCPU,sighandler_critical_child);
+      set_signal(SIGXFSZ,sighandler_critical_child);
+      
+      whitelist_dump();
+      iplist_dump();
+      to_dump();
+      tod_dump();
+      from_dump();
+      fromd_dump();
+      
+      _exit(0);
+    }
+  }
+  
   alarm(c_time_cleanup);	/* signal next cleanup */
 }
 

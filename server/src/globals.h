@@ -22,6 +22,7 @@ extern const char *const    c_host;
 extern const int            c_port;
 extern const size_t         c_poolmax;
 extern const unsigned int   c_time_cleanup;
+extern const double         c_time_savestate;
 extern const double         c_timeout_embargo;
 extern const double         c_timeout_gray;
 extern const double         c_timeout_white;
@@ -60,6 +61,8 @@ extern struct emaildomain *g_to;
 extern size_t              g_smaxtod;
 extern size_t              g_stod;
 extern struct emaildomain *g_tod;
+
+extern time_t              g_time_savestate;
 
 /*****************************************************************/
 

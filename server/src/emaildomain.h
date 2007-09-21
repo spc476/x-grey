@@ -19,6 +19,10 @@ typedef struct emaildomain
 /******************************************************************/
 
 int		edomain_cmp		(EDomain,EDomain);
+EDomain		edomain_search_to	(EDomain,size_t *);
+EDomain		edomain_search_tod	(EDomain,size_t *);
+EDomain		edomain_search_from	(EDomain,size_t *);
+EDomain		edomain_search_fromd	(EDomain,size_t *);
 EDomain		edomain_search		(EDomain,size_t *,EDomain,size_t);
 void		edomain_add_from	(EDomain,size_t);
 void		edomain_add_fromd	(EDomain,size_t);
@@ -32,6 +36,10 @@ int		to_dump_stream		(Stream);
 int		tod_dump_stream		(Stream);
 int		from_dump_stream	(Stream);
 int		fromd_dump_stream	(Stream);
+int		to_read			(void);
+int		tod_read		(void);
+int		from_read		(void);
+int		fromd_read		(void);
 		
 #endif
 
