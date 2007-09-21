@@ -310,8 +310,12 @@ void type_graylist(struct request *req)
       send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
       return;
     }
+    else if (edvalue->cmd == IPCMD_GRAYLIST)
+      goto type_graylist_check_from;
+    else
+      ddt(0);
   }
-  
+
   at = strchr(tuple.from,'@');
   if (at)
   {
@@ -332,13 +336,17 @@ void type_graylist(struct request *req)
         send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
         return;
       }
+      else if (edvalue->cmd != IPCMD_GRAYLIST)
+        ddt(0);
     }
   }
-
+  
   /*-----------------------------------------------------
   ; check the to and todomain lists.
   ;-----------------------------------------------------*/
-  
+
+type_graylist_check_from:
+
   edkey.text  = tuple.to;
   edkey.tsize = tuple.tosize;
   edvalue     = edomain_search(&edkey,&idx,g_to,g_sto);
@@ -357,6 +365,10 @@ void type_graylist(struct request *req)
       send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
       return;
     }
+    else if (edvalue->cmd == IPCMD_GRAYLIST)
+      goto type_graylist_check_ip;
+    else
+      ddt(0);
   }
   
   at = strchr(tuple.to,'@');
@@ -379,13 +391,17 @@ void type_graylist(struct request *req)
         send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
         return;
       }
+      else if (edvalue->cmd != IPCMD_GRAYLIST)
+        ddt(0);
     }
   }
 
   /*---------------------------------------------------
   ; check IP lists
   ;---------------------------------------------------*/
-  
+
+type_graylist_check_ip:
+
   rc = iplist_check(tuple.ip,4);
   
   if (rc == IPCMD_ACCEPT)
