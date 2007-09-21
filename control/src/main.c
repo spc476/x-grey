@@ -1,6 +1,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <syslog.h>
 #include <signal.h>
@@ -13,23 +14,32 @@
 #include <cgilib/memory.h>
 #include <cgilib/ddt.h>
 #include <cgilib/stream.h>
+#include <cgilib/util.h>
+#include <cgilib/types.h>
 
 #include "../../common/src/graylist.h"
+#include "../../common/src/globals.h"
 #include "../../common/src/util.h"
 
 #include "globals.h"
 
+#define min(a,b)	((a) < (b)) ? (a) : (b)
+
 /**************************************************************/
 
-static int	cmdline		(void);
-static int	send_request	(void *,size_t,void *,size_t,int);
-static void	handler_sigalrm	(int);
-static void	show_stats	(void);
-static void	show_config	(void);
-static void	show_report	(int,int);
-static void	help		(void);
-static void	pager		(int);
-static void	iplist		(char *);
+static void	cmdline			(void);
+static void	process_cmdline		(char *);
+static int	send_request		(void *,size_t,void *,size_t,int);
+static void	handler_sigalrm		(int);
+static void	show_stats		(void);
+static void	show_config		(void);
+static void	show_report		(int,int);
+static void	help			(void);
+static void	pager			(int);
+static void	iplist			(char *);
+static void	iplist_file		(char *);
+static void	iplist_file_relaydelay	(char *);
+static void	tofrom			(char *,int,int,int);
 
 /*************************************************************/
 
@@ -58,7 +68,7 @@ int main(int argc,char *argv[])
 
 /***************************************************************/
 
-static int cmdline(void)
+static void cmdline(void)
 {
   char  prompt[BUFSIZ];
   char *cmd;
@@ -77,28 +87,14 @@ static int cmdline(void)
       
     if (strcmp(cmd,"quit") == 0)
       break;
-      
-    if (!emptynull_string(cmd))
-      add_history(cmd);
 
-    if (strcmp(cmd,"show stats") == 0)
-      show_stats();
-    else if (strcmp(cmd,"show config") == 0)
-      show_config();
-    else if (strcmp(cmd,"show iplist") == 0)
-      show_report(CMD_MCP_SHOW_IPLIST,CMD_MCP_SHOW_IPLIST_RESP);
-    else if (strcmp(cmd,"show tuples") == 0)
-      show_report(CMD_MCP_SHOW_TUPLE_ALL,CMD_MCP_SHOW_TUPLE_ALL_RESP);
-    else if (strcmp(cmd,"show tuples all") == 0)
-      show_report(CMD_MCP_SHOW_TUPLE_ALL,CMD_MCP_SHOW_TUPLE_ALL_RESP);
-    else if (strcmp(cmd,"show tuples whitelist") == 0)
-      show_report(CMD_MCP_SHOW_WHITELIST,CMD_MCP_SHOW_WHITELIST_RESP);
-    else if (strncmp(cmd,"iplist ",7) == 0)
-      iplist(&cmd[7]);
-    else if (strcmp(cmd,"help") == 0)
-      help();
-    else if (strcmp(cmd,"?") == 0)
-      help();
+    if (!emptynull_string(cmd))
+    {
+      trim_space(cmd);
+      add_history(cmd);
+    }
+    
+    process_cmdline(cmd);
     
     StreamFlush(StdoutStream);  
     free(cmd);
@@ -108,6 +104,46 @@ static int cmdline(void)
 }
 
 /****************************************************************/
+
+static void process_cmdline(char *cmd)
+{
+  if (strcmp(cmd,"show stats") == 0)
+    show_stats();
+  else if (strcmp(cmd,"show config") == 0)
+    show_config();
+  else if (strcmp(cmd,"show iplist") == 0)
+    show_report(CMD_MCP_SHOW_IPLIST,CMD_MCP_SHOW_IPLIST_RESP);
+  else if (strcmp(cmd,"show tuples") == 0)
+    show_report(CMD_MCP_SHOW_TUPLE_ALL,CMD_MCP_SHOW_TUPLE_ALL_RESP);
+  else if (strcmp(cmd,"show tuples all") == 0)
+    show_report(CMD_MCP_SHOW_TUPLE_ALL,CMD_MCP_SHOW_TUPLE_ALL_RESP);
+  else if (strcmp(cmd,"show tuples whitelist") == 0)
+    show_report(CMD_MCP_SHOW_WHITELIST,CMD_MCP_SHOW_WHITELIST_RESP);
+  else if (strcmp(cmd,"show to") == 0)
+    show_report(CMD_MCP_SHOW_TO,CMD_MCP_SHOW_TO_RESP);
+  else if (strcmp(cmd,"show to-domain") == 0)
+    show_report(CMD_MCP_SHOW_TO_DOMAIN,CMD_MCP_SHOW_TO_DOMAIN_RESP);
+  else if (strcmp(cmd,"show from") == 0)
+    show_report(CMD_MCP_SHOW_FROM,CMD_MCP_SHOW_FROM_RESP);
+  else if (strcmp(cmd,"show from-domain") == 0)
+    show_report(CMD_MCP_SHOW_FROM_DOMAIN,CMD_MCP_SHOW_FROM_DOMAIN_RESP);
+  else if (strncmp(cmd,"iplist ",7) == 0)
+    iplist(&cmd[7]);
+  else if (strncmp(cmd,"to ",3) == 0)
+    tofrom(&cmd[3],CMD_MCP_TO,CMD_MCP_TO_RESP,FALSE);
+  else if (strncmp(cmd,"to-domain ",10) == 0)
+    tofrom(&cmd[10],CMD_MCP_TO_DOMAIN,CMD_MCP_TO_DOMAIN_RESP,TRUE);
+  else if (strncmp(cmd,"from ",5) == 0)
+    tofrom(&cmd[5],CMD_MCP_FROM,CMD_MCP_FROM_RESP,FALSE);
+  else if (strncmp(cmd,"from-domain ",12) == 0)
+    tofrom(&cmd[12],CMD_MCP_FROM_DOMAIN,CMD_MCP_FROM_DOMAIN_RESP,TRUE);
+  else if (strcmp(cmd,"help") == 0)
+    help();
+  else if (strcmp(cmd,"?") == 0)
+    help();
+}
+
+/***************************************************************/
 
 static int send_request(
                          void   *req,
@@ -344,16 +380,33 @@ static void help(void)
 {
   LineS(
   	StdoutStream,
-  	"exit | quit\t\tquit program\n"
-  	"iplist accept a.b.c.d/M\taccept IP addresses\n"
-  	"iplist reject a.b.c.d/M\treject IP addresses\n"
+  	"exit | quit\t\t\tquit program\n"
+  	"iplist accept a.b.c.d/M\t\taccept IP addresses\n"
+  	"iplist reject a.b.c.d/M\t\treject IP addresses\n"
   	"iplist graylist a.b.c.d/M\tgreylist IP addresses\n"
-  	"show config\t\tshow configuration settings\n"
-  	"show stats\t\tshow current statistics\n"
-  	"show tuples [all]\tshow all tuples\n"
-  	"show tuples whitelist\tshow tuples on whitelist\n"
-  	"show iplist\t\tshow accepted/rejected IP addresses\n"
-  	"help | ?\t\tthis text\n"
+  	"iplist file <file> [relaydelay]\tbulk load IP addresses\n"
+	"to accept <addr>\t\taccept recpient address\n"
+	"to reject <addr>\t\treject recipient address\n"
+	"to graylist <addr>\t\tgreylist recipient address\n"
+	"to-domain accept <domain>\taccept recipient domain\n"
+	"to-domain reject <domain>\treject recipient domain\n"
+	"to-domain graylist <domain>\tgreylist recipient domain\n"
+	"from accept <addr>\t\taccept sender address\n"
+	"from reject <addr>\t\treject sender address\n"
+	"from graylist <addr>\t\tgreylist sender address\n"
+	"from-domain accept <domain>\taccept sender domain\n"
+	"from-domain reject <domain>\treject sender domain\n"
+	"from-domain graylist <domain>\tgreylist sender domain\n"
+  	"show config\t\t\tshow configuration settings\n"
+  	"show stats\t\t\tshow current statistics\n"
+  	"show tuples [all]\t\tshow all tuples\n"
+  	"show tuples whitelist\t\tshow tuples on whitelist\n"
+  	"show iplist\t\t\tshow accepted/rejected IP addresses\n"
+	"show to\t\t\t\tshow recipient addresses\n"
+	"show to-domains\t\t\tshow recipient domains\n"
+	"show from\t\t\tshow sender addresses\n"
+	"show from-domain\t\tshow sender domains\n"
+  	"help | ?\t\t\tthis text\n"
   );
 }
 
@@ -417,16 +470,25 @@ static void iplist(char *cmd)
     return;
 
   *p++ = '\0';
-  
-  if (strcmp(cmd,"accept") == 0)
-    ipr.cmd = htons(IPCMD_ACCEPT);
-  else if (strcmp(cmd,"reject") == 0)
-    ipr.cmd = htons(IPCMD_REJECT);
-  else if (strcmp(cmd,"graylist") == 0)
-    ipr.cmd = htons(IPCMD_GRAYLIST);
-  else
-    return;
 
+  up_string(cmd);
+
+  if (strcmp(cmd,"FILE") == 0)
+  {
+    iplist_file(p);
+    return;
+  }
+
+  ipr.cmd = ci_map_int(cmd,c_ipcmds,C_IPCMDS);
+
+  if (ipr.cmd == (unet16)-1)
+  {
+    LineS(StdoutStream,"bad command\n");
+    return;
+  }
+  
+  ipr.cmd = htons(ipr.cmd);
+  
   for (octet = 0 ; octet < 4 ; octet++)
   {
     ipr.data[octet] = strtoul(p,&p,10);
@@ -438,10 +500,210 @@ static void iplist(char *cmd)
     ipr.mask = htons(strtoul(p+1,NULL,10));
   
   rc = send_request(&ipr,sizeof(ipr),&data,sizeof(data),CMD_MCP_IPLIST_RESP);
-  
+
   if (rc != ERR_OKAY)
   LineS(StdoutStream,"bad response\n");
 }
 
 /******************************************************************/
+
+static void iplist_file(char *cmd)
+{
+  Stream                       in;
+  struct glmcp_request_iplist  ipr;
+  byte                         data[1500];
+  size_t                       octet;
+  char                        *p;
+  char                        *r;
+  int                          rc;
+  int                          linecnt;
+
+  ddt(cmd != NULL);
+  
+  p = strchr(cmd,' ');
+  if (p != NULL)
+  {
+    *p++ = '\0';
+    if (strcmp(p,"relaydelay") == 0)
+      iplist_file_relaydelay(cmd);
+    return;
+  }
+  
+  in = FileStreamRead(cmd);
+  if (in == NULL)
+  {
+    LineSFormat(StdoutStream,"$","could not open %a",cmd);
+    return;
+  }
+  
+  linecnt = 0;
+  
+  while(!StreamEOF(in))
+  {
+    char *line;
+    char *p;
+    
+    linecnt++;
+    line = LineSRead(in);
+    if (empty_string(line)) continue;
+    p = trim_space(line);
+    if (*p == '#') continue;
+    
+    memset(ipr.data,0,sizeof(ipr.data));
+    ipr.version = htons(VERSION);
+    ipr.MTA     = htons(MTA_MCP);
+    ipr.type    = htons(CMD_MCP_IPLIST);
+    ipr.ipsize  = htons(4);
+    ipr.mask    = htons(32);	/* default mask */
+    
+    for (octet = 0 ; octet < 4 ; octet++)
+    {
+      ipr.data[octet] = strtoul(p,&p,10);
+      if (*p != '.') break;
+      p++;
+    }
+    
+    if (*p == '/')
+      ipr.mask = htons(strtoul(++p,&p,10));
+    
+    for ( ; *p && isspace(*p) ; p++)
+      ;
+
+    for ( r = p ; *r && isalpha(*r) ; r++)
+      ;
+
+    *r++ = '\0';
+    
+    up_string(p);
+    ipr.cmd = ci_map_int(p,c_ipcmds,C_IPCMDS);
+
+    MemFree(line);
+    
+    if (ipr.cmd == (unet16)-1)
+    {
+      LineSFormat(StdoutStream,"$ i","%a(%b): syntax error",cmd,linecnt);
+      return;
+    }
+  
+    ipr.cmd = htons(ipr.cmd);
+
+    rc = send_request(&ipr,sizeof(ipr),data,sizeof(data),CMD_MCP_IPLIST_RESP);
+    if (rc != ERR_OKAY)
+      LineS(StdoutStream,"bad response\n");
+  }
+
+  StreamFree(in);
+}
+
+/*****************************************************************/
+
+static void iplist_file_relaydelay(char *fname)
+{
+  struct glmcp_request_iplist  ipr;
+  Stream                       in;
+  byte                         data[1500];
+  size_t                       octet;
+  char                        *p;
+  int                          rc;
+  int                          linecnt;
+  
+  in = FileStreamRead(fname);
+  if (in == NULL)
+  {
+    LineSFormat(StdoutStream,"$","could not open %a",fname);
+    return;
+  }
+  
+  linecnt = 0;
+  
+  while(!StreamEOF(in))
+  {
+    char *line;
+    char *p;
+    
+    linecnt++;
+    line = LineSRead(in);
+    if (empty_string(line)) continue;
+    p = trim_space(line);
+    if (*p == '#') continue;
+    
+    memset(ipr.data,0,sizeof(ipr.data));
+    ipr.version = htons(VERSION);
+    ipr.MTA     = htons(MTA_MCP);
+    ipr.type    = htons(CMD_MCP_IPLIST);
+    ipr.ipsize  = htons(4);
+    
+    for (octet = 0 ; octet < 4 ; octet++)
+    {
+      ipr.data[octet] = strtoul(p,&p,10);
+      if (*p != '.') break;
+      p++;
+    }
+    
+    ipr.mask = htons((octet + 1) * 8);
+    ipr.cmd  = htons(IPCMD_ACCEPT);
+    
+    rc = send_request(&ipr,sizeof(ipr),data,sizeof(data),CMD_MCP_IPLIST_RESP);
+    if (rc != ERR_OKAY)
+      LineS(StdoutStream,"bad response\n");
+  }
+  StreamFree(in);
+}
+
+/*************************************************************************/
+
+static void tofrom(char *text,int cmd,int resp,int domain)
+{
+  byte                         packet[1500];
+  byte                         data  [1500];
+  struct glmcp_request_tofrom *ptfr;
+  char                        *p;
+  size_t                       addrsize;
+  int                          rc;
+  
+  ddt(cmd != NULL);
+  
+  ptfr = (struct glmcp_request_tofrom *)packet;
+  p    = strchr(text,' ');
+  if (p == NULL)
+    return;
+  
+  *p++ = '\0';
+  
+  up_string(text);
+  addrsize = min(strlen(p),200);
+
+  if (domain)
+  {
+    char *at = strchr(p,'@');
+    if (at)
+    {
+      LineSFormat(StdoutStream,"$","this '%a' is not a domain\n",p);
+      return;
+    }
+  }
+  
+  ptfr->cmd = ci_map_int(text,c_ipcmds,C_IPCMDS);
+  if (ptfr->cmd == (unet16)-1)
+    return;
+   
+  ptfr->version = htons(VERSION);
+  ptfr->MTA     = htons(MTA_MCP);
+  ptfr->type    = htons(cmd);
+  ptfr->cmd     = htons(ptfr->cmd);
+  memcpy(ptfr->data,p,addrsize);
+  ptfr->data[addrsize] = '\0';
+  
+  rc = send_request(
+  		ptfr,
+  		sizeof(struct glmcp_request_tofrom) + addrsize,
+  		data,
+  		sizeof(data),
+  		resp
+  	);
+  if (rc != ERR_OKAY)
+    LineS(StdoutStream,"bad response\n");
+}
+
+/**********************************************************************/
 

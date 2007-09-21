@@ -31,6 +31,7 @@
 #include "util.h"
 #include "iplist.h"
 #include "iptable.h"
+#include "emaildomain.h"
 
 enum
 {
@@ -72,30 +73,48 @@ void         (*cv_report)(int,char *,char *, ...) = report_syslog;
 char          *c_whitefile       = "/tmp/whitelist.txt";
 char          *c_grayfile        = "/tmp/grayfile.txt";	
 char          *c_dumpfile        = "/tmp/dump.txt";
-char          *c_iplistfile      = "whitelist.ip";
+char          *c_iplistfile      = "/tmp/iplist.txt";
+char          *c_tofile          = "/tmp/to.txt";
+char          *c_todfile         = "/tmp/to-domain.txt";
+char          *c_fromfile        = "/tmp/from.txt";
+char          *c_fromdfile       = "/tmp/from-domain.txt";
 char          *c_timeformat      = "%c";
 size_t         c_poolmax         = 65536uL;
-unsigned int   c_time_cleanup    =   60   * 5;
-double	       c_timeout_embargo =   60.0 * 25.0; /* down from an hour */
-double         c_timeout_gray    = 3600.0 * 6.0; /* 4.0;*/
-double	       c_timeout_white   = 3600.0 * 24.0 * 36.0;
-time_t         c_starttime       = 0;
-int            cf_foreground     = 0;
+unsigned int   c_time_cleanup    =    60   * 5;
+double	       c_timeout_embargo =    60.0 * 25.0; /* down from an hour */
+double         c_timeout_gray    =  3600.0 * 6.0; /* 4.0;*/
+double	       c_timeout_white   =  3600.0 * 24.0 * 36.0;
+time_t         c_starttime       =     0;
+int            cf_foreground     =     0;
 
 	/*---------------------------------------------------*/
-	
-size_t          g_poolnum;
-struct tuple   *g_pool;			/* actual space */
-Tuple          *g_tuplespace;		/* used for sorting records */
-char          **g_argv;
 
-size_t          g_graylisted;
-size_t          g_whitelisted;
-size_t          g_whitelist_expired;
-size_t          g_graylist_expired;
+char               **g_argv;
 
-struct ipnode  *g_tree;
-size_t          g_ipcnt;
+size_t               g_poolnum;
+struct tuple        *g_pool;		/* actual space */
+Tuple               *g_tuplespace;	/* used for sorting records */
+
+size_t               g_graylisted;
+size_t               g_whitelisted;
+size_t               g_whitelist_expired;
+size_t               g_graylist_expired;
+
+struct ipnode       *g_tree;
+size_t               g_ipcnt = 1;
+
+size_t		     g_smaxfrom;
+size_t	             g_sfrom;
+struct emaildomain  *g_from;
+size_t               g_smaxfromd;
+size_t               g_sfromd;
+struct emaildomain  *g_fromd;
+size_t               g_smaxto;
+size_t               g_sto;
+struct emaildomain  *g_to;
+size_t               g_smaxtod;
+size_t               g_stod;
+struct emaildomain  *g_tod;
 
 /*******************************************************************/
 
@@ -456,6 +475,13 @@ static void my_exit(void)
   ; put a breakpoint to catch those unexpected
   ; calls to exit().
   ;------------------------------------------------*/
+  
+  whitelist_dump();
+  iplist_dump();
+  to_dump();
+  tod_dump();
+  from_dump();
+  fromd_dump();
   
   unlink(c_pidfile);  
   closelog();

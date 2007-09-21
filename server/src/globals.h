@@ -4,6 +4,7 @@
 
 #include "graylist.h"
 #include "iplist.h"
+#include "emaildomain.h"
 
 	/*----------------------------------------------*/
 
@@ -11,6 +12,10 @@ extern const char *const    c_pidfile;
 extern const char *const    c_whitefile;
 extern const char *const    c_grayfile;
 extern const char *const    c_dumpfile;
+extern const char *const    c_tofile;
+extern const char *const    c_todfile;
+extern const char *const    c_fromfile;
+extern const char *const    c_fromdfile;
 extern const char *const    c_iplistfile;
 extern const char *const    c_timeformat;
 extern const char *const    c_host;
@@ -30,18 +35,31 @@ extern void               (*cv_report)(int,char *,char *, ... );
 
 	/*---------------------------------------------*/
 	
-extern size_t         g_poolnum;
-extern struct tuple  *g_pool;
-extern Tuple         *g_tuplespace;
-extern int          **g_argv;
+extern size_t              g_poolnum;
+extern struct tuple       *g_pool;
+extern Tuple              *g_tuplespace;
+extern int               **g_argv;
 
-extern size_t	      g_graylisted;
-extern size_t	      g_whitelisted;
-extern size_t	      g_whitelist_expired;
-extern size_t	      g_graylist_expired;
+extern size_t	           g_graylisted;
+extern size_t	           g_whitelisted;
+extern size_t	           g_whitelist_expired;
+extern size_t	           g_graylist_expired;
 
-extern struct ipnode *g_tree;
-extern size_t         g_ipcnt;
+extern struct ipnode      *g_tree;
+extern size_t              g_ipcnt;
+
+extern size_t              g_smaxfrom;
+extern size_t              g_sfrom;
+extern struct emaildomain *g_from;
+extern size_t              g_smaxfromd;
+extern size_t              g_sfromd;
+extern struct emaildomain *g_fromd;
+extern size_t              g_smaxto;
+extern size_t              g_sto;
+extern struct emaildomain *g_to;
+extern size_t              g_smaxtod;
+extern size_t              g_stod;
+extern struct emaildomain *g_tod;
 
 /*****************************************************************/
 

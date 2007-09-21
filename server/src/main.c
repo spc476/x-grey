@@ -25,6 +25,7 @@
 #include "server.h"
 #include "iplist.h"
 #include "iptable.h"
+#include "emaildomain.h"
 
 #define min(a,b)	((a) < (b)) ? (a) : (b)
 
@@ -36,6 +37,7 @@ static void	 mainloop		(int);
 static void	 send_reply		(struct request *,int,int);
 static void	 send_packet		(struct request *,void *,size_t);
 static void	 cmd_mcp_report		(struct request *,int (*)(Stream),int);
+static void	 cmd_mcp_tofrom		(struct request *,int,int);
 
 /********************************************************************/
 
@@ -152,13 +154,25 @@ static void mainloop(int sock)
            }
            break;
       case CMD_MCP_SHOW_IPLIST:
-           cmd_mcp_report(&req,iplist_dump_stream,CMD_MCP_SHOW_IPLIST_RESP);
+           cmd_mcp_report(&req,ip_print,CMD_MCP_SHOW_IPLIST_RESP);
            break;
       case CMD_MCP_SHOW_TUPLE_ALL:
            cmd_mcp_report(&req,tuple_dump_stream,CMD_MCP_SHOW_TUPLE_ALL_RESP);
            break;
       case CMD_MCP_SHOW_WHITELIST:
            cmd_mcp_report(&req,whitelist_dump_stream,CMD_MCP_SHOW_WHITELIST_RESP);
+           break;
+      case CMD_MCP_SHOW_TO:
+           cmd_mcp_report(&req,to_dump_stream,CMD_MCP_SHOW_TO_RESP);
+           break;
+      case CMD_MCP_SHOW_TO_DOMAIN:
+           cmd_mcp_report(&req,tod_dump_stream,CMD_MCP_SHOW_TO_DOMAIN_RESP);
+           break;
+      case CMD_MCP_SHOW_FROM:
+           cmd_mcp_report(&req,from_dump_stream,CMD_MCP_SHOW_FROM_RESP);
+           break;
+      case CMD_MCP_SHOW_FROM_DOMAIN:
+           cmd_mcp_report(&req,fromd_dump_stream,CMD_MCP_SHOW_FROM_DOMAIN_RESP);
            break;
       case CMD_MCP_IPLIST:
            {
@@ -180,6 +194,18 @@ static void mainloop(int sock)
              send_reply(&req,CMD_MCP_IPLIST_RESP,0);
            }
            break;
+      case CMD_MCP_TO:
+           cmd_mcp_tofrom(&req,CMD_MCP_TO,CMD_MCP_TO_RESP);
+           break;
+      case CMD_MCP_TO_DOMAIN:
+           cmd_mcp_tofrom(&req,CMD_MCP_TO_DOMAIN,CMD_MCP_TO_DOMAIN_RESP);
+           break;
+      case CMD_MCP_FROM:
+           cmd_mcp_tofrom(&req,CMD_MCP_FROM,CMD_MCP_FROM_RESP);
+           break;
+      case CMD_MCP_FROM_DOMAIN:
+           cmd_mcp_tofrom(&req,CMD_MCP_FROM_DOMAIN,CMD_MCP_FROM_DOMAIN_RESP);
+           break;
       default:
            send_reply(&req,CMD_NONE_RESP,GLERR_TYPE_NOT_SUPPORTED);
            break;
@@ -193,10 +219,13 @@ void type_graylist(struct request *req)
 {
   struct graylist_request *glr;
   struct tuple             tuple;
+  struct emaildomain       edkey;
+  EDomain                  edvalue;
   Tuple                    stored;
   size_t                   rsize;
   size_t                   idx;
   byte                    *p;
+  char                    *at;
   int                      rc;
 
   ddt(req != NULL);
@@ -259,11 +288,103 @@ void type_graylist(struct request *req)
   	(tuple.f & F_TRUNCTO)   ? " Tt" : ""
   );
 
-  /*------------------------------------------------
-  ; at some point, we'll add a check for sender IP
-  ; and see if we can accept/reject it at this 
-  ; point, otherwise, we do the tuple check.
-  ;-----------------------------------------------*/
+  /*-------------------------------------------------------
+  ; check the from and fromdomain lists.
+  ;------------------------------------------------------*/
+  
+  edkey.text  = tuple.from;
+  edkey.tsize = tuple.fromsize;
+  edvalue     = edomain_search(&edkey,&idx,g_from,g_sfrom);
+  
+  if (edvalue != NULL)
+  {
+    edvalue->count++;
+    
+    if (edvalue->cmd == IPCMD_ACCEPT)
+    {
+      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+      return;
+    }
+    else if (edvalue->cmd == IPCMD_REJECT)
+    {
+      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+      return;
+    }
+  }
+  
+  at = strchr(tuple.from,'@');
+  if (at)
+  {
+    edkey.text  = at + 1;
+    edkey.tsize = strlen(edkey.text);
+    edvalue     = edomain_search(&edkey,&idx,g_fromd,g_sfromd);
+    if (edvalue != NULL)
+    {
+      edvalue->count++;
+      
+      if (edvalue->cmd == IPCMD_ACCEPT)
+      {
+        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+        return;
+      }
+      else if (edvalue->cmd == IPCMD_REJECT)
+      {
+        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+        return;
+      }
+    }
+  }
+
+  /*-----------------------------------------------------
+  ; check the to and todomain lists.
+  ;-----------------------------------------------------*/
+  
+  edkey.text  = tuple.to;
+  edkey.tsize = tuple.tosize;
+  edvalue     = edomain_search(&edkey,&idx,g_to,g_sto);
+  
+  if (edvalue != NULL)
+  {
+    edvalue->count++;
+    
+    if (edvalue->cmd == IPCMD_ACCEPT)
+    {
+      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+      return;
+    }
+    else if (edvalue->cmd == IPCMD_REJECT)
+    {
+      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+      return;
+    }
+  }
+  
+  at = strchr(tuple.to,'@');
+  if (at)
+  {
+    edkey.text  = at + 1;
+    edkey.tsize = strlen(edkey.text);
+    edvalue     = edomain_search(&edkey,&idx,g_tod,g_stod);
+    if (edvalue != NULL)
+    {
+      edvalue->count++;
+      
+      if (edvalue->cmd == IPCMD_ACCEPT)
+      {
+        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+        return;
+      }
+      else if (edvalue->cmd == IPCMD_REJECT)
+      {
+        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+        return;
+      }
+    }
+  }
+
+  /*---------------------------------------------------
+  ; check IP lists
+  ;---------------------------------------------------*/
   
   rc = iplist_check(tuple.ip,4);
   
@@ -279,9 +400,8 @@ void type_graylist(struct request *req)
   }
   
   /*-------------------------------------------------------
-  ; second half of routine---look up the tuple.  If not found,
-  ; add it, else update the access time, and if less than the
-  ; embargo period, return LATER, else accept.
+  ; Look up the tuple.  If not found, add it, else update the access time,
+  ; and if less than the embargo period, return LATER, else accept.
   ;---------------------------------------------------------*/
   
   stored = tuple_search(&tuple,&idx);
@@ -435,4 +555,85 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
 }
 
 /****************************************************************/
+
+static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
+{
+  struct glmcp_request_tofrom *ptf;
+  struct emaildomain           edkey;
+  EDomain                      value;
+  size_t                       index;
+  
+  ddt(req != NULL);
+  
+  ptf = (struct glmcp_request_tofrom *)req->packet;
+  
+  edkey.text  = (char *)ptf->data;
+  edkey.tsize = ntohs(ptf->size);
+  edkey.count = 0;
+  edkey.cmd   = ntohs(ptf->cmd);
+  
+  (*cv_report)(LOG_DEBUG,"$ i","adding %a as %b",edkey.text,edkey.cmd);
+  
+  switch(cmd)
+  {
+    case CMD_MCP_TO:
+         value = edomain_search(&edkey,&index,g_to,g_sto);
+         if (value == NULL)
+         {
+           edkey.text = dup_string(edkey.text);
+           edomain_add_to(&edkey,index);
+         }
+	 else
+	 {
+	   value->cmd   = edkey.cmd;
+	   value->count = 0;
+	 }
+         break;
+    case CMD_MCP_TO_DOMAIN:
+         value = edomain_search(&edkey,&index,g_tod,g_stod);
+         if (value == NULL)
+         {
+           edkey.text = dup_string(edkey.text);
+           edomain_add_tod(&edkey,index);
+         }
+	 else
+	 {
+	   value->cmd   = edkey.cmd;
+	   value->count = 0;
+	 }
+         break;
+    case CMD_MCP_FROM:
+         value = edomain_search(&edkey,&index,g_from,g_sfrom);
+         if (value == NULL)
+         {
+           edkey.text = dup_string(edkey.text);
+           edomain_add_from(&edkey,index);
+         }
+	 else
+	 {
+	   value->cmd   = edkey.cmd;
+	   value->count = 0;
+	 }
+         break;
+    case CMD_MCP_FROM_DOMAIN:
+         value = edomain_search(&edkey,&index,g_fromd,g_sfromd);
+         if (value == NULL)
+         {
+           edkey.text = dup_string(edkey.text);
+           edomain_add_fromd(&edkey,index);
+         }
+	 else
+	 {
+	   value->cmd   = edkey.cmd;
+	   value->count = 0;
+	 }
+         break;
+    default:
+         ddt(0);
+  }
+  
+  send_reply(req,resp,0);
+}
+
+/*************************************************************************/
 

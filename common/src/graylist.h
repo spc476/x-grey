@@ -48,10 +48,19 @@ enum
 
 enum
 {
+  /*--------------------------------------
+  ; commands from MTAs
+  ;--------------------------------------*/
+  
   CMD_NONE,
   CMD_NONE_RESP,
   CMD_GRAYLIST,
   CMD_GRAYLIST_RESP,
+  
+  /*------------------------------------
+  ; commands from the MCP
+  ;-------------------------------------*/
+  
   CMD_MCP_SHOW_STATS,
   CMD_MCP_SHOW_STATS_RESP,
   CMD_MCP_SHOW_CONFIG,
@@ -62,8 +71,29 @@ enum
   CMD_MCP_SHOW_TUPLE_ALL_RESP,
   CMD_MCP_SHOW_WHITELIST,
   CMD_MCP_SHOW_WHITELIST_RESP,
+
+  CMD_MCP_SHOW_TO,
+  CMD_MCP_SHOW_TO_RESP,
+  CMD_MCP_SHOW_TO_DOMAIN,
+  CMD_MCP_SHOW_TO_DOMAIN_RESP,
+
+  CMD_MCP_SHOW_FROM,
+  CMD_MCP_SHOW_FROM_RESP,
+  CMD_MCP_SHOW_FROM_DOMAIN,
+  CMD_MCP_SHOW_FROM_DOMAIN_RESP,
+  
   CMD_MCP_IPLIST,
   CMD_MCP_IPLIST_RESP,
+  
+  CMD_MCP_TO,
+  CMD_MCP_TO_RESP,
+  CMD_MCP_TO_DOMAIN,
+  CMD_MCP_TO_DOMAIN_RESP,
+
+  CMD_MCP_FROM,
+  CMD_MCP_FROM_RESP,
+  CMD_MCP_FROM_DOMAIN,
+  CMD_MCP_FROM_DOMAIN_RESP,
   CMD_MAX
 };
 
@@ -165,6 +195,16 @@ struct glmcp_request_iplist
   unet16 ipsize;
   unet16 mask;	/* the "/X" part of A.B.C.D/X */
   byte   data[16];
+};
+
+struct glmcp_request_tofrom
+{
+  unet16 version;
+  unet16 MTA;
+  unet16 type;
+  unet16 cmd;
+  unet16 size;
+  byte   data[1];
 };
 
 /***************************************************************/

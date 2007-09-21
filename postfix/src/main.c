@@ -265,6 +265,8 @@ int check_graylist(int sock,char *ip,char *from,char *to)
     
     if (errno != EINTR)
       (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
+    else
+      (*cv_report)(LOG_DEBUG,"","timeout");
     return(GRAYLIST_YEA);
   }
   

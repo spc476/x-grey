@@ -11,6 +11,7 @@
 #include <cgilib/errors.h>
 #include <cgilib/ddt.h>
 
+#include "../../common/src/globals.h"
 #include "../../common/src/util.h"
 #include "globals.h"
 #include "iplist.h"
@@ -18,11 +19,7 @@
 
 /*****************************************************************/
 
-typedef byte maskval[4];
-
-/********************************************************************/
-
-static const char    m_dunno[]    = "GREYLIST";
+static const char    m_dunno[]    = "GRAYLIST";
 static const char    m_accept[]   = "ACCEPT";
 static const char    m_reject[]   = "REJECT";
 
@@ -111,7 +108,7 @@ int iplist_read(const char *fname)
     
     for ( ; *tline && isspace(*tline) ; tline++)
       ;
-    
+
     if (strncmp(tline,m_accept,6) == 0)
       cmd = IPCMD_ACCEPT;
     else if (strncmp(tline,m_reject,6) == 0)
@@ -205,9 +202,48 @@ int iplist_check(byte *addr,size_t size)
 
 /*****************************************************************/
 
+int iplist_dump(void)
+{
+  Stream out;
+
+  out = FileStreamWrite(c_iplistfile,FILE_CREATE | FILE_TRUNCATE);
+  if (out == NULL)
+  {
+    (*cv_report)(LOG_ERR,"$","could not open %a",c_iplistfile);
+    return(ERR_ERR);
+  }
+  
+  iplist_dump_stream(out);
+  
+  StreamFree(out);
+  return(ERR_OKAY);
+}
+
+/*****************************************************************/
+
 int iplist_dump_stream(Stream out)
 {
-  ip_print(out);
+  struct ipblock *array;
+  size_t          asize;
+  size_t          i;
+  char            ipaddr[20];
+  
+  array = ip_table(&asize);
+  
+  for (i = 0 ; i < asize ; i++)
+  {
+    sprintf(ipaddr,"%s/%d",ipv4(array[i].addr),array[i].smask);
+
+    LineSFormat(
+    	out,
+    	"$18.18l $",
+    	"%a %b\n",
+	ipaddr,
+    	ci_map_chars(array[i].cmd,c_ipcmds,C_IPCMDS)
+    );
+  }
+
+  MemFree(array);  
   return(ERR_OKAY);
 }
 

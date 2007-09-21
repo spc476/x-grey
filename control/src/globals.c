@@ -120,6 +120,12 @@ static void parse_cmdline(int argc,char *argv[])
       case OPT_PORT:
            c_port = strtoul(optarg,NULL,10);
            break;
+      case OPT_RHOST:
+           c_rhost = dup_string(optarg);
+           break;
+      case OPT_RPORT:
+           c_rport = strtoul(optarg,NULL,10);
+           break;
       case OPT_LOG_FACILITY:
            tmp = up_string(dup_string(optarg));
            c_log_facility = ci_map_int(tmp,c_facilities,C_FACILITIES);

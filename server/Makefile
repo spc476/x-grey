@@ -11,6 +11,7 @@ $(HOSTDIR)/gl : $(HOSTDIR)/main.o		\
 		$(HOSTDIR)/signals.o		\
 		$(HOSTDIR)/iplist.o		\
 		$(HOSTDIR)/iptable.o		\
+		$(HOSTDIR)/emaildomain.o	\
 		$(HOSTDIR)/tuple.o		
 	$(CC) $(CFLAGS) -o $@			\
 		$(HOSTDIR)/main.o		\
@@ -18,6 +19,7 @@ $(HOSTDIR)/gl : $(HOSTDIR)/main.o		\
 		$(HOSTDIR)/signals.o		\
 		$(HOSTDIR)/iplist.o		\
 		$(HOSTDIR)/iptable.o		\
+		$(HOSTDIR)/emaildomain.o	\
 		$(HOSTDIR)/tuple.o		\
 		../common/$(HOSTDIR)/globals.o	\
 		../common/$(HOSTDIR)/util.o	\
@@ -37,6 +39,9 @@ $(HOSTDIR)/iplist.o : src/iplist.c
 
 $(HOSTDIR)/iptable.o : src/iptable.c
 	$(CC) $(CFLAGS) -c -o $@ src/iptable.c
+
+$(HOSTDIR)/emaildomain.o : src/emaildomain.c
+	$(CC) $(CFLAGS) -c -o $@ src/emaildomain.c
 
 $(HOSTDIR)/tuple.o : src/tuple.c
 	$(CC) $(CFLAGS) -c -o $@ src/tuple.c

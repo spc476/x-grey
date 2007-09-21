@@ -77,6 +77,11 @@ void sighandler_critical(int sig)
     );
 
   whitelist_dump();	/* attempt to do this */
+  iplist_dump();
+  to_dump();
+  tod_dump();
+  from_dump();
+  fromd_dump();
   
   /*---------------------------------------------------------
   ; unblock all signals.
@@ -180,7 +185,14 @@ void sighandler_chld(int sig)
 static void handle_sigint(void)
 {
   (*cv_report)(LOG_DEBUG,"","Interrupt Signal");
+
   whitelist_dump();
+  iplist_dump();
+  to_dump();
+  tod_dump();
+  from_dump();
+  fromd_dump();
+
   GlobalsDeinit();
   exit(EXIT_SUCCESS);
 }
@@ -190,7 +202,14 @@ static void handle_sigint(void)
 static void handle_sigquit(void)
 {
   (*cv_report)(LOG_DEBUG,"","Quit signal");
+
   whitelist_dump();
+  iplist_dump();
+  to_dump();
+  tod_dump();
+  from_dump();
+  fromd_dump();
+
   GlobalsDeinit();
   exit(EXIT_SUCCESS);
 }
@@ -200,7 +219,14 @@ static void handle_sigquit(void)
 static void handle_sigterm(void)
 {
   (*cv_report)(LOG_DEBUG,"","Terminate Signal");
+
   whitelist_dump();
+  iplist_dump();
+  to_dump();
+  tod_dump();
+  from_dump();
+  fromd_dump();
+
   GlobalsDeinit();
   exit(EXIT_SUCCESS);
 }

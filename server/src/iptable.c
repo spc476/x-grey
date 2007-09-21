@@ -10,6 +10,7 @@
 #include <cgilib/ddt.h>
 #include <cgilib/memory.h>
 
+#include "../../common/src/globals.h"
 #include "../../common/src/util.h"
 
 #include "globals.h"
@@ -17,6 +18,10 @@
 #include "iptable.h"
 
 /*************************************************************/
+
+#if 0
+static void		 ip_prune	(struct ipnode *,int);
+#endif
 
 static size_t	         ip_collect	(
 				  	  byte *,
@@ -81,10 +86,16 @@ int ip_add_sm(byte *ip,size_t size,int mask,int cmd)
   
   ddt(ip   != NULL);
   ddt(size == 4);
-  ddt(mask >  0);
+  ddt(mask >  -1);
   ddt(mask <  33);
   ddt(mask != 31);
   
+  if (mask == 0)
+  {
+    g_tree->match = cmd;
+    return(0);
+  }
+
   while(mask)
   {
     if (bit == 0)
@@ -128,12 +139,43 @@ int ip_add_sm(byte *ip,size_t size,int mask,int cmd)
     bit >>= 1;
   }
   
+  if (p->match == IPCMD_NONE)
+    g_ipcnt++;
+
   p->match = cmd;
-  g_ipcnt++;
+
+#if 0
+  ip_prune(p->zero,cmd);
+  ip_prune(p->one,cmd);
+#endif
+
   return(0);
 }
 
 /*******************************************************************/
+
+#if 0
+static void ip_prune(struct ipnode *p,int match)
+{
+  if (p == NULL)
+    return;
+
+  if (p->match == IPCMD_NONE)
+  {
+    ip_prune(p->zero,match);
+    ip_prune(p->one,match);
+    return;
+  }
+  
+  if (p->match == match)
+  {
+    p->match = IPCMD_NONE;
+    g_ipcnt--;
+  }
+}  
+#endif
+
+/******************************************************************/
 
 int ip_print(Stream out)
 {
@@ -143,7 +185,6 @@ int ip_print(Stream out)
   char            tip  [20];
   char            tmask[20];
   char           *t;
-  char           *cmd;
 
   array = ip_table(&asize);
     
@@ -154,22 +195,13 @@ int ip_print(Stream out)
     t = ipv4(array[i].mask);
     strcpy(tmask,t);
       
-    switch(array[i].cmd)
-    {
-      case IPCMD_NONE:     cmd = "NONE (this is a bug)" ; break;
-      case IPCMD_ACCEPT:   cmd = "ACCEPT"; break;
-      case IPCMD_REJECT:   cmd = "REJECT"; break;
-      case IPCMD_GRAYLIST: cmd = "GRAYLIST" ; break;
-      default: ddt(0);
-    }
-      
     LineSFormat(
       	out,
-      	"$8.8l $15.15l $15.15l L10",
-      	"%a %b %c %d\n",
-      	cmd,
+      	"$15.15l $15.15l $8.8l L10",
+      	"%d %c %a %b\n",
       	tip,
       	tmask,
+      	ci_map_chars(array[i].cmd,c_ipcmds,C_IPCMDS),
       	(unsigned long)array[i].count
       );
   }
@@ -189,9 +221,10 @@ struct ipblock *ip_table(size_t *ps)
   ddt(ps != NULL);
   
   rc             = 1;
-  array          = MemAlloc((g_ipcnt + 1) * sizeof(struct ipblock));
+  array          = MemAlloc(g_ipcnt * sizeof(struct ipblock));
   array[0].size  = 4;
   array[0].count = g_tree->count;
+  array[0].smask = 0;
   array[0].cmd   = g_tree->match;
   memset(array[0].mask,0,4);
   memset(array[0].addr,0,4);
@@ -266,6 +299,15 @@ static size_t ip_collect(
     array[i].size  = size;
     array[i].count = p->count;
     array[i].cmd   = p->match;
+    array[i].smask = (off * 8)
+    			+ ((mask[off] & 0x80) != 0)
+    			+ ((mask[off] & 0x40) != 0)
+    			+ ((mask[off] & 0x20) != 0)
+    			+ ((mask[off] & 0x10) != 0)
+    			+ ((mask[off] & 0x08) != 0)
+    			+ ((mask[off] & 0x04) != 0)
+    			+ ((mask[off] & 0x02) != 0)
+    			+ ((mask[off] & 0x01) != 0);
     memcpy(array[i].mask,mask,size);
     memcpy(array[i].addr,ip,  size);
     i++;

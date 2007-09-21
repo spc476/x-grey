@@ -1,6 +1,7 @@
 
 #include <syslog.h>
 
+#include "graylist.h"
 #include "util.h"
 
 /******************************************************************/
@@ -38,5 +39,13 @@ const struct chars_int c_levels[7] =
   { "INFO"      , LOG_INFO      } ,
   { "NOTICE"    , LOG_NOTICE    } ,
   { "WARNING"   , LOG_WARNING   }
+};
+
+const struct chars_int c_ipcmds[4] =
+{
+  { "NONE (this is a bug)"	, IPCMD_NONE		} ,
+  { "ACCEPT"			, IPCMD_ACCEPT		} ,
+  { "REJECT"			, IPCMD_REJECT		} ,
+  { "GRAYLIST"			, IPCMD_GRAYLIST	} 
 };
 

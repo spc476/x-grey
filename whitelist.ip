@@ -1,5 +1,10 @@
-
+4.2.2.2			reject	# some stuff to reject
 10.0.0.0/8		reject
+11.0.0.255/32		reject
+192.168.0.0/16		reject
+255.255.255.254/32	reject
+255.255.255.255/32	reject
+
 152.163.225.0/24 	accept	# AOL (via SPF)
 205.188.139.0/24	accept	# AOL (via SPF)
 205.188.144.0/24	accept	# AOL (via SPF)
