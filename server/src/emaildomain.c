@@ -206,7 +206,7 @@ void edomain_add_tod(EDomain rec,size_t index)
 
 /******************************************************************/
 
-void to_dump(void)
+int to_dump(void)
 {
   Stream out;
   
@@ -214,16 +214,17 @@ void to_dump(void)
   if (out == NULL)
   {
     (*cv_report)(LOG_ERR,"$","could not open %a",c_tofile);
-    return;
+    return(ERR_ERR);
   }
   
   to_dump_stream(out);
   StreamFree(out);
+  return(ERR_OKAY);
 }
 
 /******************************************************************/
 
-void tod_dump(void)
+int tod_dump(void)
 {
   Stream out;
   
@@ -231,16 +232,17 @@ void tod_dump(void)
   if (out == NULL)
   {
     (*cv_report)(LOG_ERR,"$","could not open %a",c_todfile);
-    return;
+    return (ERR_ERR);
   }
   
   tod_dump_stream(out);
   StreamFree(out);
+  return(ERR_OKAY);
 }
 
 /******************************************************************/
 
-void from_dump(void)
+int from_dump(void)
 {
   Stream out;
   
@@ -248,16 +250,17 @@ void from_dump(void)
   if (out == NULL)
   {
     (*cv_report)(LOG_ERR,"$","could not open %a",c_fromfile);
-    return;
+    return(ERR_ERR);
   }
   
   from_dump_stream(out);
   StreamFree(out);
+  return(ERR_OKAY);
 }
 
 /******************************************************************/
 
-void fromd_dump(void)
+int fromd_dump(void)
 {
   Stream out;
   
@@ -265,47 +268,52 @@ void fromd_dump(void)
   if (out == NULL)
   {
     (*cv_report)(LOG_ERR,"$","could not open %a",c_fromdfile);
-    return;
+    return(ERR_ERR);
   }
   
   fromd_dump_stream(out);
   StreamFree(out);
+  return(ERR_OKAY);
 }
 
 /****************************************************************/
 
-void to_dump_stream(Stream out)
+int to_dump_stream(Stream out)
 {
   ddt(out != NULL);
   
   tofrom_dump_stream(out,g_to,g_sto);
+  return(ERR_OKAY);
 }
 
 /*********************************************************************/
 
-void tod_dump_stream(Stream out)
+int tod_dump_stream(Stream out)
 {
   ddt(out);
   
   tofrom_dump_stream(out,g_tod,g_stod);
+  return(ERR_OKAY);
 }
 
 /********************************************************************/
 
-void from_dump_stream(Stream out)
+int from_dump_stream(Stream out)
 {
   ddt(out);
   
   tofrom_dump_stream(out,g_from,g_sfrom);
+  return(ERR_OKAY);
 }
 
 /********************************************************************/
 
-void fromd_dump_stream(Stream out)
+int fromd_dump_stream(Stream out)
 {
   ddt(out);
   
   tofrom_dump_stream(out,g_fromd,g_sfromd);
+  return(ERR_OKAY);
 }
 
 /*******************************************************************/

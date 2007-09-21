@@ -121,7 +121,8 @@ enum
   IPCMD_NONE,
   IPCMD_ACCEPT,
   IPCMD_REJECT,
-  IPCMD_GRAYLIST
+  IPCMD_GRAYLIST,
+  IPCMD_REMOVE
 };
 
 struct graylist_response

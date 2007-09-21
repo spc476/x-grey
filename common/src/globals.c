@@ -41,11 +41,12 @@ const struct chars_int c_levels[7] =
   { "WARNING"   , LOG_WARNING   }
 };
 
-const struct chars_int c_ipcmds[4] =
+const struct chars_int c_ipcmds[5] =
 {
   { "NONE (this is a bug)"	, IPCMD_NONE		} ,
   { "ACCEPT"			, IPCMD_ACCEPT		} ,
   { "REJECT"			, IPCMD_REJECT		} ,
-  { "GRAYLIST"			, IPCMD_GRAYLIST	} 
+  { "GRAYLIST"			, IPCMD_GRAYLIST	} ,
+  { "REMOVE"			, IPCMD_REMOVE		}
 };
 
