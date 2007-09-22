@@ -3,12 +3,38 @@
 
 	* maybe have the ability to add stuff to the whitelist, iplist, etc.
 	  via network requests
+		DONE 2007-09-21T20:00-05:00
+
+2007-09-17T03:05-05:00
+
+        * when adding an IP list, remove records that match the IP address.
+
+        * Remove IPs that are more specific but repeat less specific IPs,
+        for instance,
+
+                iplist accept 10.10.10/24
+                iplist reject 10.10/16
+                iplist reject 10/8
+
+        when the third one is added, the second one can be removed.
+
+2007-09-15T04:28-05:00
+
+        * add code for a pager
+                DONE
+
+2007-09-11T05:15-05:00
+
+        * maybe have the ability to add stuff to the whitelist, iplist, etc.
+          via network requests
+		DONE 2007-09-21T20:00-05:00
 
 2007-09-07T03:10-05:00
 
 	* have some way of removing a whitelist entry?
 
 	* check memory allocations---I may have a small leak somewhere
+		DONE 2007-09-21-T20:00-05:00
 
 	* make a configuation file---the command line is getting a bit
 	  silly.
@@ -18,30 +44,31 @@
 
 2007-09-06T00:16-05:00
 
-*	Have gld reread the whitelist.ip file, for on-the-fly updates.
+	* Have gld reread the whitelist.ip file, for on-the-fly updates.
+		DONE 2007-09-21T20:00-05:00
 
-	Problem caused by:  The Apache mailing list, which uses a unique
-	email address for every message sent out.  I'm not sure if I'll
-	get any more or not.
+	  Problem caused by:  The Apache mailing list, which uses a unique
+	  email address for every message sent out.  I'm not sure if I'll
+	  get any more or not.
 
-*	Tune down the accept maybe?  cybercom tried again in 22 minutes.
+	* Tune down the accept maybe?  cybercom tried again in 22 minutes.
 
-*	Make a /var/run/pid file for daemon.
+	* Make a /var/run/pid file for daemon.
 		DONE	2007-09-08T03:55-05:00
 
-*	If run as root, switch down to a particular user.
+	* If run as root, switch down to a particular user.
 
-*	Report running time on various reports
+	* Report running time on various reports
 
-*	Keep track of unique IP addresses.  If an address has only
-	graylisted addresses and no whitelisted addresses, add it to the IP
-	reject list.  But let me think about this.  
+	* Keep track of unique IP addresses.  If an address has only
+	  graylisted addresses and no whitelisted addresses, add it to the
+	  IP reject list.  But let me think about this.
 
-*	Make the dump.txt and whitelist.txt have the same format.  Modify
-	the iplist_load() to ignore anything past the recipient address. 
-	Then I can reload a dump and pick up from there.  Or have
-	iplist_load() read in the extra fields to recreate the entire list. 
-	Would make upading the server a bit smoother.
+	* Make the dump.txt and whitelist.txt have the same format.  Modify
+	  the iplist_load() to ignore anything past the recipient address. 
+	  Then I can reload a dump and pick up from there.  Or have
+	  iplist_load() read in the extra fields to recreate the entire
+	  list.  Would make upading the server a bit smoother.
 
-*	Investigate maybe using only from and to address, and skip the IP
-	address.
+	* Investigate maybe using only from and to address, and skip the IP
+	  address.

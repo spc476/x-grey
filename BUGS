@@ -1,3 +1,14 @@
+2007-09-17T01:00-05:00
+
+        * if the child process segfaults, then the program is restarted,
+          which is not what I want.  FIXED
+
+        * can't add to an empty iplist for some reason.  And g_ipcnt is
+        wrong in that case.     FIXED
+
+        * doing 'iplist * 0.0.0.0/0 crashes the program.
+		FIXED
+
 2007-09-15T01:32-05:00
 	* duplicates in the whitelist.txt aren't detected and removed.
 
@@ -16,4 +27,4 @@
 	first, I thought it was the calls to _exit() were failing, but nope,
 	it's with exit() as well.  I'm thinking I may have a long term
 	problem.  I hope I don't have a long term problem.  That would suck.
-
+		FIXED 2007-09-21T20:00-05:00
