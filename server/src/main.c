@@ -434,6 +434,12 @@ type_graylist_check_ip:
   
   stored->atime = req->now;
 
+  if ((stored->f & F_WHITELIST))
+  {
+    send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+    return;
+  }
+  
   if (difftime(req->now,stored->ctime) < c_timeout_embargo)
   {
     send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_LATER);

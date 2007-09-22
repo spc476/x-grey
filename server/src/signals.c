@@ -247,9 +247,10 @@ static void handle_sigalrm(void)
   
   (*cv_report)(LOG_DEBUG,"","Alarm-time for house cleaning!");
   mf_sigalrm = 0;
-  tuple_expire(time(NULL));
+  now        = time(NULL);
+
+  tuple_expire(now);
   
-  now = time(NULL);
   if (difftime(now,g_time_savestate) >= c_time_savestate)
   {
     pid_t child;
