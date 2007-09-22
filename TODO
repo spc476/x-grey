@@ -1,9 +1,6 @@
+2007-09-21T20:17-05:00
 
-2007-09-11T05:15-05:00
-
-	* maybe have the ability to add stuff to the whitelist, iplist, etc.
-	  via network requests
-		DONE 2007-09-21T20:00-05:00
+	* Possibly add code to filter requests from certain IP addresses.
 
 2007-09-17T03:05-05:00
 

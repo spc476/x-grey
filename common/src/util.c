@@ -28,6 +28,7 @@ int create_socket(const char *host,int port,int type)
 {
   struct sockaddr_in  sin;
   struct hostent     *localhost;
+  in_addr_t           lh;
   int                 s;
   int                 rc;
   int                 reuse = 1;
@@ -36,14 +37,21 @@ int create_socket(const char *host,int port,int type)
   ddt(port >= 0);
   ddt(port <= 65535);
   
-  localhost = gethostbyname(host);
-  if (localhost == NULL)
+  lh = inet_addr(host);
+
+  if (lh == (in_addr_t)-1)
   {
-    (*cv_report)(LOG_ERR,"$ $","gethostbyname(%a) = %b",c_host,strerror(errno));
-    exit(EXIT_FAILURE);
+    localhost = gethostbyname(host);
+    if (localhost == NULL)
+    {
+      (*cv_report)(LOG_ERR,"$ $","gethostbyname(%a) = %b",c_host,strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+    memcpy(&sin.sin_addr.s_addr,localhost->h_addr,localhost->h_length);
   }
-  
-  memcpy(&sin.sin_addr.s_addr,localhost->h_addr,localhost->h_length);
+  else
+    memcpy(&sin.sin_addr.s_addr,&lh,sizeof(in_addr_t));
+
   sin.sin_family = AF_INET;
   sin.sin_port   = htons(port);
   
