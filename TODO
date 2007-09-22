@@ -1,3 +1,7 @@
+2007-09-22T03:03-05:00
+
+	* Add IP restrictions on who can connect.
+
 2007-09-21T20:17-05:00
 
 	* Possibly add code to filter requests from certain IP addresses.
