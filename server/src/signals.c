@@ -183,12 +183,12 @@ pid_t gld_fork(void)
   pid_t pid;
   
   pid = fork();
-  if (pid == -1)
+  if (pid == (pid_t)-1)
   {
     (*cv_report)(LOG_CRIT,"$","fork() = %a",strerror(errno));
     return(pid);
   }
-  else if (pid > 0)	/* parent returns immediately */
+  else if (pid > (pid_t)0)	/* parent returns immediately */
     return(pid);
   
   /*---------------------------------------------------
@@ -273,7 +273,7 @@ static void handle_sigalrm(void)
 
   tuple_expire(now);
 
-#if 0
+#ifdef FIXED_SAVE_STATE_BUG
   if (difftime(now,g_time_savestate) >= c_time_savestate)
   {
     pid_t child;
