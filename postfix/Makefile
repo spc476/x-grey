@@ -13,6 +13,7 @@ $(HOSTDIR)/pfc : $(HOSTDIR)/main.o	\
 		$(HOSTDIR)/globals.o		\
 		../common/$(HOSTDIR)/globals.o	\
 		../common/$(HOSTDIR)/util.o	\
+		../common/$(HOSTDIR)/crc32.o	\
 		$(LFLAGS)
 
 $(HOSTDIR)/main.o : src/main.c	

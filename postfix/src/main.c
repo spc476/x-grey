@@ -19,6 +19,7 @@
 
 #include "../../common/src/graylist.h"
 #include "../../common/src/util.h"
+#include "../../common/src/crc32.h"
 #include "globals.h"
 
 #define min(a,b)	((a) < (b)) ? (a) : (b)
@@ -199,7 +200,9 @@ int check_graylist(int sock,char *ip,char *from,char *to)
   byte                     *p;
   char                     *d;
   ssize_t                   rrc;
-  
+  size_t                    packetsize; 
+  CRC32                     crc;
+
   sfrom = min(strlen(from),200);
   sto   = min(strlen(to),  200);
   
@@ -222,11 +225,17 @@ int check_graylist(int sock,char *ip,char *from,char *to)
   
   memcpy(p,from,sfrom);	p += sfrom;
   memcpy(p,to,sto);     p += sto;
-  
+
+  packetsize = (size_t)(p - outpacket);
+
+  crc        = crc32(INIT_CRC32,&glq->version,packetsize - sizeof(CRC32));
+  crc        = crc32(crc,c_secret,c_secretsize);
+  glq->crc   = htonl(crc);
+
   rrc = sendto(
   		sock,
   		outpacket,
-  		(size_t)(p - outpacket),
+  		packetsize,
   		0,
   		(const struct sockaddr *)&c_raddr,
   		c_raddrsize
@@ -267,6 +276,15 @@ int check_graylist(int sock,char *ip,char *from,char *to)
       (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
     else
       (*cv_report)(LOG_DEBUG,"","timeout");
+    return(GRAYLIST_YEA);
+  }
+  
+  crc = crc32(INIT_CRC32,&glr->version,rrc - sizeof(unet32));
+  crc = crc32(crc,c_secret,c_secretsize);
+  
+  if (crc != ntohl(glr->crc))
+  {
+    (*cv_report)(LOG_ERR,"","received back packet");
     return(GRAYLIST_YEA);
   }
   

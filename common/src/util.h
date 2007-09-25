@@ -23,15 +23,15 @@ struct chars_int
 
 typedef struct mystring
 {
-  size_t      s;
-  const char *d;
+  size_t  s;
+  char   *d;
 } String;
 
 /***************************************************************/
 
 int	    create_socket		(const char *,int,int);
-int	    ci_map_int			(const char *,const struct chars_int *,size_t);
-const char *ci_map_chars		(int,const struct chars_int *,size_t);
+int	    ci_map_int			(const char *,const struct chars_int [],size_t);
+const char *ci_map_chars		(int,const struct chars_int [],size_t);
 void	    report_syslog		(int,char *,char *, ... );
 void	    report_stderr		(int,char *,char *, ... );
 void	    log_address			(struct sockaddr *);

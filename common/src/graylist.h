@@ -4,7 +4,7 @@
 
 #include <time.h>
 
-#define VERSION		0x0101
+#define VERSION		0x0102
 
 #define DEF_HOST	"localhost"
 #define DEF_PORT	9990
@@ -34,6 +34,7 @@ enum
   OPT_PORT,	/* local port */
   OPT_RHOST,	/* remote host */
   OPT_RPORT,	/* remote port */
+  OPT_SECRET,
   OPT_USER
 };
 
@@ -127,6 +128,7 @@ enum
 
 struct graylist_response
 {
+  unet32 crc;
   unet16 version;
   unet16 MTA;
   unet16 type;
@@ -135,6 +137,7 @@ struct graylist_response
 
 struct graylist_request
 {
+  unet32 crc;
   unet16 version;
   unet16 MTA;
   unet16 type;
@@ -146,6 +149,7 @@ struct graylist_request
 
 struct glmcp_request
 {
+  unet32 crc;
   unet16 version;
   unet16 MTA;
   unet16 type;
@@ -153,6 +157,7 @@ struct glmcp_request
 
 struct glmcp_response
 {
+  unet32 crc;
   unet16 version;
   unet16 MTA;
   unet16 type;
@@ -160,6 +165,7 @@ struct glmcp_response
 
 struct glmcp_response_show_stats
 {
+  unet32 crc;
   unet16 version;
   unet16 MTA;
   unet16 type;
@@ -176,6 +182,7 @@ struct glmcp_response_show_stats
 
 struct glmcp_response_show_config
 {
+  unet32 crc;
   unet16 version;
   unet16 MTA;
   unet16 type;
@@ -189,6 +196,7 @@ struct glmcp_response_show_config
 
 struct glmcp_request_iplist
 {
+  unet32 crc;
   unet16 version;
   unet16 MTA;
   unet16 type;
@@ -200,6 +208,7 @@ struct glmcp_request_iplist
 
 struct glmcp_request_tofrom
 {
+  unet32 crc;
   unet16 version;
   unet16 MTA;
   unet16 type;

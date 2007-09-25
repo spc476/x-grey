@@ -30,6 +30,8 @@ extern const int            c_facility;
 extern const int            c_level;
 extern const char *const    c_sysid;
 extern const time_t         c_starttime;
+extern const char *const    c_secret;
+extern const size_t         c_secretsize;
 extern const int            cf_debug;
 extern const int            cf_foreground;
 extern void               (*cv_report)(int,char *,char *, ... );

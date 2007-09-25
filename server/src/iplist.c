@@ -143,10 +143,10 @@ int iplist_read(const char *fname)
 
     for (i = 0 ; i < ipsize ; i++)
     {
-      char tip  [20];
-      char tmask[20];
-      char *t;
-      char *tcmd;
+      char        tip  [20];
+      char        tmask[20];
+      char       *t;
+      const char *tcmd;
       
       t = ipv4(iplist[i].addr);
       strcpy(tip,t);

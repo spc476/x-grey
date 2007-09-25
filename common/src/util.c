@@ -82,7 +82,7 @@ int create_socket(const char *host,int port,int type)
 
 /*******************************************************************/
 
-int ci_map_int(const char *name,const struct chars_int *list,size_t size)
+int ci_map_int(const char *name,const struct chars_int list[],size_t size)
 {
   int i;
 
@@ -100,7 +100,7 @@ int ci_map_int(const char *name,const struct chars_int *list,size_t size)
 
 /************************************************************************/
 
-const char *ci_map_chars(int value,const struct chars_int *list,size_t size)
+const char *ci_map_chars(int value,const struct chars_int list[],size_t size)
 {
   int i;
 

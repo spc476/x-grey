@@ -17,6 +17,7 @@
 
 #include "../../common/src/graylist.h"
 #include "../../common/src/util.h"
+#include "../../common/src/crc32.h"
 
 #include "tuple.h"
 #include "globals.h"
@@ -74,6 +75,7 @@ static void mainloop(int sock)
 {
   struct request req;
   ssize_t        rrc;
+  CRC32          crc;
   
   while(1)
   {
@@ -103,8 +105,18 @@ static void mainloop(int sock)
     req.glr  = (struct graylist_request *)req.packet;
     req.size = rrc;
     
+    crc = crc32(INIT_CRC32,&req.glr->version,req.size - sizeof(CRC32));
+    crc = crc32(crc,c_secret,c_secretsize);
+    
+    if (crc != ntohl(req.glr->crc))
+    {
+      (*cv_report)(LOG_DEBUG,"","bad CRC-skipping packet");
+      continue;
+    }
+    
     if (ntohs(req.glr->version) != VERSION)
     {
+      (*cv_report)(LOG_DEBUG,"","received bad version");
       send_reply(&req,CMD_NONE_RESP,GLERR_VERSION_NOT_SUPPORTED);
       continue;
     }
@@ -250,10 +262,11 @@ void type_graylist(struct request *req)
         + glr->fromsize 
 	+ glr->tosize 
 	+ sizeof(struct graylist_request) 
-	- 2;	/* empiracally found --- this is bad XXX */
+	- 4;	/* empiracally found --- this is bad XXX */
 
   if (rsize > req->size)
   {
+    (*cv_report)(LOG_DEBUG,"i i","bad size, expected %a got %b",req->size,rsize);
     send_reply(req,CMD_NONE_RESP,GLERR_BAD_DATA);
     return;
   }
@@ -476,11 +489,17 @@ static void send_reply(struct request *req,int type,int response)
 
 static void send_packet(struct request *req,void *packet,size_t size)
 {
-  ssize_t rrc;
+  struct graylist_response *glr = packet;
+  ssize_t                   rrc;
+  CRC32                     crc;
   
   ddt(req    != NULL);
   ddt(packet != NULL);
   ddt(size   >  0);
+  
+  crc      = crc32(INIT_CRC32,&glr->version,size - sizeof(unet32));
+  crc      = crc32(crc,c_secret,c_secretsize);
+  glr->crc = htonl(crc);
   
   do
   {

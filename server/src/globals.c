@@ -67,6 +67,8 @@ int            c_port            = DEF_PORT;
 int            c_log_facility    = LOG_LOCAL6;
 int            c_log_level       = LOG_INFO;
 char	      *c_log_id          = "graylist";
+char	      *c_secret		 = "decafbad";
+size_t         c_secretsize	 = 8;
 int            cf_debug          = 0;
 void         (*cv_report)(int,char *,char *, ...) = report_syslog;
 
@@ -143,6 +145,7 @@ static const struct option mc_options[] =
   { "log-facility"   	, required_argument 	, NULL	, OPT_LOG_FACILITY	} ,
   { "log-level"      	, required_argument 	, NULL	, OPT_LOG_LEVEL		} ,
   { "log-id"      	, required_argument 	, NULL	, OPT_LOG_ID        	} ,
+  { "secret"		, required_argument	, NULL	, OPT_SECRET		} ,
   { "debug"          	, no_argument       	, NULL	, OPT_DEBUG		} ,
   { "foreground"     	, no_argument       	, NULL	, OPT_FOREGROUND   	} ,
   { "stderr"	     	, no_argument       	, NULL	, OPT_STDERR       	} ,
@@ -371,6 +374,10 @@ static void parse_cmdline(int argc,char *argv[])
              }
              MemFree(tmp);
            }
+           break;
+      case OPT_SECRET:
+           c_secret     = dup_string(optarg);
+           c_secretsize = strlen(c_secret);
            break;
       case OPT_DEBUG:
            cf_debug = 1;

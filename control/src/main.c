@@ -20,6 +20,7 @@
 #include "../../common/src/graylist.h"
 #include "../../common/src/globals.h"
 #include "../../common/src/util.h"
+#include "../../common/src/crc32.h"
 
 #include "globals.h"
 
@@ -180,14 +181,20 @@ static int send_request(
 
 {
   struct sockaddr_in     sip;
-  struct glmcp_response *gr = result;
+  struct glmcp_response *gr   = result;
+  struct glmcp_request  *greq = req;
   socklen_t              sipsize;
   ssize_t                rrc;
+  CRC32                  crc;
   
   ddt(req    != NULL);
   ddt(result != NULL);
   ddt(size   >  0);
   
+  crc       = crc32(INIT_CRC32,&greq->version,reqsize - sizeof(CRC32));
+  crc       = crc32(crc,c_secret,c_secretsize);
+  greq->crc = htonl(crc);
+
   rrc = sendto(
   		m_sock,
   		req,
@@ -215,7 +222,7 @@ static int send_request(
   	);
   
   alarm(0);
-  
+    
   if (rrc == -1)
   {
     if (errno != EINTR)
@@ -223,6 +230,15 @@ static int send_request(
     return(ERR_ERR);
   }
   
+  crc = crc32(INIT_CRC32,&gr->version,rrc - sizeof(CRC32));
+  crc = crc32(crc,c_secret,c_secretsize);
+  
+  if (crc != ntohl(gr->crc))
+  {
+    (*cv_report)(LOG_ERR,"","bad packet");
+    return(ERR_ERR);
+  }
+
   if (ntohs(gr->version) != VERSION)
   {
     (*cv_report)(LOG_ERR,"","received response from wrong version");

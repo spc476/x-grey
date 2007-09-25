@@ -40,6 +40,8 @@ const char          *c_log_id       = "gld-mcp";
 int                  cf_debug       = FALSE;
 const char          *c_timeformat   = "%c";
 const char          *c_pager        = "/bin/more";
+char                *c_secret       = "decafbad";
+size_t               c_secretsize   = 8;
 void               (*cv_report)(int,char *,char *, ... ) = report_stderr;
 
 /**********************************************************/
@@ -53,6 +55,7 @@ static const struct option mc_options[] =
   { "log-facility"	, required_argument	, NULL	, OPT_LOG_FACILITY 	} ,
   { "log-level"		, required_argument	, NULL	, OPT_LOG_LEVEL		} ,
   { "log-id"		, required_argument	, NULL	, OPT_LOG_ID		} ,
+  { "secret"		, required_argument	, NULL	, OPT_SECRET		} ,
   { "debug"		, no_argument		, NULL	, OPT_DEBUG		} ,
   { "help"		, no_argument		, NULL	, OPT_HELP		} ,
   { NULL		, 0			, NULL	, 0			}
@@ -138,6 +141,10 @@ static void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_LOG_ID:
            c_log_id = dup_string(optarg);
+           break;
+      case OPT_SECRET:
+           c_secret     = dup_string(optarg);
+           c_secretsize = strlen(c_secret);
            break;
       case OPT_DEBUG:
            cf_debug    = TRUE;
