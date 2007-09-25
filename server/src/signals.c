@@ -17,6 +17,7 @@
 #include "../../common/src/util.h"
 #include "globals.h"
 #include "iplist.h"
+#include "signals.h"
 
 /***********************************************************************/
 
@@ -76,13 +77,8 @@ void sighandler_critical(int sig)
        sys_siglist[sig]
     );
 
-  whitelist_dump();	/* attempt to do this */
-  iplist_dump();
-  to_dump();
-  tod_dump();
-  from_dump();
-  fromd_dump();
-  
+  save_state();
+
   /*---------------------------------------------------------
   ; unblock all signals.
   ;--------------------------------------------------------*/
@@ -182,17 +178,54 @@ void sighandler_chld(int sig)
 
 /**********************************************************************/
 
-static void handle_sigint(void)
+pid_t gld_fork(void)
 {
-  (*cv_report)(LOG_DEBUG,"","Interrupt Signal");
+  pid_t pid;
+  
+  pid = fork();
+  if (pid == -1)
+  {
+    (*cv_report)(LOG_CRIT,"$","fork() = %a",strerror(errno));
+    return(pid);
+  }
+  else if (pid > 0)	/* parent returns immediately */
+    return(pid);
+  
+  /*---------------------------------------------------
+  ; set the environment for the child process.
+  ;--------------------------------------------------*/
 
+  alarm(0);	/* turn off any pending alarms */
+  
+  set_signal(SIGSEGV,sighandler_critical_child);
+  set_signal(SIGBUS, sighandler_critical_child);
+  set_signal(SIGFPE, sighandler_critical_child);
+  set_signal(SIGILL, sighandler_critical_child);
+  set_signal(SIGXCPU,sighandler_critical_child);
+  set_signal(SIGXFSZ,sighandler_critical_child);
+
+  return(pid);
+}
+
+/*****************************************************************/
+
+void save_state(void)
+{
   whitelist_dump();
   iplist_dump();
   to_dump();
   tod_dump();
   from_dump();
   fromd_dump();
+}
 
+/*******************************************************************/ 
+ 
+static void handle_sigint(void)
+{
+  (*cv_report)(LOG_DEBUG,"","Interrupt Signal");
+
+  save_state();
   GlobalsDeinit();
   exit(EXIT_SUCCESS);
 }
@@ -203,13 +236,7 @@ static void handle_sigquit(void)
 {
   (*cv_report)(LOG_DEBUG,"","Quit signal");
 
-  whitelist_dump();
-  iplist_dump();
-  to_dump();
-  tod_dump();
-  from_dump();
-  fromd_dump();
-
+  save_state();
   GlobalsDeinit();
   exit(EXIT_SUCCESS);
 }
@@ -220,13 +247,7 @@ static void handle_sigterm(void)
 {
   (*cv_report)(LOG_DEBUG,"","Terminate Signal");
 
-  whitelist_dump();
-  iplist_dump();
-  to_dump();
-  tod_dump();
-  from_dump();
-  fromd_dump();
-
+  save_state();
   GlobalsDeinit();
   exit(EXIT_SUCCESS);
 }
@@ -246,11 +267,13 @@ static void handle_sigalrm(void)
   time_t now;
   
   (*cv_report)(LOG_DEBUG,"","Alarm-time for house cleaning!");
+
   mf_sigalrm = 0;
   now        = time(NULL);
 
   tuple_expire(now);
-  
+
+#if 0
   if (difftime(now,g_time_savestate) >= c_time_savestate)
   {
     pid_t child;
@@ -258,31 +281,18 @@ static void handle_sigalrm(void)
     (*cv_report)(LOG_DEBUG,"","saving state");
   
     g_time_savestate = now;
-    child            = fork();
+    child            = gld_fork();
     
     if (child == (pid_t)-1)
       (*cv_report)(LOG_CRIT,"$","could not save state-fork() = %a",strerror(errno));
-
     else if (child == 0)	/* child process */
     {
-      set_signal(SIGSEGV,sighandler_critical_child);
-      set_signal(SIGBUS, sighandler_critical_child);
-      set_signal(SIGFPE, sighandler_critical_child);
-      set_signal(SIGILL, sighandler_critical_child);
-      set_signal(SIGXCPU,sighandler_critical_child);
-      set_signal(SIGXFSZ,sighandler_critical_child);
-      
-      whitelist_dump();
-      iplist_dump();
-      to_dump();
-      tod_dump();
-      from_dump();
-      fromd_dump();
-      
+      save_state();
       _exit(0);
     }
   }
-  
+#endif
+
   alarm(c_time_cleanup);	/* signal next cleanup */
 }
 
@@ -295,7 +305,7 @@ static void handle_sigusr1(void)
   (*cv_report)(LOG_DEBUG,"","User 1 Signal");
   mf_sigusr1 = 0;
 
-  child = fork();
+  child = gld_fork();
   if (child == (pid_t)-1)
   {
     (*cv_report)(LOG_CRIT,"$","fork() = %a",strerror(errno));
@@ -307,18 +317,6 @@ static void handle_sigusr1(void)
     (*cv_report)(LOG_DEBUG,"","parent about to go about it's business");
     return;
   }
-
-  /*-------------------------------------------------
-  ; for child processes, we don't want to re-exec()
-  ; ourselves, so we just bail on these signals.
-  ;------------------------------------------------*/
-
-  set_signal(SIGSEGV ,sighandler_critical_child);
-  set_signal(SIGBUS,  sighandler_critical_child);
-  set_signal(SIGFPE,  sighandler_critical_child);
-  set_signal(SIGILL,  sighandler_critical_child);
-  set_signal(SIGXCPU ,sighandler_critical_child);
-  set_signal(SIGXFSZ ,sighandler_critical_child);
 
   (*cv_report)(LOG_DEBUG,"","child about to generate report");
   tuple_dump();

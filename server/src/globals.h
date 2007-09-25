@@ -2,7 +2,7 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#include "graylist.h"
+#include "tuple.h"
 #include "iplist.h"
 #include "emaildomain.h"
 

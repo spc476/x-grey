@@ -1,3 +1,7 @@
+2007-09-22T16:33-05:00
+
+	* Around 6 hours, saving state fails for some reason.
+
 2007-09-17T01:00-05:00
 
         * if the child process segfaults, then the program is restarted,

@@ -18,13 +18,12 @@
 #include "../../common/src/graylist.h"
 #include "../../common/src/util.h"
 
-#include "graylist.h"
+#include "tuple.h"
 #include "globals.h"
 #include "signals.h"
 #include "util.h"
 #include "server.h"
 #include "iplist.h"
-#include "iptable.h"
 #include "emaildomain.h"
 
 #define min(a,b)	((a) < (b)) ? (a) : (b)
@@ -288,6 +287,23 @@ void type_graylist(struct request *req)
   	(tuple.f & F_TRUNCTO)   ? " Tt" : ""
   );
 
+  /*----------------------------------------------------
+  ; check IP address
+  ;----------------------------------------------------*/
+  
+  rc = ip_match(tuple.ip,4);
+  
+  if (rc == IPCMD_ACCEPT)
+  {
+    send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+    return;
+  }
+  else if (rc == IPCMD_REJECT)
+  {
+    send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+    return;
+  }
+  
   /*-------------------------------------------------------
   ; check the from and fromdomain lists.
   ;------------------------------------------------------*/
@@ -311,7 +327,7 @@ void type_graylist(struct request *req)
       return;
     }
     else if (edvalue->cmd == IPCMD_GRAYLIST)
-      goto type_graylist_check_from;
+      goto type_graylist_check_to;
     else
       ddt(0);
   }
@@ -345,7 +361,7 @@ void type_graylist(struct request *req)
   ; check the to and todomain lists.
   ;-----------------------------------------------------*/
 
-type_graylist_check_from:
+type_graylist_check_to:
 
   edkey.text  = tuple.to;
   edkey.tsize = tuple.tosize;
@@ -366,7 +382,7 @@ type_graylist_check_from:
       return;
     }
     else if (edvalue->cmd == IPCMD_GRAYLIST)
-      goto type_graylist_check_ip;
+      goto type_graylist_check_tuple;
     else
       ddt(0);
   }
@@ -396,30 +412,13 @@ type_graylist_check_from:
     }
   }
 
-  /*---------------------------------------------------
-  ; check IP lists
-  ;---------------------------------------------------*/
-
-type_graylist_check_ip:
-
-  rc = iplist_check(tuple.ip,4);
-  
-  if (rc == IPCMD_ACCEPT)
-  {
-    send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
-    return;
-  }
-  else if (rc == IPCMD_REJECT)
-  {
-    send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
-    return;
-  }
-  
   /*-------------------------------------------------------
   ; Look up the tuple.  If not found, add it, else update the access time,
   ; and if less than the embargo period, return LATER, else accept.
   ;---------------------------------------------------------*/
   
+type_graylist_check_tuple:
+
   stored = tuple_search(&tuple,&idx);
   
   if (stored == NULL)
@@ -439,7 +438,7 @@ type_graylist_check_ip:
     send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
     return;
   }
-  
+
   if (difftime(req->now,stored->ctime) < c_timeout_embargo)
   {
     send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_LATER);
@@ -523,7 +522,7 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
   tcp = create_socket(c_host,c_port,SOCK_STREAM);
   listen(tcp,5);
 
-  pid = fork();
+  pid = gld_fork();
   if (pid == -1)
   {
     close(tcp);
@@ -537,18 +536,6 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
     return;
   }
 
-  /*-------------------------------------------------
-  ; for the child, we don't want to re-exec(), just
-  ; bail for any of these signals.
-  ;--------------------------------------------------*/
-
-  set_signal(SIGSEGV ,sighandler_critical_child);
-  set_signal(SIGBUS,  sighandler_critical_child);
-  set_signal(SIGFPE,  sighandler_critical_child);
-  set_signal(SIGILL,  sighandler_critical_child);
-  set_signal(SIGXCPU ,sighandler_critical_child);
-  set_signal(SIGXFSZ ,sighandler_critical_child);
-  
   do
   {
     rsize = sizeof(struct sockaddr);

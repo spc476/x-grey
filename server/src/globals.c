@@ -26,11 +26,10 @@
 #include "../../common/src/globals.h"
 #include "../../common/src/util.h"
 
-#include "graylist.h"
+#include "tuple.h"
 #include "signals.h"
 #include "util.h"
 #include "iplist.h"
-#include "iptable.h"
 #include "emaildomain.h"
 
 enum

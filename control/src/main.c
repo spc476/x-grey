@@ -29,17 +29,21 @@
 
 static void	cmdline			(void);
 static void	process_cmdline		(char *);
-static int	send_request		(void *,size_t,void *,size_t,int);
-static void	handler_sigalrm		(int);
+static void	show			(String *,size_t);
+static void	iplist			(String *,size_t);
+static void	tofrom			(String *,size_t,int,int,int);
+
 static void	show_stats		(void);
 static void	show_config		(void);
 static void	show_report		(int,int);
-static void	help			(void);
-static void	pager			(int);
-static void	iplist			(char *);
+
 static void	iplist_file		(char *);
 static void	iplist_file_relaydelay	(char *);
-static void	tofrom			(char *,int,int,int);
+
+static int	send_request		(void *,size_t,void *,size_t,int);
+static void	handler_sigalrm		(int);
+static void	help			(void);
+static void	pager			(int);
 
 /*************************************************************/
 
@@ -81,6 +85,9 @@ static void cmdline(void)
     cmd = readline(prompt);
     
     if (cmd == NULL) break;
+    if (empty_string(cmd)) continue;
+    
+    trim_space(cmd);
     
     if (strcmp(cmd,"exit") == 0)
       break;
@@ -89,10 +96,7 @@ static void cmdline(void)
       break;
 
     if (!emptynull_string(cmd))
-    {
-      trim_space(cmd);
       add_history(cmd);
-    }
     
     process_cmdline(cmd);
     
@@ -107,40 +111,61 @@ static void cmdline(void)
 
 static void process_cmdline(char *cmd)
 {
-  if (strcmp(cmd,"show stats") == 0)
+  String *cmdline;
+  size_t  cmds;
+  
+  cmdline = split(&cmds,cmd);
+  
+  if (strcmp(cmdline[0].d,"show") == 0)
+    show(cmdline,cmds);
+  else if (strcmp(cmdline[0].d,"iplist") == 0)
+    iplist(cmdline,cmds);
+  else if (strcmp(cmdline[0].d,"to") == 0)
+    tofrom(cmdline,cmds,CMD_MCP_TO,CMD_MCP_TO_RESP,FALSE);
+  else if (strcmp(cmdline[0].d,"to-domain") == 0)
+    tofrom(cmdline,cmds,CMD_MCP_TO_DOMAIN,CMD_MCP_TO_DOMAIN_RESP,TRUE);
+  else if (strcmp(cmdline[0].d,"from") == 0)
+    tofrom(cmdline,cmds,CMD_MCP_FROM,CMD_MCP_FROM_RESP,FALSE);
+  else if (strcmp(cmdline[0].d,"from-domain") == 0)
+    tofrom(cmdline,cmds,CMD_MCP_FROM_DOMAIN,CMD_MCP_FROM_DOMAIN_RESP,TRUE);
+  else if (strcmp(cmdline[0].d,"help") == 0)
+    help();
+  else if (strcmp(cmdline[0].d,"?") == 0)
+    help();
+
+  MemFree(cmdline);
+}
+
+/**************************************************************/
+
+static void show(String *cmdline,size_t cmds)
+{
+  ddt(cmdline != NULL);
+  ddt(cmds    >  0);
+  
+  if (strcmp(cmdline[1].d,"stats") == 0)
     show_stats();
-  else if (strcmp(cmd,"show config") == 0)
+  else if (strcmp(cmdline[1].d,"config") == 0)
     show_config();
-  else if (strcmp(cmd,"show iplist") == 0)
+  else if (strcmp(cmdline[1].d,"iplist") == 0)
     show_report(CMD_MCP_SHOW_IPLIST,CMD_MCP_SHOW_IPLIST_RESP);
-  else if (strcmp(cmd,"show tuples") == 0)
-    show_report(CMD_MCP_SHOW_TUPLE_ALL,CMD_MCP_SHOW_TUPLE_ALL_RESP);
-  else if (strcmp(cmd,"show tuples all") == 0)
-    show_report(CMD_MCP_SHOW_TUPLE_ALL,CMD_MCP_SHOW_TUPLE_ALL_RESP);
-  else if (strcmp(cmd,"show tuples whitelist") == 0)
-    show_report(CMD_MCP_SHOW_WHITELIST,CMD_MCP_SHOW_WHITELIST_RESP);
-  else if (strcmp(cmd,"show to") == 0)
+  else if (strcmp(cmdline[1].d,"tuples") == 0)
+  {
+    if (cmds == 2)
+      show_report(CMD_MCP_SHOW_TUPLE_ALL,CMD_MCP_SHOW_TUPLE_ALL_RESP);
+    else if (strcmp(cmdline[2].d,"all") == 0)
+      show_report(CMD_MCP_SHOW_TUPLE_ALL,CMD_MCP_SHOW_TUPLE_ALL_RESP);
+    else if (strcmp(cmdline[2].d,"whitelist") == 0)
+      show_report(CMD_MCP_SHOW_WHITELIST,CMD_MCP_SHOW_WHITELIST_RESP);
+  }
+  else if (strcmp(cmdline[1].d,"to") == 0)
     show_report(CMD_MCP_SHOW_TO,CMD_MCP_SHOW_TO_RESP);
-  else if (strcmp(cmd,"show to-domain") == 0)
+  else if (strcmp(cmdline[1].d,"to-domain") == 0)
     show_report(CMD_MCP_SHOW_TO_DOMAIN,CMD_MCP_SHOW_TO_DOMAIN_RESP);
-  else if (strcmp(cmd,"show from") == 0)
+  else if (strcmp(cmdline[1].d,"from") == 0)
     show_report(CMD_MCP_SHOW_FROM,CMD_MCP_SHOW_FROM_RESP);
-  else if (strcmp(cmd,"show from-domain") == 0)
+  else if (strcmp(cmdline[1].d,"from-domain") == 0)
     show_report(CMD_MCP_SHOW_FROM_DOMAIN,CMD_MCP_SHOW_FROM_DOMAIN_RESP);
-  else if (strncmp(cmd,"iplist ",7) == 0)
-    iplist(&cmd[7]);
-  else if (strncmp(cmd,"to ",3) == 0)
-    tofrom(&cmd[3],CMD_MCP_TO,CMD_MCP_TO_RESP,FALSE);
-  else if (strncmp(cmd,"to-domain ",10) == 0)
-    tofrom(&cmd[10],CMD_MCP_TO_DOMAIN,CMD_MCP_TO_DOMAIN_RESP,TRUE);
-  else if (strncmp(cmd,"from ",5) == 0)
-    tofrom(&cmd[5],CMD_MCP_FROM,CMD_MCP_FROM_RESP,FALSE);
-  else if (strncmp(cmd,"from-domain ",12) == 0)
-    tofrom(&cmd[12],CMD_MCP_FROM_DOMAIN,CMD_MCP_FROM_DOMAIN_RESP,TRUE);
-  else if (strcmp(cmd,"help") == 0)
-    help();
-  else if (strcmp(cmd,"?") == 0)
-    help();
 }
 
 /***************************************************************/
@@ -447,7 +472,7 @@ static void pager(int fh)
 
 /**********************************************************/
 
-static void iplist(char *cmd)
+static void iplist(String *cmdline,size_t cmds)
 {
   struct glmcp_request_iplist  ipr;
   byte                         data[1500];
@@ -455,8 +480,12 @@ static void iplist(char *cmd)
   char                        *p;
   int                          rc;
   
-  ddt(cmd != NULL);
-  
+  ddt(cmdline != NULL);
+  ddt(cmds    >  0);
+
+  if (cmds < 3)		/* valid command has at least 3 paramters */
+    return;
+
   memset(ipr.data,0,16);
   
   ipr.version = htons(VERSION);
@@ -465,21 +494,16 @@ static void iplist(char *cmd)
   ipr.ipsize  = htons(4);
   ipr.mask    = htons(32);	/* default mask */
   
-  p = strchr(cmd,' ');
-  if (p == NULL)
-    return;
-
-  *p++ = '\0';
-
-  up_string(cmd);
-
-  if (strcmp(cmd,"FILE") == 0)
+  if (strcmp(cmdline[1].d,"file") == 0)
   {
-    iplist_file(p);
+    if (cmds == 3)
+      iplist_file(cmdline[2].d);
+    else if ((cmds == 4) && (strcmp(cmdline[3].d,"relaydelay") == 0))
+      iplist_file_relaydelay(cmdline[2].d);
     return;
   }
-
-  ipr.cmd = ci_map_int(cmd,c_ipcmds,C_IPCMDS);
+  
+  ipr.cmd = ci_map_int(up_string(cmdline[1].d),c_ipcmds,C_IPCMDS);
 
   if (ipr.cmd == (unet16)-1)
   {
@@ -489,7 +513,7 @@ static void iplist(char *cmd)
   
   ipr.cmd = htons(ipr.cmd);
   
-  for (octet = 0 ; octet < 4 ; octet++)
+  for (octet = 0 , p = cmdline[2].d ; octet < 4 ; octet++)
   {
     ipr.data[octet] = strtoul(p,&p,10);
     if (*p != '.') break;
@@ -507,32 +531,19 @@ static void iplist(char *cmd)
 
 /******************************************************************/
 
-static void iplist_file(char *cmd)
+static void iplist_file(char *fname)
 {
   Stream                       in;
   struct glmcp_request_iplist  ipr;
   byte                         data[1500];
-  size_t                       octet;
-  char                        *p;
-  char                        *r;
-  int                          rc;
   int                          linecnt;
 
-  ddt(cmd != NULL);
+  ddt(fname != NULL);
   
-  p = strchr(cmd,' ');
-  if (p != NULL)
-  {
-    *p++ = '\0';
-    if (strcmp(p,"relaydelay") == 0)
-      iplist_file_relaydelay(cmd);
-    return;
-  }
-  
-  in = FileStreamRead(cmd);
+  in = FileStreamRead(fname);
   if (in == NULL)
   {
-    LineSFormat(StdoutStream,"$","could not open %a",cmd);
+    LineSFormat(StdoutStream,"$","could not open %a",fname);
     return;
   }
   
@@ -540,8 +551,11 @@ static void iplist_file(char *cmd)
   
   while(!StreamEOF(in))
   {
-    char *line;
-    char *p;
+    char   *line;
+    char   *p;
+    char   *r;
+    int     rc;
+    size_t  octet;
     
     linecnt++;
     line = LineSRead(in);
@@ -581,7 +595,7 @@ static void iplist_file(char *cmd)
     
     if (ipr.cmd == (unet16)-1)
     {
-      LineSFormat(StdoutStream,"$ i","%a(%b): syntax error",cmd,linecnt);
+      LineSFormat(StdoutStream,"$ i","%a(%b): syntax error",fname,linecnt);
       return;
     }
   
@@ -652,38 +666,32 @@ static void iplist_file_relaydelay(char *fname)
 
 /*************************************************************************/
 
-static void tofrom(char *text,int cmd,int resp,int domain)
+static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
 {
   byte                         packet[1500];
   byte                         data  [1500];
   struct glmcp_request_tofrom *ptfr;
-  char                        *p;
   size_t                       addrsize;
   int                          rc;
   
-  ddt(cmd != NULL);
+  ddt(cmdline != NULL);
+  ddt(cmds    >  0);
   
-  ptfr = (struct glmcp_request_tofrom *)packet;
-  p    = strchr(text,' ');
-  if (p == NULL)
-    return;
-  
-  *p++ = '\0';
-  
-  up_string(text);
-  addrsize = min(strlen(p),200);
+  ptfr     = (struct glmcp_request_tofrom *)packet;
+  addrsize = min(strlen(cmdline[2].d),200);  
+  up_string(cmdline[1].d);
 
   if (domain)
   {
-    char *at = strchr(p,'@');
+    char *at = strchr(cmdline[2].d,'@');
     if (at)
     {
-      LineSFormat(StdoutStream,"$","this '%a' is not a domain\n",p);
+      LineSFormat(StdoutStream,"$","this '%a' is not a domain\n",cmdline[2].d);
       return;
     }
   }
   
-  ptfr->cmd = ci_map_int(text,c_ipcmds,C_IPCMDS);
+  ptfr->cmd = ci_map_int(up_string(cmdline[1].d),c_ipcmds,C_IPCMDS);
   if (ptfr->cmd == (unet16)-1)
     return;
    
@@ -691,7 +699,7 @@ static void tofrom(char *text,int cmd,int resp,int domain)
   ptfr->MTA     = htons(MTA_MCP);
   ptfr->type    = htons(cmd);
   ptfr->cmd     = htons(ptfr->cmd);
-  memcpy(ptfr->data,p,addrsize);
+  memcpy(ptfr->data,cmdline[2].d,addrsize);
   ptfr->data[addrsize] = '\0';
   
   rc = send_request(

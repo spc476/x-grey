@@ -4,10 +4,15 @@
 
 #include <syslog.h>
 
+#include <cgilib/stream.h>
+#include <cgilib/errors.h>
+#include <cgilib/util.h>
+#include <cgilib/memory.h>
 #include <cgilib/ddt.h>
 
 #include "../../common/src/graylist.h"
-#include "graylist.h"
+#include "../../common/src/util.h"
+#include "tuple.h"
 #include "globals.h"
 
 /**********************************************************************/
@@ -240,3 +245,184 @@ void tuple_expire(time_t Tao)
 
 /**********************************************************************/
 
+int whitelist_dump(void)
+{
+  Stream out;
+  
+  out = FileStreamWrite(c_whitefile,FILE_CREATE | FILE_TRUNCATE);
+  if (out == NULL)
+  {
+    (*cv_report)(LOG_ERR,"$","could not open %a",c_whitefile);
+    return(ERR_ERR);
+  }
+
+  whitelist_dump_stream(out);
+  
+  StreamFree(out);
+  return(ERR_OKAY);
+}
+
+/******************************************************************/
+
+int whitelist_dump_stream(Stream out)
+{
+  size_t i;
+
+  ddt(out != NULL);
+  
+  for (i = 0 ; (!StreamEOF(out)) && (i < g_poolnum) ; i++)
+  {
+    if ((g_tuplespace[i]->f & F_WHITELIST))
+    {
+      LineSFormat(
+      		out,
+      		"$ $ $",
+      		"%a %b %c\n",
+      		ipv4(g_tuplespace[i]->ip),
+      		g_tuplespace[i]->from,
+      		g_tuplespace[i]->to
+      	);
+    }
+  }
+  return(ERR_OKAY);
+}
+
+/********************************************************************/
+
+int tuple_dump(void)
+{
+  Stream out;
+  
+  out = FileStreamWrite(c_dumpfile,FILE_CREATE | FILE_TRUNCATE);
+  if (out == NULL)
+  {
+    (*cv_report)(LOG_ERR,"$","could not open %a",c_dumpfile);
+    return(ERR_ERR);
+  }
+  
+  tuple_dump_stream(out);
+  StreamFree(out);
+  return(ERR_OKAY);
+}
+
+/*******************************************************************/
+
+int tuple_dump_stream(Stream out)
+{
+  size_t i;
+
+  ddt(out != NULL);
+
+  for (i = 0 ; (!StreamEOF(out)) && (i < g_poolnum) ; i++)
+  {
+    LineSFormat(
+        out,
+        "$ $ $ $ $ $ $ $ L L",
+        "%a %b %c %d%e%f%g%h %i %j\n",
+        ipv4(g_tuplespace[i]->ip),
+        g_tuplespace[i]->from,
+        g_tuplespace[i]->to,
+        (g_tuplespace[i]->f & F_WHITELIST) ? "W" : "-",
+        (g_tuplespace[i]->f & F_GRAYLIST)  ? "G" : "-",
+        (g_tuplespace[i]->f & F_TRUNCFROM) ? "F" : "-",
+        (g_tuplespace[i]->f & F_TRUNCTO)   ? "T" : "-",
+        (g_tuplespace[i]->f & F_IPv6)      ? "6" : "-",
+        (unsigned long)g_tuplespace[i]->ctime,
+        (unsigned long)g_tuplespace[i]->atime
+    );
+  }
+  return(ERR_OKAY);
+}
+
+/******************************************************************/
+
+int whitelist_load(void)
+{
+  struct tuple tuple;
+  Stream       in;
+  time_t       now;
+  
+  now = time(NULL);
+  in  = FileStreamRead(c_whitefile);
+  if (in == NULL)	/* normal condition, if it doesn't exist */
+    return(ERR_OKAY);	/* don't sweat about it */
+    
+  while(!StreamEOF(in))
+  {
+    Tuple   stored;
+    size_t  idx;
+    char   *line;
+    char   *p;
+    char   *n;
+    
+    memset(&tuple,0,sizeof(struct tuple));
+    
+    line = LineSRead(in);
+    if (empty_string(line)) continue;
+    
+    D(tuple.pad = 0xDECAFBAD);
+    tuple.ip[0] = strtoul(line,&p,10); p++;
+    tuple.ip[1] = strtoul(p,&p,10);    p++;
+    tuple.ip[2] = strtoul(p,&p,10);    p++;
+    tuple.ip[3] = strtoul(p,&p,10);    p++;
+    
+    n = strchr(p,' ');
+    
+    /*----------------------------------------------
+    ; this shouldn't happen, but if it does, just skip
+    ; this line and continue
+    ;------------------------------------------------*/
+    
+    if (n == NULL)
+    {
+      MemFree(line);
+      continue;
+    }
+    
+    *n++ = '\0';
+    
+    strncpy(tuple.from,p,sizeof(tuple.from) - 1);
+    strncpy(tuple.to,  n,sizeof(tuple.to)   - 1);
+    tuple.fromsize = strlen(tuple.from);
+    tuple.tosize   = strlen(tuple.to);
+    tuple.ctime    = tuple.atime = now;
+
+    (*cv_report)(
+    	LOG_DEBUG,
+	"$ $ $",
+	"Adding [%a , %b , %c]",
+	ipv4(tuple.ip),
+	tuple.from,
+	tuple.to
+      );
+    
+    stored = tuple_search(&tuple,&idx);
+    
+    if (stored == NULL)
+    {
+      stored = tuple_allocate();
+      memcpy(stored,&tuple,sizeof(struct tuple));
+      stored->f |= F_WHITELIST;
+      tuple_add(stored,idx);
+      g_whitelisted++;
+    }
+    else
+    {
+      (*cv_report)(LOG_DEBUG,"","FOUND!");
+      stored->atime = now;
+      
+      if ((stored->f & F_WHITELIST) == 0)
+      {
+        stored->f |= F_WHITELIST;
+        g_whitelisted++;
+      }
+    }
+    
+    MemFree(line);
+  }
+  
+  StreamFree(in);
+  return(ERR_OKAY);
+}
+
+/**********************************************************************/
