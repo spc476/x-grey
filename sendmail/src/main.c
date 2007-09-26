@@ -17,6 +17,7 @@
 #include <cgilib/memory.h>
 #include <cgilib/types.h>
 #include <cgilib/ddt.h>
+#include <cgilib/util.h>
 #include <cgilib/stream.h>
 
 #include "../../common/src/graylist.h"
@@ -39,17 +40,17 @@ static sfsistat		mf_mail_from	(SMFICTX *,char **);
 static sfsistat		mf_rcpt_to	(SMFICTX *,char **);
 static sfsistat		mf_close	(SMFICTX *);
 
-static int		check_graylist	(int,char *,char *,char *);	
+static int		check_graylist	(int,byte *,char *,char *);	
 static void		handler_sigalrm	(int);
 
 /**********************************************************/
 
 static volatile sig_atomic_t mf_sigalrm;
-static smfiDesc              m_smfilter = 
+static struct smfiDesc       m_smfilter = 
 {
   "Greylist Daemon",
   SMFI_VERSION,
-  SMFIF_ADDRCPT,
+  SMFIF_NONE,
   mf_connect,
   NULL,
   mf_mail_from,
@@ -66,7 +67,7 @@ static smfiDesc              m_smfilter =
 
 int main(int argc,char *argv[])
 {
-  int sock;
+  int rc;
   
   MemInit();
   DdtInit();
@@ -76,10 +77,10 @@ int main(int argc,char *argv[])
     return(EXIT_FAILURE);  
 
   set_signal(SIGALRM,handler_sigalrm);
-  rc = smfi_setconn(g_filterchannel);
-  rc = smfi_register(m_smfilter);
-  sock = create_socket(c_host,c_port,SOCK_DGRAM);
-  
+  rc      = smfi_setconn((char *)c_filterchannel);
+  rc      = smfi_register(m_smfilter);
+  gl_sock = create_socket(c_host,c_port,SOCK_DGRAM);
+
   return (smfi_main());
 }
 
@@ -95,7 +96,7 @@ static sfsistat mf_connect(SMFICTX *ctx,char *hostname,_SOCK_ADDR *addr)
   data = MemAlloc(sizeof(struct mfprivate));
   data->sip    = 4;
   data->sender = NULL;
-  memcpy(data->ip,addr,4);
+  memcpy(data->ip,addr->sa_data,4);
   
   smfi_setpriv(ctx,data);
   return(SMFIS_CONTINUE);
@@ -110,7 +111,7 @@ static sfsistat mf_mail_from(SMFICTX *ctx,char **argv)
   ddt(ctx  != NULL);
   ddt(argv != NULL);
   
-  data         = MLFIPRIV;
+  data         = smfi_getpriv(ctx);
   data->sender = dup_string(argv[0]);
   return(SMFIS_CONTINUE);
 }
@@ -125,7 +126,7 @@ static sfsistat mf_rcpt_to(SMFICTX *ctx,char **argv)
   ddt(ctx  != NULL);
   ddt(argv != NULL);
   
-  data = MLFIPRIV;
+  data = smfi_getpriv(ctx);
   
   response = check_graylist(gl_sock,data->ip,data->sender,argv[0]);
   switch(response)
@@ -145,7 +146,7 @@ static sfsistat mf_close(SMFICTX *ctx)
   
   ddt(ctx != NULL);
   
-  data = MLFIPRIV;
+  data = smfi_getpriv(ctx);
   if (data != NULL)
   {
     if (data->sender != NULL) MemFree(data->sender);
@@ -157,8 +158,15 @@ static sfsistat mf_close(SMFICTX *ctx)
 
 /****************************************************************/
 
-static int check_graylist(int sock,char *ip,char *from,char *to)
+static int check_graylist(int sock,byte *ip,char *from,char *to)
 {
+#if 1
+
+  syslog(LOG_INFO,"tuple: [%s , %s , %s]",ipv4(ip),from,to);
+  return(GRAYLIST_YEA);
+
+#else
+
   byte                      outpacket[600];
   byte                      inpacket [1500];
   struct graylist_request  *glq;
@@ -168,7 +176,6 @@ static int check_graylist(int sock,char *ip,char *from,char *to)
   size_t                    sfrom;
   size_t                    sto;
   byte                     *p;
-  char                     *d;
   ssize_t                   rrc;
   
   sfrom = min(strlen(from),200);
@@ -185,12 +192,8 @@ static int check_graylist(int sock,char *ip,char *from,char *to)
   glq->ipsize   = htons(4);
   glq->fromsize = htons(sfrom);
   glq->tosize   = htons(sto);
-  
-  *p++ = strtoul(ip,&d,10); d++;	/* pack IP */
-  *p++ = strtoul(d ,&d,10); d++;
-  *p++ = strtoul(d ,&d,10); d++;
-  *p++ = strtoul(d ,&d,10); d++;
-  
+
+  memcpy(p,ip,4);	p += 4;
   memcpy(p,from,sfrom);	p += sfrom;
   memcpy(p,to,sto);     p += sto;
   
@@ -283,6 +286,7 @@ static int check_graylist(int sock,char *ip,char *from,char *to)
   }
   ddt(0);
   return(GRAYLIST_YEA);
+#endif
 }
 
 /*******************************************************************/

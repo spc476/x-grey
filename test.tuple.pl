@@ -3,6 +3,7 @@ use strict;
 
 my $line;
 my @tuple;
+$| = 1;
 
 while($line = <STDIN>)
 {
@@ -15,4 +16,5 @@ recipient=$tuple[2]
 client_address=$tuple[0]
 
 EOF
+  sleep 1;
 }

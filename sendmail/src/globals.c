@@ -22,7 +22,8 @@
 
 enum
 {
-  OPT_TIMEOUT = OPT_USER
+  OPT_TIMEOUT = OPT_USER,
+  OPT_CHANNEL
 };
 
 /*****************************************************************/
@@ -32,19 +33,24 @@ static void		 dump_defaults	(void);
 
 /****************************************************************/
 
-char                *c_host        = DEF_LHOST;
-int                  c_port        = 0;
-char                *c_timeformat  = "%c";
-char                *c_rhost       = DEF_RHOST;
-int                  c_rport       = DEF_RPORT;
+char                *c_host         = DEF_LHOST;
+int                  c_port         = 0;
+char                *c_timeformat   = "%c";
+char                *c_rhost        = DEF_RHOST;
+int                  c_rport        = DEF_RPORT;
 struct sockaddr_in   c_raddr;
-socklen_t            c_raddrsize    = sizeof(struct sockaddr_in);
-int                  c_timeout      = 5;
-int                  c_log_facility = LOG_LOCAL5;
-int                  c_log_level    = LOG_DEBUG;
-char                *c_log_id	    = "pfgl";
-int                  cf_debug       = 0;
+socklen_t            c_raddrsize     = sizeof(struct sockaddr_in);
+int                  c_timeout       = 5;
+int                  c_log_facility  = LOG_LOCAL5;
+int                  c_log_level     = LOG_DEBUG;
+char                *c_log_id	     = "smgl";
+char                *c_secret        = "decafbad";
+size_t               c_secretsize    = 8;
+char                *c_filterchannel = "unix:/tmp/milter";
+int                  cf_debug        = 0;
 void               (*cv_report)(int,char *,char *,...) = report_syslog;
+
+int                  gl_sock;
 
   /*----------------------------------------------------*/
 
@@ -54,6 +60,7 @@ static const struct option mc_options[] =
   { "log-facility"	, required_argument	, NULL	, OPT_LOG_FACILITY	} ,
   { "log-level"		, required_argument	, NULL	, OPT_LOG_LEVEL		} ,
   { "log-id"		, required_argument	, NULL	, OPT_LOG_ID		} ,
+  { "channel"		, required_argument	, NULL	, OPT_CHANNEL		} ,
   { "debug"		, no_argument		, NULL	, OPT_DEBUG		} ,
   { "help"		, no_argument		, NULL	, OPT_HELP		} ,
   { NULL		, 0			, NULL	, 0			} 
@@ -111,6 +118,9 @@ static void parse_cmdline(int argc,char *argv[])
       case OPT_TIMEOUT:
            c_timeout = read_dtime(optarg);
            break;
+      case OPT_CHANNEL:
+           c_filterchannel = dup_string(optarg);
+           break;
       case OPT_LOG_FACILITY:
            {
              char *tmp = up_string(dup_string(optarg));
@@ -154,12 +164,14 @@ static void dump_defaults(void)
     "\t--log-facility <facility> (%s)\n"
     "\t--log-level <level>       (%s)\n"
     "\t--log-id <id>             (%s)\n"
+    "\t--channel <channel>       (%s)\n"
     "\t--debug                   (%s)\n"
     "\t--help\n",
     tout,
     ci_map_chars(c_log_facility,c_facilities,C_FACILITIES),
     ci_map_chars(c_log_level,   c_levels,    C_LEVELS),
     c_log_id,
+    c_filterchannel,
     (cf_debug) ? "true" : "false"
   );  
   MemFree(tout);

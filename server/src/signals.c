@@ -19,6 +19,8 @@
 #include "iplist.h"
 #include "signals.h"
 
+#define FIXED_SAVE_STATE_BUG
+
 /***********************************************************************/
 
 static void	handle_sigint		(void);
