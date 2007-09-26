@@ -22,6 +22,7 @@
 
 #include "../../common/src/graylist.h"
 #include "../../common/src/util.h"
+#include "../../common/src/crc32.h"
 #include "globals.h"
 
 #define min(a,b)	((a) < (b)) ? (a) : (b)
@@ -42,6 +43,7 @@ static sfsistat		mf_close	(SMFICTX *);
 
 static int		check_graylist	(int,byte *,char *,char *);	
 static void		handler_sigalrm	(int);
+static int		isbracket	(int);
 
 /**********************************************************/
 
@@ -88,7 +90,8 @@ int main(int argc,char *argv[])
 
 static sfsistat mf_connect(SMFICTX *ctx,char *hostname,_SOCK_ADDR *addr)
 {
-  struct mfprivate *data;
+  struct mfprivate   *data;
+  struct sockaddr_in *ip = (struct sockaddr_in *)addr;
 
   ddt(ctx  != NULL);
   ddt(addr != NULL);
@@ -96,7 +99,7 @@ static sfsistat mf_connect(SMFICTX *ctx,char *hostname,_SOCK_ADDR *addr)
   data = MemAlloc(sizeof(struct mfprivate));
   data->sip    = 4;
   data->sender = NULL;
-  memcpy(data->ip,addr->sa_data,4);
+  memcpy(data->ip,&ip->sin_addr.s_addr,4);
   
   smfi_setpriv(ctx,data);
   return(SMFIS_CONTINUE);
@@ -112,7 +115,7 @@ static sfsistat mf_mail_from(SMFICTX *ctx,char **argv)
   ddt(argv != NULL);
   
   data         = smfi_getpriv(ctx);
-  data->sender = dup_string(argv[0]);
+  data->sender = remove_char(dup_string(argv[0]),isbracket);
   return(SMFIS_CONTINUE);
 }
 
@@ -121,14 +124,18 @@ static sfsistat mf_mail_from(SMFICTX *ctx,char **argv)
 static sfsistat mf_rcpt_to(SMFICTX *ctx,char **argv)
 {
   struct mfprivate *data;
+  char             *to;
   int               response;
   
   ddt(ctx  != NULL);
   ddt(argv != NULL);
   
-  data = smfi_getpriv(ctx);
+  data     = smfi_getpriv(ctx);
+  to       = remove_char(dup_string(argv[0]),isbracket);
+  response = check_graylist(gl_sock,data->ip,data->sender,to);
   
-  response = check_graylist(gl_sock,data->ip,data->sender,argv[0]);
+  MemFree(to);
+  
   switch(response)
   {
     case GRAYLIST_YEA:   return (SMFIS_ACCEPT);
@@ -160,9 +167,19 @@ static sfsistat mf_close(SMFICTX *ctx)
 
 static int check_graylist(int sock,byte *ip,char *from,char *to)
 {
-#if 1
+#if 0
+  char *p;
 
-  syslog(LOG_INFO,"tuple: [%s , %s , %s]",ipv4(ip),from,to);
+  p = strchr(to,'@');
+  if (p == NULL)
+    return(GRAYLIST_YEA);
+
+  if (strcmp(p+1,"armigeron.com") == 0)
+#endif
+#if 0
+
+    syslog(LOG_INFO,"tuple: [%s , %s , %s]",ipv4(ip),from,to);
+
   return(GRAYLIST_YEA);
 
 #else
@@ -177,6 +194,18 @@ static int check_graylist(int sock,byte *ip,char *from,char *to)
   size_t                    sto;
   byte                     *p;
   ssize_t                   rrc;
+  size_t                    packetsize;
+  CRC32                     crc;
+  
+  {
+    char *t;
+    t = strchr(to,'@');
+    if (t == NULL)
+      return(GRAYLIST_YEA);
+    
+    if (strcmp(t+1,"armigeron.com") != 0)
+      return(GRAYLIST_YEA);
+  }
   
   sfrom = min(strlen(from),200);
   sto   = min(strlen(to),  200);
@@ -196,6 +225,14 @@ static int check_graylist(int sock,byte *ip,char *from,char *to)
   memcpy(p,ip,4);	p += 4;
   memcpy(p,from,sfrom);	p += sfrom;
   memcpy(p,to,sto);     p += sto;
+  
+  packetsize = (size_t)(p - outpacket);
+
+  (*cv_report)(LOG_INFO,"i i","sizeof CRC: %a sizeof unet32: %b",sizeof(CRC32),sizeof(unet32));
+  
+  crc      = crc32(INIT_CRC32,&glq->version,packetsize - sizeof(CRC32));
+  crc      = crc32(crc,c_secret,c_secretsize);
+  glq->crc = htonl(crc);
   
   rrc = sendto(
   		sock,
@@ -241,6 +278,15 @@ static int check_graylist(int sock,byte *ip,char *from,char *to)
       (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
     else
       (*cv_report)(LOG_DEBUG,"","timeout");
+    return(GRAYLIST_YEA);
+  }
+  
+  crc = crc32(INIT_CRC32,&glr->version,rrc - sizeof(unet32));
+  crc = crc32(crc,c_secret,c_secretsize);
+  
+  if (crc != ntohl(glr->crc))
+  {
+    (*cv_report)(LOG_ERR,"","received bad packet");
     return(GRAYLIST_YEA);
   }
   
@@ -294,6 +340,15 @@ static int check_graylist(int sock,byte *ip,char *from,char *to)
 static void handler_sigalrm(int sig)
 {
   mf_sigalrm = 1;
+}
+
+/******************************************************************/
+
+static int isbracket(int c)
+{
+  if (c == '>') return(1);
+  if (c == '<') return(1);
+  return(0);
 }
 
 /******************************************************************/

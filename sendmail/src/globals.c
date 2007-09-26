@@ -38,15 +38,15 @@ int                  c_port         = 0;
 char                *c_timeformat   = "%c";
 char                *c_rhost        = DEF_RHOST;
 int                  c_rport        = DEF_RPORT;
+int                  c_timeout       = 5;
 struct sockaddr_in   c_raddr;
 socklen_t            c_raddrsize     = sizeof(struct sockaddr_in);
-int                  c_timeout       = 5;
 int                  c_log_facility  = LOG_LOCAL5;
 int                  c_log_level     = LOG_DEBUG;
 char                *c_log_id	     = "smgl";
 char                *c_secret        = "decafbad";
 size_t               c_secretsize    = 8;
-char                *c_filterchannel = "unix:/tmp/milter";
+char                *c_filterchannel = "unix:/var/state/graylist/milter";
 int                  cf_debug        = 0;
 void               (*cv_report)(int,char *,char *,...) = report_syslog;
 
@@ -56,11 +56,16 @@ int                  gl_sock;
 
 static const struct option mc_options[] =
 {
+  { "host"		, required_argument	, NULL	, OPT_HOST		} ,
+  { "port"		, required_argument	, NULL	, OPT_PORT		} ,
+  { "remote-host"	, required_argument	, NULL	, OPT_RHOST		} ,
+  { "remote-port"	, required_argument	, NULL	, OPT_RPORT		} ,
   { "timeout"		, required_argument	, NULL  , OPT_TIMEOUT		} ,
   { "log-facility"	, required_argument	, NULL	, OPT_LOG_FACILITY	} ,
   { "log-level"		, required_argument	, NULL	, OPT_LOG_LEVEL		} ,
   { "log-id"		, required_argument	, NULL	, OPT_LOG_ID		} ,
   { "channel"		, required_argument	, NULL	, OPT_CHANNEL		} ,
+  { "secret"		, required_argument	, NULL	, OPT_SECRET		} ,
   { "debug"		, no_argument		, NULL	, OPT_DEBUG		} ,
   { "help"		, no_argument		, NULL	, OPT_HELP		} ,
   { NULL		, 0			, NULL	, 0			} 
@@ -88,6 +93,7 @@ int (GlobalsInit)(int argc,char *argv[])
   c_raddr.sin_port   = htons(c_rport);
 
   openlog(c_log_id,0,c_log_facility);
+
   return(EXIT_SUCCESS);
 }
 
@@ -115,6 +121,18 @@ static void parse_cmdline(int argc,char *argv[])
            return;
       case OPT_NONE:
            break;
+      case OPT_HOST:
+           c_host = dup_string(optarg);
+           break;
+      case OPT_PORT:
+           c_port = strtoul(optarg,NULL,10);
+           break;
+      case OPT_RHOST:
+           c_rhost = dup_string(optarg);
+           break;
+      case OPT_RPORT:
+           c_rport = strtoul(optarg,NULL,10);
+           break;
       case OPT_TIMEOUT:
            c_timeout = read_dtime(optarg);
            break;
@@ -137,6 +155,10 @@ static void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_LOG_ID:
            c_log_id = dup_string(optarg);
+           break;
+      case OPT_SECRET:
+           c_secret     = dup_string(optarg);
+           c_secretsize = strlen(c_secret);
            break;
       case OPT_DEBUG:
            cf_debug = 1;

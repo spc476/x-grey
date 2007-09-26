@@ -110,7 +110,7 @@ static void mainloop(int sock)
     
     if (crc != ntohl(req.glr->crc))
     {
-      (*cv_report)(LOG_DEBUG,"","bad CRC-skipping packet");
+      (*cv_report)(LOG_DEBUG,"U","bad CRC-skipping packet %a",(unsigned long)crc);
       continue;
     }
     
