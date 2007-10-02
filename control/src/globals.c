@@ -21,13 +21,13 @@
 
 /*********************************************************/
 
-static void	parse_cmdline	(int,char *[]);
+static int	parse_cmdline	(int,char *[]);
 static void	dump_defaults	(void);
 static void	my_exit		(void);
 
 /**********************************************************/
 
-const char          *c_host         = DEF_HOST;
+const char          *c_host         = "0.0.0.0";
 int                  c_port         = 0;
 const char          *c_rhost        = DEF_RHOST;
 int                  c_rport        = DEF_RPORT;
@@ -35,7 +35,7 @@ int                  c_timeout      = 5;
 struct sockaddr_in   c_raddr;
 socklen_t            c_raddrsize = sizeof(struct sockaddr_in);
 int                  c_log_facility = LOG_LOCAL5;
-int                  c_log_level    = LOG_INFO;
+int                  c_log_level    = LOG_ERR;
 const char          *c_log_id       = "gld-mcp";
 int                  cf_debug       = FALSE;
 const char          *c_timeformat   = "%c";
@@ -48,10 +48,10 @@ void               (*cv_report)(int,char *,char *, ... ) = report_stderr;
 
 static const struct option mc_options[] =
 {
-  { "host"		, required_argument	, NULL	, OPT_HOST 		} ,
+  { "addr"		, required_argument	, NULL	, OPT_HOST 		} ,
   { "port"		, required_argument	, NULL	, OPT_PORT 		} ,
-  { "remote-host"	, required_argument	, NULL	, OPT_RHOST		} ,
-  { "remote-port"	, required_argument	, NULL	, OPT_RPORT		} ,
+  { "server"		, required_argument	, NULL	, OPT_RHOST		} ,
+  { "server-port"	, required_argument	, NULL	, OPT_RPORT		} ,
   { "log-facility"	, required_argument	, NULL	, OPT_LOG_FACILITY 	} ,
   { "log-level"		, required_argument	, NULL	, OPT_LOG_LEVEL		} ,
   { "log-id"		, required_argument	, NULL	, OPT_LOG_ID		} ,
@@ -67,6 +67,7 @@ int (GlobalsInit)(int argc,char *argv[])
 {
   struct hostent *remote;
   char           *pager;
+  int             rc;
   
   ddt(argc >  0);
   ddt(argv != NULL);
@@ -75,13 +76,13 @@ int (GlobalsInit)(int argc,char *argv[])
   if (pager)
     c_pager = dup_string(pager);
 
-  parse_cmdline(argc,argv);
+  rc = parse_cmdline(argc,argv);
 
   remote = gethostbyname(c_rhost);
   if (remote == NULL)
   {
     (*cv_report)(LOG_ERR,"$ $","gethostbyname(%a) = %b",c_rhost,strerror(errno));
-    return(EXIT_FAILURE);
+    return(-1);
   }
   
   memcpy(&c_raddr.sin_addr.s_addr,remote->h_addr,remote->h_length);
@@ -89,7 +90,7 @@ int (GlobalsInit)(int argc,char *argv[])
   c_raddr.sin_port   = htons(c_rport);
 
   atexit(my_exit);
-  return(ERR_OKAY);  
+  return(rc);  
 }
 
 /******************************************************/
@@ -101,7 +102,7 @@ int (GlobalsDeinit)(void)
 
 /****************************************************/
 
-static void parse_cmdline(int argc,char *argv[])
+static int parse_cmdline(int argc,char *argv[])
 {
   char *tmp;
   int   option = 0;
@@ -114,7 +115,7 @@ static void parse_cmdline(int argc,char *argv[])
     switch(getopt_long_only(argc,argv,"",mc_options,&option))
     {
       case EOF:
-           return;
+           return (option + 1);
       case OPT_NONE:
            break;
       case OPT_HOST:
@@ -167,10 +168,10 @@ static void dump_defaults(void)
   LineSFormat(
   	StderrStream,
   	"$ i $ $ $ $ $ i",
-  	"\t--host <hostname>\t\t(%a)\n"
+  	"\t--addr <hostname>\t\t(%a)\n"
   	"\t--port <num>\t\t\t(%b)\n"
-  	"\t--remote-host <hostname>\t(%g)\n"
-  	"\t--remote-port <num>\t\t(%h)\n"
+  	"\t--server <hostname>\t(%g)\n"
+  	"\t--server-port <num>\t\t(%h)\n"
   	"\t--log-facility <facility>\t(%c)\n"
   	"\t--log-level <level>\t\t(%d)\n"
   	"\t--log-id <string>\t\t(%e)\n"

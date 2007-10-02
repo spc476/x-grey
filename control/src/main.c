@@ -29,7 +29,7 @@
 /**************************************************************/
 
 static void	cmdline			(void);
-static void	process_cmdline		(char *);
+static void	process_cmdline		(String *,size_t);
 static void	show			(String *,size_t);
 static void	iplist			(String *,size_t);
 static void	tofrom			(String *,size_t,int,int,int);
@@ -44,30 +44,58 @@ static void	iplist_file_relaydelay	(char *);
 static int	send_request		(void *,size_t,void *,size_t,int);
 static void	handler_sigalrm		(int);
 static void	help			(void);
-static void	pager			(int);
+static void	pager_batch		(int);
+static void	pager_interactive	(int);
 
 /*************************************************************/
 
 extern char **environ;
 
-static volatile sig_atomic_t mf_sigalrm;
-static int                   m_sock;
+static volatile sig_atomic_t   mf_sigalrm;
+static int                     m_sock;
+static void                  (*m_pager)(int) = pager_interactive;
 
 /************************************************************/
 
 int main(int argc,char *argv[])
 {
+  int cmd;
+  
   MemInit();
   DdtInit();
   StreamInit();
   
-  GlobalsInit(argc,argv);
+  cmd = GlobalsInit(argc,argv);
   
+  if (cmd < 0)
+  {
+    LineS(StderrStream,"can't init program\n");
+    StreamFlush(StderrStream);
+    return(EXIT_FAILURE);
+  }
+
   set_signal(SIGALRM,handler_sigalrm);
   m_sock = create_socket(c_host,c_port,SOCK_DGRAM);
-
-  cmdline();
-  
+    
+  if (cmd < argc)
+  {
+    size_t  cmds  = argc - cmd;
+    String *what  = MemAlloc(cmds * sizeof(String));
+    size_t  i;
+    
+    for (i = 0 ; cmd < argc ; i++,cmd++)
+    {
+      what[i].d = argv[cmd];
+      what[i].s = strlen(argv[cmd]);
+    }
+    
+    m_pager = pager_batch;
+    process_cmdline(what,cmds);  
+    MemFree(cmdline);
+  }
+  else
+    cmdline();
+    
   return(EXIT_SUCCESS);
 }
 
@@ -75,9 +103,11 @@ int main(int argc,char *argv[])
 
 static void cmdline(void)
 {
-  char  prompt[BUFSIZ];
-  char *cmd;
-  
+  String *cmdline;
+  char    prompt[BUFSIZ];
+  char   *cmd;
+  size_t  cmds;
+
   sprintf(prompt,"%s>",c_log_id);
   using_history();
   
@@ -96,26 +126,28 @@ static void cmdline(void)
     if (strcmp(cmd,"quit") == 0)
       break;
 
-    if (!emptynull_string(cmd))
-      add_history(cmd);
-    
-    process_cmdline(cmd);
+    add_history(cmd);
+
+    cmdline = split(&cmds,cmd);    
+    StreamWrite(StdoutStream,'\n');
+    process_cmdline(cmdline,cmds);
+    StreamWrite(StdoutStream,'\n');
+    MemFree(cmdline);
     
     StreamFlush(StdoutStream);  
     free(cmd);
   }
+  
   free(cmd);
-  LineS(StdoutStream,"\n");
+  StreamWrite(StdoutStream,'\n');
 }
 
 /****************************************************************/
 
-static void process_cmdline(char *cmd)
+static void process_cmdline(String *cmdline,size_t cmds)
 {
-  String *cmdline;
-  size_t  cmds;
-  
-  cmdline = split(&cmds,cmd);
+  ddt(cmdline != NULL);
+  ddt(cmds    >  0);
   
   if (strcmp(cmdline[0].d,"show") == 0)
     show(cmdline,cmds);
@@ -133,8 +165,6 @@ static void process_cmdline(char *cmd)
     help();
   else if (strcmp(cmdline[0].d,"?") == 0)
     help();
-
-  MemFree(cmdline);
 }
 
 /**************************************************************/
@@ -295,15 +325,13 @@ static void show_stats(void)
   LineSFormat(
       	StdoutStream,
       	"$ L10 L10 L10 L10 L10 L10",
-      	"\n"
       	"%a\n"
       	"IPs:               %c\n"
       	"Tuples:            %b\n"
       	"Graylisted:        %d\n"
       	"Whitelisted:       %e\n"
       	"Graylist-Expired:  %f\n"
-      	"Whitelist-Expired: %g\n"
-      	"\n",
+      	"Whitelist-Expired: %g\n",
         t,
         (unsigned long)ntohl(gss->tuples),
         (unsigned long)ntohl(gss->ips),
@@ -349,13 +377,11 @@ static void show_config(void)
   LineSFormat(
   	StdoutStream,
   	"L10 $ $ $ $",
-  	"\n"
   	"Max-Tuples:        %a\n"
   	"Timeout-Cleanup:   %b\n"
   	"Timeout-Embargo:   %c\n"
   	"Timeout-Graylist:  %d\n"
-  	"Timeout-Whitelist: %e\n"
-  	"\n",
+  	"Timeout-Whitelist: %e\n",
   	(unsigned long)ntohl(gsc->max_tuples),
   	cleanup,
   	embargo,
@@ -409,10 +435,10 @@ static void show_report(int req,int resp)
     return;
   }
 
-  StreamWrite(StdoutStream,'\n');
-  pager(conn);
+  /*StreamWrite(StdoutStream,'\n');*/
+  (*m_pager)(conn);
   close(conn); 
-  StreamWrite(StdoutStream,'\n');
+  /*StreamWrite(StdoutStream,'\n');*/
 }
 
 /************************************************************/
@@ -453,7 +479,18 @@ static void help(void)
 
 /**************************************************************/
 
-static void pager(int fh)
+static void pager_batch(int fh)
+{
+  Stream in;
+  
+  in = FHStreamRead(fh);
+  StreamCopy(StdoutStream,in);
+  StreamFree(in);
+}
+
+/*************************************************************/
+
+static void pager_interactive(int fh)
 {
   pid_t  child;
   pid_t  pid;

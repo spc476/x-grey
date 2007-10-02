@@ -539,6 +539,13 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
   
   memcpy(&remote,&req->remote,sizeof(struct sockaddr));
   tcp = create_socket(c_host,c_port,SOCK_STREAM);
+
+  if (tcp == -1)
+  {
+    (*cv_report)(LOG_ERR,"","could not create socket for report");
+    return;
+  }
+    
   listen(tcp,5);
 
   pid = gld_fork();
@@ -555,17 +562,13 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
     return;
   }
 
-  do
+  rsize = sizeof(struct sockaddr);
+  conn  = accept(tcp,&remote,&rsize);
+  if (conn == -1)
   {
-    rsize = sizeof(struct sockaddr);
-    conn  = accept(tcp,&remote,&rsize);
-    if (conn == -1)
-    {
-      if (errno == EINTR)
-        continue;
-      (*cv_report)(LOG_ERR,"$","accept() = %a",strerror(errno));
-    }
-  } while (conn == -1);
+    (*cv_report)(LOG_ERR,"$","accept() = %a",strerror(errno));
+    return;
+  }
   
   close(tcp);
   out = FHStreamWrite(conn);

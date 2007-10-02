@@ -31,7 +31,7 @@ struct mfprivate
 {
   size_t  sip;
   byte    ip[16];
-  char   *sender;
+  char    sender[200];
 };
 
 /***********************************************************/
@@ -96,12 +96,17 @@ static sfsistat mf_connect(SMFICTX *ctx,char *hostname,_SOCK_ADDR *addr)
   ddt(ctx  != NULL);
   ddt(addr != NULL);
 
-  data = MemAlloc(sizeof(struct mfprivate));
+  data = smfi_getpriv(ctx);
+  if (data == NULL)
+  {
+    data = MemAlloc(sizeof(struct mfprivate));
+    smfi_setpriv(ctx,data);
+  }
+
   data->sip    = 4;
-  data->sender = NULL;
+  memset(data->sender,0,sizeof(data->sender));
   memcpy(data->ip,&ip->sin_addr.s_addr,4);
   
-  smfi_setpriv(ctx,data);
   return(SMFIS_CONTINUE);
 }
 
@@ -110,12 +115,15 @@ static sfsistat mf_connect(SMFICTX *ctx,char *hostname,_SOCK_ADDR *addr)
 static sfsistat mf_mail_from(SMFICTX *ctx,char **argv)
 {
   struct mfprivate *data;
+  size_t            size;
   
   ddt(ctx  != NULL);
   ddt(argv != NULL);
   
   data         = smfi_getpriv(ctx);
-  data->sender = remove_char(dup_string(argv[0]),isbracket);
+  size = min(sizeof(data->sender) - 1,strlen(argv[0]));
+  memcpy(data->sender,argv[0],size);
+  remove_char(data->sender,isbracket);
   return(SMFIS_CONTINUE);
 }
 
@@ -154,12 +162,11 @@ static sfsistat mf_close(SMFICTX *ctx)
   ddt(ctx != NULL);
   
   data = smfi_getpriv(ctx);
+
   if (data != NULL)
-  {
-    if (data->sender != NULL) MemFree(data->sender);
     MemFree(data);
-  }
   
+  smfi_setpriv(ctx,NULL);
   return(SMFIS_CONTINUE);
 }
 
@@ -167,23 +174,6 @@ static sfsistat mf_close(SMFICTX *ctx)
 
 static int check_graylist(int sock,byte *ip,char *from,char *to)
 {
-#if 0
-  char *p;
-
-  p = strchr(to,'@');
-  if (p == NULL)
-    return(GRAYLIST_YEA);
-
-  if (strcmp(p+1,"armigeron.com") == 0)
-#endif
-#if 0
-
-    syslog(LOG_INFO,"tuple: [%s , %s , %s]",ipv4(ip),from,to);
-
-  return(GRAYLIST_YEA);
-
-#else
-
   byte                      outpacket[600];
   byte                      inpacket [1500];
   struct graylist_request  *glq;
@@ -228,8 +218,6 @@ static int check_graylist(int sock,byte *ip,char *from,char *to)
   
   packetsize = (size_t)(p - outpacket);
 
-  (*cv_report)(LOG_INFO,"i i","sizeof CRC: %a sizeof unet32: %b",sizeof(CRC32),sizeof(unet32));
-  
   crc      = crc32(INIT_CRC32,&glq->version,packetsize - sizeof(CRC32));
   crc      = crc32(crc,c_secret,c_secretsize);
   glq->crc = htonl(crc);
@@ -332,7 +320,6 @@ static int check_graylist(int sock,byte *ip,char *from,char *to)
   }
   ddt(0);
   return(GRAYLIST_YEA);
-#endif
 }
 
 /*******************************************************************/
