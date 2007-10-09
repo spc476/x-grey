@@ -20,12 +20,16 @@ static void tofrom_dump_stream	(Stream,EDomain,size_t);
 static int  tofrom_read		(
 				  const char *,
 				  EDomain (*)(EDomain,size_t *),
-				  void    (*)(EDomain,size_t)
+				  void    (*)(EDomain,size_t),
+				  int      *,
+				  size_t   *
 				);
 static void tofrom_read_stream	(
 				  Stream,
 				  EDomain (*)(EDomain,size_t *),
-				  void    (*)(EDomain,size_t)
+				  void    (*)(EDomain,size_t),
+				  int      *,
+				  size_t   *
 				);
 
 /******************************************************************/
@@ -331,9 +335,13 @@ int fromd_dump(void)
 
 int to_dump_stream(Stream out)
 {
+  const char *cmd;
+  
   ddt(out != NULL);
   
   tofrom_dump_stream(out,g_to,g_sto);
+  cmd = ci_map_chars(g_defto,c_ipcmds,C_IPCMDS);
+  LineSFormat(out,"L10 $8.8l","%a %b DEFAULT\n",g_toc,cmd);
   return(ERR_OKAY);
 }
 
@@ -341,9 +349,13 @@ int to_dump_stream(Stream out)
 
 int tod_dump_stream(Stream out)
 {
+  const char *cmd;
+  
   ddt(out);
   
   tofrom_dump_stream(out,g_tod,g_stod);
+  cmd = ci_map_chars(g_deftodomain,c_ipcmds,C_IPCMDS);
+  LineSFormat(out,"L10 $8.8l","%a %b DEFAULT\n",g_todomainc,cmd);
   return(ERR_OKAY);
 }
 
@@ -351,9 +363,13 @@ int tod_dump_stream(Stream out)
 
 int from_dump_stream(Stream out)
 {
+  const char *cmd;
+  
   ddt(out);
   
   tofrom_dump_stream(out,g_from,g_sfrom);
+  cmd = ci_map_chars(g_deffrom,c_ipcmds,C_IPCMDS);
+  LineSFormat(out,"L10 $8.8l","%a %b DEFAULT\n",g_fromc,cmd);
   return(ERR_OKAY);
 }
 
@@ -361,9 +377,13 @@ int from_dump_stream(Stream out)
 
 int fromd_dump_stream(Stream out)
 {
+  const char *cmd;
+  
   ddt(out);
   
   tofrom_dump_stream(out,g_fromd,g_sfromd);
+  cmd = ci_map_chars(g_deffromdomain,c_ipcmds,C_IPCMDS);
+  LineSFormat(out,"L10 $8.8l","%a %b DEFAULT\n",g_fromdomainc,cmd);
   return(ERR_OKAY);
 }
 
@@ -387,28 +407,28 @@ static void tofrom_dump_stream(Stream out,EDomain list,size_t size)
 
 int to_read(void)
 {
-  return (tofrom_read(c_tofile,edomain_search_to,edomain_add_to));
+  return (tofrom_read(c_tofile,edomain_search_to,edomain_add_to,&g_defto,&g_toc));
 }
 
 /*******************************************************************/
 
 int tod_read(void)
 {
-  return (tofrom_read(c_todfile,edomain_search_tod,edomain_add_tod));
+  return (tofrom_read(c_todfile,edomain_search_tod,edomain_add_tod,&g_deftodomain,&g_todomainc));
 }
 
 /******************************************************************/
 
 int from_read(void)
 {
-  return (tofrom_read(c_fromfile,edomain_search_from,edomain_add_from));
+  return (tofrom_read(c_fromfile,edomain_search_from,edomain_add_from,&g_deffrom,&g_fromc));
 }
 
 /*****************************************************************/
 
 int fromd_read(void)
 {
-  return (tofrom_read(c_fromdfile,edomain_search_fromd,edomain_add_fromd));
+  return (tofrom_read(c_fromdfile,edomain_search_fromd,edomain_add_fromd,&g_deffromdomain,&g_fromdomainc));
 }
 
 /******************************************************************/
@@ -416,14 +436,18 @@ int fromd_read(void)
 static int tofrom_read(
 		const char  *fname,
 		EDomain    (*search)(EDomain,size_t *),
-		void       (*add)   (EDomain,size_t)
+		void       (*add)   (EDomain,size_t),
+		int         *pdef,
+		size_t      *pcount
 	)
 {
   Stream in;
   
-  ddt(fname != NULL);
+  ddt(fname  != NULL);
   ddt(search);
   ddt(add);
+  ddt(pdef   != NULL);
+  ddt(pcount != NULL);
   
   in = FileStreamRead(fname);
   if (in == NULL)
@@ -432,7 +456,7 @@ static int tofrom_read(
     return(ERR_ERR);
   }
   
-  tofrom_read_stream(in,search,add);
+  tofrom_read_stream(in,search,add,pdef,pcount);
   StreamFree(in);
   return(ERR_OKAY);
 }
@@ -442,7 +466,9 @@ static int tofrom_read(
 static void tofrom_read_stream(
 		Stream    in,
 		EDomain (*search)(EDomain,size_t *),
-		void    (*add)   (EDomain,size_t)
+		void    (*add)   (EDomain,size_t),
+		int      *pdef,
+		size_t   *pcount
 	)
 {
   struct emaildomain  ed;
@@ -452,9 +478,11 @@ static void tofrom_read_stream(
   char               *line;
   size_t              idx;
   
-  ddt(in != NULL);
+  ddt(in     != NULL);
   ddt(search);
   ddt(add);
+  ddt(pdef   != NULL);
+  ddt(pcount != NULL);
   
   line    = dup_string("");
   fields  = MemAlloc(sizeof(String));
@@ -480,6 +508,16 @@ static void tofrom_read_stream(
       continue;
     }
     
+    if (
+         (strcmp(fields[2].d,"default") == 0)
+         || (strcmp(fields[2].d,"DEFAULT") == 0)
+       )
+    {
+      *pdef   = ci_map_int(fields[1].d,c_ipcmds,C_IPCMDS);
+      *pcount = strtoul(fields[0].d,NULL,10);
+      continue;
+    }
+
     ed.text  = (char *)fields[2].d;
     ed.tsize = fields[2].s;
     ed.count = strtoul(fields[0].d,NULL,10);

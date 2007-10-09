@@ -14,6 +14,7 @@
 #include <cgilib/ddt.h>
 #include <cgilib/stream.h>
 #include <cgilib/util.h>
+#include <cgilib/types.h>
 
 #include "../../common/src/graylist.h"
 #include "../../common/src/util.h"
@@ -344,7 +345,15 @@ void type_graylist(struct request *req)
     else
       ddt(0);
   }
-
+  else 
+  {
+    g_fromc++;
+    if (g_deffrom == IPCMD_ACCEPT)
+      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+    else if (g_deffrom == IPCMD_REJECT)
+      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+  }
+  
   at = strchr(tuple.from,'@');
   if (at)
   {
@@ -368,6 +377,14 @@ void type_graylist(struct request *req)
       else if (edvalue->cmd != IPCMD_GRAYLIST)
         ddt(0);
     }
+  }
+  else 
+  {
+    g_fromdomainc++;
+    if (g_deffromdomain == IPCMD_ACCEPT)
+      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+    else if (g_deffromdomain == IPCMD_REJECT)
+      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
   }
   
   /*-----------------------------------------------------
@@ -399,6 +416,14 @@ type_graylist_check_to:
     else
       ddt(0);
   }
+  else 
+  {
+    g_toc++;
+    if (g_defto == IPCMD_ACCEPT)
+      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+    else if (g_defto == IPCMD_REJECT)
+      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+  }
   
   at = strchr(tuple.to,'@');
   if (at)
@@ -424,7 +449,15 @@ type_graylist_check_to:
         ddt(0);
     }
   }
-
+  else 
+  {
+    g_todomainc++;
+    if (g_deftodomain == IPCMD_ACCEPT)
+      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+    else if (g_deftodomain == IPCMD_REJECT)
+      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+  }
+  
   /*-------------------------------------------------------
   ; Look up the tuple.  If not found, add it, else update the access time,
   ; and if less than the embargo period, return LATER, else accept.
@@ -593,6 +626,7 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
   struct emaildomain           edkey;
   EDomain                      value;
   size_t                       index;
+  int                          def;
   
   ddt(req != NULL);
   
@@ -602,61 +636,105 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
   edkey.tsize = ntohs(ptf->size);
   edkey.count = 0;
   edkey.cmd   = ntohs(ptf->cmd);
-  
+
+  if(
+      (strcmp(edkey.text,"default") == 0)
+      || (strcmp(edkey.text,"DEFAULT") == 0)
+    )
+  {
+    def = TRUE;
+  }
+  else
+  {
+    def = FALSE;
+  }
+
   (*cv_report)(LOG_DEBUG,"$ i","adding %a as %b",edkey.text,edkey.cmd);
   
   switch(cmd)
   {
     case CMD_MCP_TO:
-         value = edomain_search(&edkey,&index,g_to,g_sto);
-         if (value == NULL)
+         if (def)
          {
-           edkey.text = dup_string(edkey.text);
-           edomain_add_to(&edkey,index);
+           g_defto = edkey.cmd;
+           g_toc   = edkey.count;
          }
-	 else
-	 {
-	   value->cmd   = edkey.cmd;
-	   value->count = 0;
+         else
+         {
+           value = edomain_search(&edkey,&index,g_to,g_sto);
+           if (value == NULL)
+           {
+             edkey.text = dup_string(edkey.text);
+             edomain_add_to(&edkey,index);
+           }
+	   else
+	   {
+	     value->cmd   = edkey.cmd;
+	     value->count = 0;
+	   }
 	 }
          break;
     case CMD_MCP_TO_DOMAIN:
-         value = edomain_search(&edkey,&index,g_tod,g_stod);
-         if (value == NULL)
+         if (def)
          {
-           edkey.text = dup_string(edkey.text);
-           edomain_add_tod(&edkey,index);
+           g_deftodomain = edkey.cmd;
+           g_todomainc   = edkey.count;
          }
-	 else
-	 {
-	   value->cmd   = edkey.cmd;
-	   value->count = 0;
+         else
+         {
+           value = edomain_search(&edkey,&index,g_tod,g_stod);
+           if (value == NULL)
+           {
+             edkey.text = dup_string(edkey.text);
+             edomain_add_tod(&edkey,index);
+           }
+	   else
+	   {
+	     value->cmd   = edkey.cmd;
+	     value->count = 0;
+	   }
 	 }
          break;
     case CMD_MCP_FROM:
-         value = edomain_search(&edkey,&index,g_from,g_sfrom);
-         if (value == NULL)
+         if (def)
          {
-           edkey.text = dup_string(edkey.text);
-           edomain_add_from(&edkey,index);
+           g_deffrom = edkey.cmd;
+           g_fromc   = edkey.count;
          }
-	 else
-	 {
-	   value->cmd   = edkey.cmd;
-	   value->count = 0;
+         else
+         {
+           value = edomain_search(&edkey,&index,g_from,g_sfrom);
+           if (value == NULL)
+           {
+             edkey.text = dup_string(edkey.text);
+             edomain_add_from(&edkey,index);
+           }
+	   else
+	   {
+	     value->cmd   = edkey.cmd;
+	     value->count = 0;
+	   }
 	 }
          break;
     case CMD_MCP_FROM_DOMAIN:
-         value = edomain_search(&edkey,&index,g_fromd,g_sfromd);
-         if (value == NULL)
+         if (def)
          {
-           edkey.text = dup_string(edkey.text);
-           edomain_add_fromd(&edkey,index);
+           g_deffromdomain = edkey.cmd;
+           g_fromdomainc   = edkey.count;
          }
-	 else
-	 {
-	   value->cmd   = edkey.cmd;
-	   value->count = 0;
+         else
+         {
+           value = edomain_search(&edkey,&index,g_fromd,g_sfromd);
+           if (value == NULL)
+           {
+             edkey.text = dup_string(edkey.text);
+             edomain_add_fromd(&edkey,index);
+           }
+	   else
+	   {
+	     value->cmd   = edkey.cmd;
+	     value->count = 0;
+	   }
 	 }
          break;
     default:

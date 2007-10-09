@@ -121,6 +121,15 @@ struct emaildomain  *g_tod;
 
 time_t               g_time_savestate;
 
+int		     g_defto         = IPCMD_GRAYLIST;
+int                  g_deftodomain   = IPCMD_GRAYLIST;
+int		     g_deffrom       = IPCMD_GRAYLIST;
+int                  g_deffromdomain = IPCMD_GRAYLIST;
+size_t               g_toc;
+size_t               g_todomainc;
+size_t               g_fromc;
+size_t               g_fromdomainc;
+
 /*******************************************************************/
 
 volatile int m_debug = 1;

@@ -66,6 +66,15 @@ extern struct emaildomain *g_tod;
 
 extern time_t              g_time_savestate;
 
+extern int                 g_defto;
+extern int                 g_deftodomain;
+extern int                 g_deffrom;
+extern int                 g_deffromdomain;
+extern size_t              g_toc;
+extern size_t              g_todomainc;
+extern size_t              g_fromc;
+extern size_t              g_fromdomainc;
+
 /*****************************************************************/
 
 int	(GlobalsInit)	(int,char *[]);

@@ -19,7 +19,7 @@
 #include "iplist.h"
 #include "signals.h"
 
-#undef FIXED_SAVE_STATE_BUG
+#define FIXED_SAVE_STATE_BUG
 
 /***********************************************************************/
 
