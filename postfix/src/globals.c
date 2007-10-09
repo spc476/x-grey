@@ -52,6 +52,10 @@ void               (*cv_report)(int,char *,char *,...) = report_syslog;
 
 static const struct option mc_options[] =
 {
+  { "host"		, required_argument	, NULL	, OPT_HOST		} ,
+  { "port"		, required_argument	, NULL	, OPT_HOST		} ,
+  { "remote-host"	, required_argument	, NULL	, OPT_RHOST		} ,
+  { "remote-port"	, required_argument	, NULL	, OPT_RPORT		} ,
   { "timeout"		, required_argument	, NULL  , OPT_TIMEOUT		} ,
   { "log-facility"	, required_argument	, NULL	, OPT_LOG_FACILITY	} ,
   { "log-level"		, required_argument	, NULL	, OPT_LOG_LEVEL		} ,
@@ -110,6 +114,18 @@ static void parse_cmdline(int argc,char *argv[])
       case EOF:
            return;
       case OPT_NONE:
+           break;
+      case OPT_HOST:
+           c_host = dup_string(optarg);
+           break;
+      case OPT_PORT:
+           c_port = strtoul(optarg,NULL,10);
+           break;
+      case OPT_RHOST:
+           c_rhost = dup_string(optarg);
+           break;
+      case OPT_RPORT:
+           c_rport = strtoul(optarg,NULL,10);
            break;
       case OPT_TIMEOUT:
            c_timeout = read_dtime(optarg);
