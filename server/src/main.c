@@ -377,14 +377,14 @@ void type_graylist(struct request *req)
       else if (edvalue->cmd != IPCMD_GRAYLIST)
         ddt(0);
     }
-  }
-  else 
-  {
-    g_fromdomainc++;
-    if (g_deffromdomain == IPCMD_ACCEPT)
-      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
-    else if (g_deffromdomain == IPCMD_REJECT)
-      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+    else 
+    {
+      g_fromdomainc++;
+      if (g_deffromdomain == IPCMD_ACCEPT)
+        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+      else if (g_deffromdomain == IPCMD_REJECT)
+        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+    }
   }
   
   /*-----------------------------------------------------
@@ -448,16 +448,16 @@ type_graylist_check_to:
       else if (edvalue->cmd != IPCMD_GRAYLIST)
         ddt(0);
     }
+    else 
+    {
+      g_todomainc++;
+      if (g_deftodomain == IPCMD_ACCEPT)
+        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+      else if (g_deftodomain == IPCMD_REJECT)
+        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+    }
   }
-  else 
-  {
-    g_todomainc++;
-    if (g_deftodomain == IPCMD_ACCEPT)
-      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
-    else if (g_deftodomain == IPCMD_REJECT)
-      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
-  }
-  
+
   /*-------------------------------------------------------
   ; Look up the tuple.  If not found, add it, else update the access time,
   ; and if less than the embargo period, return LATER, else accept.
