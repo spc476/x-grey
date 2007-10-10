@@ -177,7 +177,7 @@ void edomain_add_from(EDomain rec,size_t index)
   if (g_sfrom == g_smaxfrom)
   {
     g_smaxfrom += ED_DELTA;
-    g_from      = MemResize(g_from,g_smaxfrom);
+    g_from      = MemResize(g_from,g_smaxfrom * sizeof(struct emaildomain));
   }
   
   memmove(
@@ -200,7 +200,7 @@ void edomain_add_fromd(EDomain rec,size_t index)
   if (g_sfromd == g_smaxfromd)
   {
     g_smaxfromd += ED_DELTA;
-    g_fromd      = MemResize(g_fromd,g_smaxfromd);
+    g_fromd      = MemResize(g_fromd,g_smaxfromd * sizeof(struct emaildomain));
   }
   
   memmove(
@@ -223,7 +223,7 @@ void edomain_add_to(EDomain rec,size_t index)
   if (g_sto == g_smaxto)
   {
     g_smaxto += ED_DELTA;
-    g_to      = MemResize(g_to,g_smaxto);
+    g_to      = MemResize(g_to,g_smaxto * sizeof(struct emaildomain));
   }
   
   memmove(
@@ -246,14 +246,14 @@ void edomain_add_tod(EDomain rec,size_t index)
   if (g_stod == g_smaxtod)
   {
     g_smaxtod += ED_DELTA;
-    g_tod      = MemResize(g_tod,g_smaxtod);
+    g_tod      = MemResize(g_tod,g_smaxtod * sizeof(struct emaildomain));
   }
   
   memmove(
   	&g_tod[index + 1],
   	&g_tod[index],
   	(g_stod - index) * sizeof(struct emaildomain)
-  );
+    );
   
   g_tod[index] = *rec;
   g_stod++;
