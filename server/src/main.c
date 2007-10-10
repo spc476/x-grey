@@ -349,9 +349,15 @@ void type_graylist(struct request *req)
   {
     g_fromc++;
     if (g_deffrom == IPCMD_ACCEPT)
+    {
       send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+      return;
+    }
     else if (g_deffrom == IPCMD_REJECT)
+    {
       send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+      return;
+    }
   }
   
   at = strchr(tuple.from,'@');
@@ -381,9 +387,15 @@ void type_graylist(struct request *req)
     {
       g_fromdomainc++;
       if (g_deffromdomain == IPCMD_ACCEPT)
+      {
         send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+	return;
+      }
       else if (g_deffromdomain == IPCMD_REJECT)
+      { 
         send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+	return;
+      }
     }
   }
   
@@ -420,9 +432,15 @@ type_graylist_check_to:
   {
     g_toc++;
     if (g_defto == IPCMD_ACCEPT)
+    {
       send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+      return;
+    }
     else if (g_defto == IPCMD_REJECT)
+    {
       send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+      return;
+    }
   }
   
   at = strchr(tuple.to,'@');
@@ -452,9 +470,15 @@ type_graylist_check_to:
     {
       g_todomainc++;
       if (g_deftodomain == IPCMD_ACCEPT)
+      {
         send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+	return;
+      }
       else if (g_deftodomain == IPCMD_REJECT)
+      {
         send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+        return;
+      }
     }
   }
 
