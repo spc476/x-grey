@@ -187,18 +187,6 @@ static int check_graylist(int sock,byte *ip,char *from,char *to)
   size_t                    packetsize;
   CRC32                     crc;
   
-#if 0
-  {
-    char *t;
-    t = strchr(to,'@');
-    if (t == NULL)
-      return(GRAYLIST_YEA);
-    
-    if (strcmp(t+1,"armigeron.com") != 0)
-      return(GRAYLIST_YEA);
-  }
-#endif
-
   sfrom = min(strlen(from),200);
   sto   = min(strlen(to),  200);
   
