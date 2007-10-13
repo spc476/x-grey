@@ -43,6 +43,9 @@ extern struct tuple       *g_pool;
 extern Tuple              *g_tuplespace;
 extern int               **g_argv;
 
+extern size_t		   g_requests;
+extern size_t              g_req_cu;
+extern size_t              g_req_cucurrent;
 extern size_t	           g_graylisted;
 extern size_t	           g_whitelisted;
 extern size_t	           g_whitelist_expired;

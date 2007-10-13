@@ -241,10 +241,10 @@ int iplist_dump_stream(Stream out)
 
 int ip_match(byte *ip,size_t size)
 {
-  struct ipnode *match;
-  struct ipnode *p   = g_tree;
-  int            off = -1;
-  int            bit =  0;
+  struct ipnode *match = g_tree;
+  struct ipnode *p     = g_tree;
+  int            off   = -1;
+  int            bit   =  0;
   
   ddt(ip   != NULL);
   ddt(size == 4);
@@ -290,7 +290,7 @@ int ip_add_sm(byte *ip,size_t size,int mask,int cmd)
   ddt(size == 4);
   ddt(mask >  -1);
   ddt(mask <  33);
-  ddt(mask != 31);
+  /*ddt(mask != 31);*/	/* mask CAN be /31! */
   
   if (mask == 0)
   {

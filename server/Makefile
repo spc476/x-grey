@@ -2,8 +2,9 @@
 CGILIB=/home/spc/source/cgi
 CINCL=-I $(CGILIB)/src
 
-CC=gcc -g
-CFLAGS=-Wall -pedantic $(CINCL) -DDDT
+#CC=gcc -g
+CC=gcc -fomit-frame-pointer -O3
+CFLAGS=-Wall -pedantic $(CINCL)
 LFLAGS=-L$(CGILIB)/$(HOSTDIR) -lcgi5
 
 $(HOSTDIR)/gl : $(HOSTDIR)/main.o		\

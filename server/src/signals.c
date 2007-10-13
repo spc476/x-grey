@@ -270,9 +270,11 @@ static void handle_sigalrm(void)
   
   (*cv_report)(LOG_DEBUG,"","Alarm-time for house cleaning!");
 
-  mf_sigalrm = 0;
-  now        = time(NULL);
-
+  mf_sigalrm      = 0;
+  now             = time(NULL);
+  g_req_cu        = g_req_cucurrent;
+  g_req_cucurrent = 0;
+  
   tuple_expire(now);
 
 #ifdef FIXED_SAVE_STATE_BUG

@@ -10,6 +10,9 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #include <cgilib/memory.h>
@@ -23,16 +26,20 @@
 enum
 {
   OPT_TIMEOUT = OPT_USER,
-  OPT_CHANNEL
+  OPT_CHANNEL,
+  OPT_FOREGROUND
 };
 
 /*****************************************************************/
 
 static void		 parse_cmdline	(int,char *[]);
 static void		 dump_defaults	(void);
+static void		 daemon_init	(void);
+static void		 my_exit	(void);
 
 /****************************************************************/
 
+char		    *c_pidfile	    = "/var/run/graylist.pid";
 char                *c_host         = DEF_LHOST;
 int                  c_port         = 0;
 char                *c_timeformat   = "%c";
@@ -47,6 +54,7 @@ char                *c_log_id	     = "smgl";
 char                *c_secret        = "decafbad";
 size_t               c_secretsize    = 8;
 char                *c_filterchannel = "unix:/var/state/graylist/milter";
+int                  cf_foreground   = 0;
 int                  cf_debug        = 0;
 void               (*cv_report)(int,char *,char *,...) = report_syslog;
 
@@ -61,6 +69,7 @@ static const struct option mc_options[] =
   { "remote-host"	, required_argument	, NULL	, OPT_RHOST		} ,
   { "remote-port"	, required_argument	, NULL	, OPT_RPORT		} ,
   { "timeout"		, required_argument	, NULL  , OPT_TIMEOUT		} ,
+  { "foreground"	, no_argument		, NULL	, OPT_FOREGROUND	} ,
   { "log-facility"	, required_argument	, NULL	, OPT_LOG_FACILITY	} ,
   { "log-level"		, required_argument	, NULL	, OPT_LOG_LEVEL		} ,
   { "log-id"		, required_argument	, NULL	, OPT_LOG_ID		} ,
@@ -94,6 +103,12 @@ int (GlobalsInit)(int argc,char *argv[])
 
   openlog(c_log_id,0,c_log_facility);
 
+  if (!cf_foreground)
+    daemon_init();
+  
+  unlink(&c_filterchannel[5]);
+  atexit(my_exit);
+  write_pidfile(c_pidfile);
   return(EXIT_SUCCESS);
 }
 
@@ -156,6 +171,9 @@ static void parse_cmdline(int argc,char *argv[])
       case OPT_LOG_ID:
            c_log_id = dup_string(optarg);
            break;
+      case OPT_FOREGROUND:
+           cf_foreground = 1;
+           break;
       case OPT_SECRET:
            c_secret     = dup_string(optarg);
            c_secretsize = strlen(c_secret);
@@ -197,6 +215,68 @@ static void dump_defaults(void)
     (cf_debug) ? "true" : "false"
   );  
   MemFree(tout);
+}
+
+/********************************************************************/
+
+static void daemon_init(void)
+{
+  pid_t pid;
+  int   fhr;
+  int   fhw;
+  
+  /*---------------------------------------------------
+  ; because I don't know the full details about the
+  ; milter library, I decided to redirect STDIN, STDOUT
+  ; and STDERR to /dev/null.  I figure it's safer
+  ; that way.
+  ;---------------------------------------------------*/
+  
+  fhr = open("/dev/null",O_RDONLY);
+  if (fhr == -1)
+  {
+    (*cv_report)(LOG_EMERG,"$","daemon_init(): open(/dev/null,read) = %a",strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+  
+  fhw = open("/dev/null",O_WRONLY);
+  if (fhw == -1)
+  {
+    (*cv_report)(LOG_EMERG,"$","daemon_init(): open(/dev/null,write) = %a",strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+  pid = fork();
+  if (pid == (pid_t)-1)
+  {
+    (*cv_report)(LOG_EMERG,"$","daemon_init(): fork() = %a",strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+  else if (pid != 0)
+  {
+    close(fhw);
+    close(fhr);
+    exit(EXIT_SUCCESS);
+  }
+  
+  setsid();
+  
+  dup2(STDIN_FILENO,fhr);
+  dup2(STDOUT_FILENO,fhw);
+  dup2(STDERR_FILENO,fhw);
+
+  close(fhw);
+  close(fhr);
+}
+
+/********************************************************************/
+
+static void my_exit(void)
+{
+  unlink(&c_filterchannel[5]);
+  closelog();
+  StreamFlush(StderrStream);
+  StreamFlush(StdoutStream);
 }
 
 /********************************************************************/

@@ -462,3 +462,22 @@ String *split(size_t *pnum,char *txt)
 
 /********************************************************************/
 
+void write_pidfile(const char *fname)
+{
+  Stream pfile;
+  
+  ddt(fname != NULL);
+  
+  pfile = FileStreamWrite(fname,FILE_CREATE | FILE_TRUNCATE);
+  if (pfile == NULL)
+    (*cv_report)(LOG_ERR,"$","unable to write pid file %a",fname);
+  else
+  {
+    LineSFormat(pfile,"L","%a\n",(unsigned long)getpid());
+    StreamFlush(pfile);
+    StreamFree(pfile);
+  }
+}
+
+/*********************************************************************/
+

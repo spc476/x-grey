@@ -178,6 +178,8 @@ struct glmcp_response_show_stats
   unet32 whitelisted;
   unet32 graylist_expired;
   unet32 whitelist_expired;
+  unet32 requests;
+  unet32 requests_cleanup;
 };
 
 struct glmcp_response_show_config

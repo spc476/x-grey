@@ -228,7 +228,8 @@ static int check_graylist(int sock,byte *ip,char *from,char *to)
   
   alarm(c_timeout);
   
-  rrc = recvfrom(
+  sipsize = sizeof(struct sockaddr_in);
+  rrc     = recvfrom(
   		sock,
   		inpacket,
   		sizeof(inpacket),

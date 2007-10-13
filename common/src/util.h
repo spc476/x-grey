@@ -47,6 +47,8 @@ char       *report_delta		(double);
 
 String	   *split			(size_t *,char *);
 
+void	    write_pidfile		(const char *);
+
 /***************************************************************/
 
 #endif

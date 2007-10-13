@@ -40,6 +40,7 @@ static void	show_report		(int,int);
 
 static void	iplist_file		(char *);
 static void	iplist_file_relaydelay	(char *);
+static void	iplist_file_bogonspace	(char *);
 
 static int	send_request		(void *,size_t,void *,size_t,int);
 static void	handler_sigalrm		(int);
@@ -324,9 +325,11 @@ static void show_stats(void)
       
   LineSFormat(
       	StdoutStream,
-      	"$ L10 L10 L10 L10 L10 L10",
+      	"$ L10 L10 L10 L10 L10 L10 L10 L10",
       	"%a\n"
       	"IPs:               %c\n"
+      	"Requests:          %h\n"
+      	"Requests-Cu:       %i\n"
       	"Tuples:            %b\n"
       	"Graylisted:        %d\n"
       	"Whitelisted:       %e\n"
@@ -338,7 +341,9 @@ static void show_stats(void)
         (unsigned long)ntohl(gss->graylisted),
         (unsigned long)ntohl(gss->whitelisted),
         (unsigned long)ntohl(gss->graylist_expired),
-        (unsigned long)ntohl(gss->whitelist_expired)
+        (unsigned long)ntohl(gss->whitelist_expired),
+        (unsigned long)ntohl(gss->requests),
+        (unsigned long)ntohl(gss->requests_cleanup)
        );
   MemFree(t);
 }
@@ -551,8 +556,13 @@ static void iplist(String *cmdline,size_t cmds)
   {
     if (cmds == 3)
       iplist_file(cmdline[2].d);
-    else if ((cmds == 4) && (strcmp(cmdline[3].d,"relaydelay") == 0))
-      iplist_file_relaydelay(cmdline[2].d);
+    else if (cmds == 4)
+    {
+      if (strcmp(cmdline[3].d,"relaydelay") == 0)
+        iplist_file_relaydelay(cmdline[2].d);
+      else if (strcmp(cmdline[3].d,"bogonspace") == 0)
+        iplist_file_bogonspace(cmdline[2].d);
+    }
     return;
   }
   
@@ -719,6 +729,63 @@ static void iplist_file_relaydelay(char *fname)
 
 /*************************************************************************/
 
+static void iplist_file_bogonspace(char *fname)
+{
+  struct glmcp_request_iplist  ipr;
+  Stream                       in;
+  byte                         data[1500];
+  size_t                       octet;
+  char                        *p;
+  int                          rc;
+  int                          linecnt;
+  
+  in = FileStreamRead(fname);
+  if (in == NULL)
+  {
+    LineSFormat(StdoutStream,"$","could not open %a",fname);
+    return;
+  }
+  
+  linecnt = 0;
+  
+  while(!StreamEOF(in))
+  {
+    char *line;
+    char *p;
+    
+    linecnt++;
+    line = LineSRead(in);
+    if (empty_string(line)) continue;
+    p = trim_space(line);
+    if (*p == '#') continue;
+    
+    memset(ipr.data,0,sizeof(ipr.data));
+    ipr.version = htons(VERSION);
+    ipr.MTA     = htons(MTA_MCP);
+    ipr.type    = htons(CMD_MCP_IPLIST);
+    ipr.ipsize  = htons(4);
+    ipr.mask    = htons(32);
+    ipr.cmd     = htons(IPCMD_REJECT);
+    
+    for (octet = 0 ; octet < 4 ; octet++)
+    {
+      ipr.data[octet] = strtoul(p,&p,10);
+      if (*p != '.') break;
+      p++;
+    }
+    
+    if (*p == '/')
+      ipr.mask = htons(strtoul(++p,NULL,10));
+    
+    rc = send_request(&ipr,sizeof(ipr),data,sizeof(data),CMD_MCP_IPLIST_RESP);
+    if (rc != ERR_OKAY)
+      LineS(StdoutStream,"bad response\n");
+  }
+  StreamFree(in);
+}
+
+/*************************************************************************/
+
 static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
 {
   byte                         packet[1500];
@@ -762,6 +829,7 @@ static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
   		sizeof(data),
   		resp
   	);
+
   if (rc != ERR_OKAY)
     LineS(StdoutStream,"bad response\n");
 }

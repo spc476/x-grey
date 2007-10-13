@@ -145,6 +145,8 @@ static void mainloop(int sock)
              stats.whitelisted       = htonl(g_whitelisted);
              stats.graylist_expired  = htonl(g_graylist_expired);
              stats.whitelist_expired = htonl(g_whitelist_expired);
+             stats.requests          = htonl(g_requests);
+             stats.requests_cleanup  = htonl(g_req_cu);
              
              send_packet(&req,&stats,sizeof(stats));
            }
@@ -301,6 +303,13 @@ void type_graylist(struct request *req)
   	(tuple.f & F_TRUNCTO)   ? " Tt" : ""
   );
 
+  /*------------------------------------------------
+  ; we have a valid GREYLIST request.  Count it.
+  ;------------------------------------------------*/
+  
+  g_requests++;
+  g_req_cucurrent++;
+  
   /*----------------------------------------------------
   ; check IP address
   ;----------------------------------------------------*/

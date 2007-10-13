@@ -98,6 +98,9 @@ size_t               g_poolnum;
 struct tuple        *g_pool;		/* actual space */
 Tuple               *g_tuplespace;	/* used for sorting records */
 
+size_t               g_requests;
+size_t               g_req_cu;
+size_t               g_req_cucurrent;
 size_t               g_graylisted;
 size_t               g_whitelisted;
 size_t               g_whitelist_expired;
@@ -227,20 +230,7 @@ int (GlobalsInit)(int argc,char *argv[])
   set_signal(SIGXCPU ,sighandler_critical);
   set_signal(SIGXFSZ ,sighandler_critical);
 
-  {
-    Stream pfile;
-    
-    pfile = FileStreamWrite(c_pidfile,FILE_CREATE | FILE_TRUNCATE);
-    if (pfile == NULL)
-      (*cv_report)(LOG_ERR,"$","unable to write pid file %a",c_pidfile);
-    else
-    {
-      LineSFormat(pfile,"L","%a\n",(unsigned long)getpid());
-      StreamFlush(pfile);
-      StreamFree(pfile);
-    }
-  }
-  
+  write_pidfile(c_pidfile);
   alarm(c_time_cleanup);	/* start the countdown */
   return(ERR_OKAY);
 }
