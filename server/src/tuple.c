@@ -201,7 +201,7 @@ void tuple_add(Tuple rec,size_t index)
   memmove(
   	&g_tuplespace[index + 1],
   	&g_tuplespace[index],
-  	(g_poolnum - index /*+ 1*/) * sizeof(Tuple)
+  	(g_poolnum - index) * sizeof(Tuple)
     );
 
   g_tuplespace[index] = rec;
@@ -426,3 +426,4 @@ int whitelist_load(void)
 }
 
 /**********************************************************************/
+
