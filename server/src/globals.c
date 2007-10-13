@@ -61,7 +61,7 @@ static void		 my_exit	(void);
 
 extern char **environ;
 
-char          *c_pidfile         = "/tmp/graylist.pid";
+char          *c_pidfile         = "/var/run/graylist.pid";
 char          *c_host            = DEF_HOST;
 int            c_port            = DEF_PORT;
 int            c_log_facility    = LOG_LOCAL6;
@@ -72,14 +72,14 @@ size_t         c_secretsize	 = 8;
 int            cf_debug          = 0;
 void         (*cv_report)(int,char *,char *, ...) = report_syslog;
 
-char          *c_whitefile       = "/tmp/whitelist.txt";
-char          *c_grayfile        = "/tmp/grayfile.txt";	
-char          *c_dumpfile        = "/tmp/dump.txt";
-char          *c_iplistfile      = "/tmp/iplist.txt";
-char          *c_tofile          = "/tmp/to.txt";
-char          *c_todfile         = "/tmp/to-domain.txt";
-char          *c_fromfile        = "/tmp/from.txt";
-char          *c_fromdfile       = "/tmp/from-domain.txt";
+char          *c_whitefile       = "/var/state/graylist/whitelist.txt";
+char          *c_grayfile        = "/var/state/graylist/grayfile.txt";	
+char          *c_dumpfile        = "/var/state/graylist/dump.txt";
+char          *c_iplistfile      = "/var/state/graylist/iplist.txt";
+char          *c_tofile          = "/var/state/graylist/to.txt";
+char          *c_todfile         = "/var/state/graylist/to-domain.txt";
+char          *c_fromfile        = "/var/state/graylist/from.txt";
+char          *c_fromdfile       = "/var/state/graylist/from-domain.txt";
 char          *c_timeformat      = "%c";
 size_t         c_poolmax         = 65536uL;
 unsigned int   c_time_cleanup    =    60   * 5;
