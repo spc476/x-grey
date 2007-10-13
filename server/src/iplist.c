@@ -312,7 +312,7 @@ int ip_add_sm(byte *ip,size_t size,int mask,int cmd)
     {
       if (p->zero == NULL)
       {
-        new = malloc(sizeof(struct ipnode));
+        new         = MemAlloc(sizeof(struct ipnode));
         new->parent = p;
         new->zero   = NULL;
         new->one    = NULL;
@@ -326,7 +326,7 @@ int ip_add_sm(byte *ip,size_t size,int mask,int cmd)
     {
       if (p->one == NULL)
       {
-        new = malloc(sizeof(struct ipnode));
+        new         = MemAlloc(sizeof(struct ipnode));
         new->parent = p;
         new->zero   = NULL;
         new->one    = NULL;
