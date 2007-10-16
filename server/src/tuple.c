@@ -220,7 +220,12 @@ void tuple_expire(time_t Tao)
     if ((g_pool[i].f & F_WHITELIST))
     {
       if (difftime(Tao,g_pool[i].atime) < c_timeout_white)
-        g_pool[j++] = g_pool[i];
+      {
+        if (i != j)
+          g_pool[j++] = g_pool[i];	/* VVV memcpy overlap */
+        else
+	  j++;
+      }
       else
         g_whitelist_expired++;
       continue;
@@ -228,7 +233,10 @@ void tuple_expire(time_t Tao)
     
     if (difftime(Tao,g_pool[i].atime) < c_timeout_gray)
     {
-      g_pool[j++] = g_pool[i];
+      if (i != j)
+        g_pool[j++] = g_pool[i];	/* VVV memcpy() overlap */
+      else
+        j++;
       continue;
     }
     

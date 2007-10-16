@@ -79,7 +79,7 @@ CRC32 crc32(CRC32 crc,const void *data,size_t size)
   const byte *p = data;
   
   while(size--)
-  {
+  {	/* VVV - uninit mem size 4 next line */
     crc = ((crc >> 8) & 0x00FFFFFF) ^ m_crc32_table[ (crc ^ *p++) & 0xFF ];
   }
   

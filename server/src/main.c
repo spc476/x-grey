@@ -134,6 +134,7 @@ static void mainloop(int sock)
            {
              struct glmcp_response_show_stats stats;
              
+	     stats.crc = stats.pad   = htons(0);	/* VVV */
              stats.version           = htons(VERSION);
              stats.MTA               = req.glr->MTA;
              stats.type              = htons(CMD_MCP_SHOW_STATS_RESP);
@@ -148,7 +149,7 @@ static void mainloop(int sock)
              stats.requests          = htonl(g_requests);
              stats.requests_cleanup  = htonl(g_req_cu);
              
-             send_packet(&req,&stats,sizeof(stats));
+             send_packet(&req,&stats,sizeof(stats)); /* VVV - uninit mem */
            }
            break;
       case CMD_MCP_SHOW_CONFIG:
