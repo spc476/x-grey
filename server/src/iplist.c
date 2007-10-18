@@ -131,6 +131,7 @@ int iplist_read(const char *fname)
     MemFree(tokens);
   }
 
+  MemFree(line);
   StreamFree(in);
 
   if (cf_debug)

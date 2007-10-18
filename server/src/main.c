@@ -270,7 +270,7 @@ void type_graylist(struct request *req)
 
   if (rsize > req->size)
   {
-    (*cv_report)(LOG_DEBUG,"i i","bad size, expected %a got %b",req->size,rsize);
+    (*cv_report)(LOG_DEBUG,"L L","bad size, expected %a got %b",(unsigned long)req->size,(unsigned long)rsize);
     send_reply(req,CMD_NONE_RESP,GLERR_BAD_DATA);
     return;
   }

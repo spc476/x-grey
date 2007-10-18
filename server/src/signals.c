@@ -74,7 +74,7 @@ void sighandler_critical(int sig)
 
   (*cv_report)(
        LOG_ERR,
-       "$ p",
+       "$",
        "DANGER!  %a - restarting program",
        sys_siglist[sig]
     );
@@ -137,7 +137,7 @@ void sighandler_chld(int sig)
 
   if (sig != SIGCHLD)
   {
-    (*cv_report)(LOG_CRIT,"i","sighandler_chld() 'Why am I handling signal %a",sig);
+    (*cv_report)(LOG_CRIT,"i","sighandler_chld() Why am I handling signal %a?",sig);
     return;
   }
   
@@ -163,17 +163,17 @@ void sighandler_chld(int sig)
     ret = WEXITSTATUS(status);
     (*cv_report)(LOG_DEBUG,"i","Child process returned %a",ret);
     if (ret != 0)
-      (*cv_report)(LOG_ERR,"L i","Process %a returned status %b",child,ret); 
+      (*cv_report)(LOG_ERR,"L i","Process %a returned status %b",(unsigned long)child,ret); 
   }
   else if (WIFSIGNALED(status))
   {
     ret = WTERMSIG(status);
-    (*cv_report)(LOG_ERR,"L i","Process %a terminated by signal(%b)",child,ret);
+    (*cv_report)(LOG_ERR,"L i","Process %a terminated by signal(%b)",(unsigned long)child,ret);
   }
   else if(WIFSTOPPED(status))
   {
     ret = WSTOPSIG(status);
-    (*cv_report)(LOG_ERR,"L i","Process %a stopped by signal(%b)",child,ret);
+    (*cv_report)(LOG_ERR,"L i","Process %a stopped by signal(%b)",(unsigned long)child,ret);
   }
   errno = pusherr;
 }

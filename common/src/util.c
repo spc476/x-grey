@@ -452,10 +452,26 @@ String *split(size_t *pnum,char *txt)
     
     *p++ = '\0';
     txt  = p;
-    (*cv_report)(LOG_DEBUG,"i $ i i","%a '%b' %c %d",num - 1,pool[num-1].d,pool[num-1].s,strlen(pool[num-1].d));
+    (*cv_report)(
+    	LOG_DEBUG,
+	"L $ L L",
+	"%a '%b' %c %d",
+	(unsigned long)num - 1,
+	pool[num-1].d,
+	(unsigned long)pool[num-1].s,
+	(unsigned long)strlen(pool[num-1].d)
+    );	
   }
   
-  (*cv_report)(LOG_DEBUG,"i $ i i","%a '%b' %c %d",num - 1,pool[num-1].d,pool[num-1].s,strlen(pool[num-1].d));
+  (*cv_report)(
+  	LOG_DEBUG,
+	"i $ i i",
+	"%a '%b' %c %d",
+	(unsigned long)num - 1,
+	pool[num-1].d,
+	(unsigned long)pool[num-1].s,
+	(unsigned long)strlen(pool[num-1].d)
+  );
   *pnum = num;
   return(pool);
 }
