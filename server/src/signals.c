@@ -19,8 +19,6 @@
 #include "iplist.h"
 #include "signals.h"
 
-#define FIXED_SAVE_STATE_BUG
-
 /***********************************************************************/
 
 static void	handle_sigchld		(void);
@@ -122,9 +120,7 @@ void sighandler_sigs(int sig)
     case SIGUSR1  : mf_sigusr1  = 1; break;
     case SIGUSR2  : mf_sigusr2  = 1; break;
     case SIGHUP   : mf_sighup   = 1; break;
-    default:
-         (*cv_report)(LOG_ERR,"i","someone forgot to handle signal %a",sig);
-         break;
+    default: _exit(EXIT_FAILURE); /* because I'm stupid */
   }
 }
 
@@ -267,7 +263,6 @@ static void handle_sigalrm(void)
   
   tuple_expire(now);
 
-#ifdef FIXED_SAVE_STATE_BUG
   if (difftime(now,g_time_savestate) >= c_time_savestate)
   {
     pid_t child;
@@ -283,7 +278,6 @@ static void handle_sigalrm(void)
       _exit(0);
     }
   }  
-#endif
 
   alarm(c_time_cleanup);	/* signal next cleanup */
 }
