@@ -23,6 +23,7 @@
 
 /***********************************************************************/
 
+static void	handle_sigchld		(void);
 static void	handle_sigint		(void);
 static void	handle_sigquit		(void);
 static void	handle_sigterm		(void);
@@ -34,6 +35,7 @@ static void	handle_sighup		(void);
 
 /***********************************************************************/
 
+static volatile sig_atomic_t mf_sigchld;
 static volatile sig_atomic_t mf_sigint;
 static volatile sig_atomic_t mf_sigquit;
 static volatile sig_atomic_t mf_sigterm;
@@ -47,6 +49,7 @@ static volatile sig_atomic_t mf_sighup;
 
 void check_signals(void)
 {
+  if (mf_sigchld)  handle_sigchld();
   if (mf_sigalrm)  handle_sigalrm();
   if (mf_sigint)   handle_sigint(); 
   if (mf_sigquit)  handle_sigquit();
@@ -110,6 +113,7 @@ void sighandler_sigs(int sig)
 {
   switch(sig)
   {
+    case SIGCHLD  : mf_sigchld  = 1; break;
     case SIGINT   : mf_sigint   = 1; break;
     case SIGQUIT  : mf_sigquit  = 1; break;
     case SIGTERM  : mf_sigterm  = 1; break;
@@ -126,56 +130,42 @@ void sighandler_sigs(int sig)
 
 /***********************************************************/
 
-void sighandler_chld(int sig)
+void handle_sigchld(void)
 {
   pid_t child;
   int   ret;
-  int   pusherr;
   int   status;
   
   (*cv_report)(LOG_DEBUG,"","child process ended");
 
-  if (sig != SIGCHLD)
+  while(1)
   {
-    (*cv_report)(LOG_CRIT,"i","sighandler_chld() Why am I handling signal %a?",sig);
-    return;
-  }
+    child = waitpid(0,&status,WNOHANG);
   
-  /*------------------------------------------
-  ; since we do make a system call here, we
-  ; cache the value of errno to prevent problems
-  ; elsewhere in the code where we use it.  Then, just
-  ; before we return, the saved value is stuffed
-  ; back into errno.  Remember, this routine is called
-  ; asynchronously with respect to the rest of the
-  ; code in this program.
-  ;----------------------------------------------*/
+    if (child == (pid_t)-1)
+    {
+      if (errno == ECHILD) return;
+      if (errno == EINTR) continue;
+      (*cv_report)(LOG_ERR,"$","waitpid() returned %a",strerror(errno));
+      return;
+    }
   
-  pusherr = errno;
-  child   = waitpid(0,&status,WNOHANG);
-  
-  if (child == (pid_t)-1)
-  {
-    (*cv_report)(LOG_ERR,"$","waitpid() returned %a",strerror(errno));
+    if (WIFEXITED(status))
+    {
+      ret = WEXITSTATUS(status);
+      (*cv_report)(LOG_DEBUG,"i","Child process returned %a",ret);
+    }
+    else if (WIFSIGNALED(status))
+    {
+      ret = WTERMSIG(status);
+      (*cv_report)(LOG_ERR,"L i","Process %a terminated by signal(%b)",(unsigned long)child,ret);
+    }
+    else if(WIFSTOPPED(status))
+    {
+      ret = WSTOPSIG(status);
+      (*cv_report)(LOG_ERR,"L i","Process %a stopped by signal(%b)",(unsigned long)child,ret);
+    }
   }
-  else if (WIFEXITED(status))
-  {
-    ret = WEXITSTATUS(status);
-    (*cv_report)(LOG_DEBUG,"i","Child process returned %a",ret);
-    if (ret != 0)
-      (*cv_report)(LOG_ERR,"L i","Process %a returned status %b",(unsigned long)child,ret); 
-  }
-  else if (WIFSIGNALED(status))
-  {
-    ret = WTERMSIG(status);
-    (*cv_report)(LOG_ERR,"L i","Process %a terminated by signal(%b)",(unsigned long)child,ret);
-  }
-  else if(WIFSTOPPED(status))
-  {
-    ret = WSTOPSIG(status);
-    (*cv_report)(LOG_ERR,"L i","Process %a stopped by signal(%b)",(unsigned long)child,ret);
-  }
-  errno = pusherr;
 }
 
 /**********************************************************************/
@@ -287,14 +277,12 @@ static void handle_sigalrm(void)
     g_time_savestate = now;
     child            = gld_fork();
     
-    if (child == (pid_t)-1)
-      (*cv_report)(LOG_CRIT,"$","could not save state-fork() = %a",strerror(errno));
-    else if (child == 0)	/* child process */
+    if (child == 0)	/* child process */
     {
       save_state();
       _exit(0);
     }
-  }
+  }  
 #endif
 
   alarm(c_time_cleanup);	/* signal next cleanup */
@@ -310,21 +298,12 @@ static void handle_sigusr1(void)
   mf_sigusr1 = 0;
 
   child = gld_fork();
-  if (child == (pid_t)-1)
-  {
-    (*cv_report)(LOG_CRIT,"$","fork() = %a",strerror(errno));
-    return;
-  }
-  
-  if (child > 0)
-  {
-    (*cv_report)(LOG_DEBUG,"","parent about to go about it's business");
-    return;
-  }
 
-  (*cv_report)(LOG_DEBUG,"","child about to generate report");
-  tuple_dump();
-  _exit(0);
+  if (child == 0)
+  {
+    tuple_dump();
+    _exit(0);
+  }
 }
 
 /***********************************************************************/

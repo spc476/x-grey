@@ -214,7 +214,7 @@ int (GlobalsInit)(int argc,char *argv[])
 
   atexit(my_exit);	/* used to be above daemon_init(), race condition */
 
-  set_signal(SIGCHLD, sighandler_chld);
+  set_signal(SIGCHLD, sighandler_sigs);
   set_signal(SIGINT,  sighandler_sigs);
   set_signal(SIGQUIT, sighandler_sigs);
   set_signal(SIGTERM, sighandler_sigs);

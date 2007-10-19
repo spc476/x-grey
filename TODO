@@ -1,3 +1,15 @@
+2007-10-17T23:14-05:00
+
+	* on brevard, changed SIGCHLD to be handled like any other normal
+	  signal.
+	
+	* Also fixed some possible problems with handle_sigchld
+	* simplified code dealing with gld_fork().
+
+	* next to try:
+		* renaming state files
+		* saving state without the fork
+
 2007-10-03T02:33-05:00
 
 	* Fix pfc to accept---oh, I see I already have that on the todo

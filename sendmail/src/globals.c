@@ -39,7 +39,7 @@ static void		 my_exit	(void);
 
 /****************************************************************/
 
-char		    *c_pidfile	    = "/var/run/graylist.pid";
+char		    *c_pidfile	    = "/var/run/smc.pid";
 char                *c_host         = DEF_LHOST;
 int                  c_port         = 0;
 char                *c_timeformat   = "%c";
