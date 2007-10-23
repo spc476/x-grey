@@ -314,7 +314,7 @@ void type_graylist(struct request *req)
   /*----------------------------------------------------
   ; check IP address
   ;----------------------------------------------------*/
-  
+
   rc = ip_match(tuple.ip,4);
   
   if (rc == IPCMD_ACCEPT)
@@ -452,7 +452,7 @@ type_graylist_check_to:
       return;
     }
   }
-  
+
   at = strchr(tuple.to,'@');
   if (at)
   {
@@ -496,7 +496,7 @@ type_graylist_check_to:
   ; Look up the tuple.  If not found, add it, else update the access time,
   ; and if less than the embargo period, return LATER, else accept.
   ;---------------------------------------------------------*/
-  
+
 type_graylist_check_tuple:
 
   stored = tuple_search(&tuple,&idx);

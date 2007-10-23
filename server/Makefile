@@ -7,7 +7,7 @@ CC=gcc -g
 CFLAGS=-Wall -pedantic $(CINCL)
 LFLAGS=-L$(CGILIB)/$(HOSTDIR) -lcgi5
 
-$(HOSTDIR)/gl : $(HOSTDIR)/main.o		\
+$(HOSTDIR)/gld : $(HOSTDIR)/main.o		\
 		$(HOSTDIR)/globals.o		\
 		$(HOSTDIR)/signals.o		\
 		$(HOSTDIR)/iplist.o		\
@@ -44,7 +44,7 @@ $(HOSTDIR)/tuple.o : src/tuple.c
 	$(CC) $(CFLAGS) -c -o $@ src/tuple.c
 
 clean:
-	/bin/rm -f $(HOSTDIR)/gl
+	/bin/rm -f $(HOSTDIR)/gld
 	/bin/rm -f $(HOSTDIR)/*.o
 	/bin/rm -f src/*~
 
