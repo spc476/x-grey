@@ -260,7 +260,11 @@ static void handle_sigalrm(void)
   now             = time(NULL);
   g_req_cu        = g_req_cucurrent;
   g_req_cucurrent = 0;
-  
+  g_cleanup_count++;
+
+  if (g_req_cu > g_req_cumax)
+    g_req_cumax = g_req_cu;
+
   tuple_expire(now);
 
   if (difftime(now,g_time_savestate) >= c_time_savestate)

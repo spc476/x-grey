@@ -101,6 +101,8 @@ Tuple               *g_tuplespace;	/* used for sorting records */
 size_t               g_requests;
 size_t               g_req_cu;
 size_t               g_req_cucurrent;
+size_t               g_req_cumax;
+size_t               g_cleanup_count;
 size_t               g_graylisted;
 size_t               g_whitelisted;
 size_t               g_whitelist_expired;

@@ -322,14 +322,20 @@ static void show_stats(void)
   }
 
   t = report_time(ntohl(gss->starttime),ntohl(gss->nowtime));
-      
+
   LineSFormat(
       	StdoutStream,
-      	"$ L10 L10 L10 L10 L10 L10 L10 L10",
+      	"$ L10 L10 L10 L10 L10 L10 L10 L10 L10 L10 L10 L10 L10 L10",
       	"%a\n"
-      	"IPs:               %c\n"
       	"Requests:          %h\n"
       	"Requests-Cu:       %i\n"
+	"Requests-Cu-Max:   %j\n"
+	"Requests-Cu-Ave:   %k\n"
+      	"IPs:               %c\n"
+	"From:              %l\n"
+	"From-Domain:       %m\n"
+	"To:                %n\n"
+	"To-Domain:         %o\n"
       	"Tuples:            %b\n"
       	"Graylisted:        %d\n"
       	"Whitelisted:       %e\n"
@@ -343,7 +349,13 @@ static void show_stats(void)
         (unsigned long)ntohl(gss->graylist_expired),
         (unsigned long)ntohl(gss->whitelist_expired),
         (unsigned long)ntohl(gss->requests),
-        (unsigned long)ntohl(gss->requests_cleanup)
+        (unsigned long)ntohl(gss->requests_cu),
+	(unsigned long)ntohl(gss->requests_cu_max),
+	(unsigned long)ntohl(gss->requests_cu_ave),
+	(unsigned long)ntohl(gss->from),
+	(unsigned long)ntohl(gss->fromd),
+	(unsigned long)ntohl(gss->to),
+	(unsigned long)ntohl(gss->tod)
        );
   MemFree(t);
 }

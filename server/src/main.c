@@ -133,6 +133,13 @@ static void mainloop(int sock)
       case CMD_MCP_SHOW_STATS:
            {
              struct glmcp_response_show_stats stats;
+	     size_t ave;
+
+	     if (g_cleanup_count)
+	       ave = (size_t)(((double)(g_requests - g_req_cucurrent)
+	     		   / (double)(g_cleanup_count)) + 0.5);
+	     else
+	       ave = 0;
              
 	     stats.crc = stats.pad   = htons(0);	/* VVV */
              stats.version           = htons(VERSION);
@@ -147,7 +154,13 @@ static void mainloop(int sock)
              stats.graylist_expired  = htonl(g_graylist_expired);
              stats.whitelist_expired = htonl(g_whitelist_expired);
              stats.requests          = htonl(g_requests);
-             stats.requests_cleanup  = htonl(g_req_cu);
+             stats.requests_cu       = htonl(g_req_cu);
+	     stats.requests_cu_max   = htonl(g_req_cumax);
+	     stats.requests_cu_ave   = htonl(ave);
+	     stats.from              = htonl(g_sfrom  + 1);
+	     stats.fromd             = htonl(g_sfromd + 1);
+	     stats.to                = htonl(g_sto    + 1);
+	     stats.tod               = htonl(g_stod   + 1);
              
              send_packet(&req,&stats,sizeof(stats)); /* VVV - uninit mem */
            }

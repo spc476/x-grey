@@ -46,6 +46,8 @@ extern int               **g_argv;
 extern size_t		   g_requests;
 extern size_t              g_req_cu;
 extern size_t              g_req_cucurrent;
+extern size_t		   g_req_cumax;
+extern size_t		   g_cleanup_count;
 extern size_t	           g_graylisted;
 extern size_t	           g_whitelisted;
 extern size_t	           g_whitelist_expired;
