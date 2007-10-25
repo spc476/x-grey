@@ -2,6 +2,7 @@
 CGILIB=/home/spc/source/cgi
 CINCL=-I $(CGILIB)/src
 
+#CC=gcc -g -pg
 CC=gcc -g
 #CC=gcc -fomit-frame-pointer -O3
 CFLAGS=-Wall -pedantic $(CINCL)
