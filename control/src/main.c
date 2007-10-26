@@ -506,38 +506,12 @@ static void show_report(int req,int resp)
 
 static void help(void)
 {
-  LineS(
-  	StdoutStream,
-  	"exit | quit\t\t\tquit program\n"
-  	"iplist accept a.b.c.d/M\t\taccept IP addresses\n"
-  	"iplist reject a.b.c.d/M\t\treject IP addresses\n"
-  	"iplist graylist a.b.c.d/M\tgreylist IP addresses\n"
-  	"iplist file <file> [relaydelay]\tbulk load IP addresses\n"
-	"to accept <addr>\t\taccept recpient address\n"
-	"to reject <addr>\t\treject recipient address\n"
-	"to graylist <addr>\t\tgreylist recipient address\n"
-	"to-domain accept <domain>\taccept recipient domain\n"
-	"to-domain reject <domain>\treject recipient domain\n"
-	"to-domain graylist <domain>\tgreylist recipient domain\n"
-	"from accept <addr>\t\taccept sender address\n"
-	"from reject <addr>\t\treject sender address\n"
-	"from graylist <addr>\t\tgreylist sender address\n"
-	"from-domain accept <domain>\taccept sender domain\n"
-	"from-domain reject <domain>\treject sender domain\n"
-	"from-domain graylist <domain>\tgreylist sender domain\n"
-  	"show config\t\t\tshow configuration settings\n"
-  	"show stats\t\t\tshow current statistics\n"
-  	"show tuples [all]\t\tshow all tuples\n"
-  	"show tuples whitelist\t\tshow tuples on whitelist\n"
-  	"show iplist\t\t\tshow accepted/rejected IP addresses\n"
-	"show to\t\t\t\tshow recipient addresses\n"
-	"show to-domains\t\t\tshow recipient domains\n"
-	"show from\t\t\tshow sender addresses\n"
-	"show from-domain\t\tshow sender domains\n"
-	"show w\t\t\t\tshow warranty information\n"
-	"show c\t\t\t\tshow redistribution information\n"
-  	"help | ?\t\t\tthis text\n"
-  );
+  int fh;
+  
+  fh = open(c_commands,O_RDONLY);
+  if (fh == -1) return;
+  (*m_pager)(fh);
+  close(fh);
 }
 
 /**************************************************************/

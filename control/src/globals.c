@@ -49,6 +49,7 @@ static void	my_exit		(void);
 /**********************************************************/
 
 const char	    *c_license	    = "/home/spc/projects/graylist/LICENSE";
+const char          *c_commands	    = "/home/spc/projects/graylist/COMMANDS";
 const char          *c_host         = "0.0.0.0";
 int                  c_port         = 0;
 const char          *c_rhost        = DEF_RHOST;
