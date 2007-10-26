@@ -1,0 +1,32 @@
+exit			exit the program
+quit			exit the program
+
+iplist      (accept|reject|greylist|remove) <ip-addr-mask>
+to          (accept|reject|greylist|remove) <emailaddr>
+to-domain   (accept|reject|greylist|remove) <domain>
+from        (accept|reject|greylist|remove) <emailaddr>
+from-domain (accept|reject|greylist|remove) <domain>
+
+show config		show current configuation of server
+show stats		show current stats of server
+
+show tuples		show tuples on the greylist
+show tuples all		show all tuples 
+show tuples whitelist	show tuples on the whitelist
+
+show (iplist|to|to-domain|from|from-domain)
+
+show w		show warranty information
+show c		show copying (licensing) information
+
+help		this file
+?		this file
+
+-----------------------------
+
+<ip-addr-mask>	format of A.B.C.D/M (example: '10.11.12.0/24')
+<emailaddr>	format of user'@'domain (example: 'fred@example.com')
+<domain>	DNS domain name (example: 'example.com')
+
+'graylist' is accepted for 'greylist'
+
