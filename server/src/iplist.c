@@ -139,7 +139,7 @@ int iplist_read(const char *fname)
       return(ERR_ERR);
     }
 
-    cmd = ci_map_int(tokens[1].d,c_ipcmds,C_IPCMDS);
+    cmd = ci_map_int(tokens[1].d,c_ift,C_IFT);
     if (cmd == -1)    
     {
       (*cv_report)(LOG_ERR,"$ i $","syntax error on %a(%b)-needs to be ACCEPT or REJECT but not %c",fname,lcount,tline);
@@ -175,7 +175,7 @@ int iplist_read(const char *fname)
       t = ipv4(iplist[i].mask);
       strcpy(tmask,t);
       
-      tcmd = ci_map_chars(iplist[i].cmd,c_ipcmds,C_IPCMDS);
+      tcmd = ci_map_chars(iplist[i].cmd,c_ift,C_IFT);
       
       (*cv_report)(
       		LOG_DEBUG,
@@ -251,7 +251,7 @@ int iplist_dump_stream(Stream out)
     	"$18.18l $",
     	"%a %b\n",
 	ipaddr,
-    	ci_map_chars(array[i].cmd,c_ipcmds,C_IPCMDS)
+    	ci_map_chars(array[i].cmd,c_ift,C_IFT)
     );
   }
 
@@ -273,7 +273,7 @@ int ip_match(byte *ip,size_t size)
   
   while(p != NULL)
   {
-    if (p->match != IPCMD_NONE)
+    if (p->match != IFT_NONE)
       match = p;
     
     if (bit == 0)
@@ -289,13 +289,14 @@ int ip_match(byte *ip,size_t size)
     else
     {
       match->count++;
+      ddt(match->match != IFT_NONE);
       return (match->match);
     }
     
     bit >>= 1;
   }
   
-  return(IPCMD_GRAYLIST);
+  return(IFT_GRAYLIST);
 }
 
 /******************************************************************/
@@ -339,7 +340,7 @@ int ip_add_sm(byte *ip,size_t size,int mask,int cmd)
         new->zero   = NULL;
         new->one    = NULL;
         new->count  = 0;
-        new->match  = IPCMD_NONE;
+        new->match  = IFT_NONE;
         p->zero     = new;
       }
       p    = p->zero;
@@ -353,7 +354,7 @@ int ip_add_sm(byte *ip,size_t size,int mask,int cmd)
         new->zero   = NULL;
         new->one    = NULL;
         new->count  = 0;
-        new->match  = IPCMD_NONE;
+        new->match  = IFT_NONE;
         p->one      = new;
       }
       p    = p->one;
@@ -363,7 +364,7 @@ int ip_add_sm(byte *ip,size_t size,int mask,int cmd)
     bit >>= 1;
   }
   
-  if (p->match == IPCMD_NONE)
+  if (p->match == IFT_NONE)
     g_ipcnt++;
 
   p->match = cmd;
@@ -384,7 +385,7 @@ static void ip_prune(struct ipnode *p,int match)
   if (p == NULL)
     return;
 
-  if (p->match == IPCMD_NONE)
+  if (p->match == IFT_NONE)
   {
     ip_prune(p->zero,match);
     ip_prune(p->one,match);
@@ -393,7 +394,7 @@ static void ip_prune(struct ipnode *p,int match)
   
   if (p->match == match)
   {
-    p->match = IPCMD_NONE;
+    p->match = IFT_NONE;
     g_ipcnt--;
   }
 }  
@@ -425,7 +426,7 @@ int ip_print(Stream out)
       	"%d %c %a %b\n",
       	tip,
       	tmask,
-      	ci_map_chars(array[i].cmd,c_ipcmds,C_IPCMDS),
+      	ci_map_chars(array[i].cmd,c_ift,C_IFT),
       	(unsigned long)array[i].count
       );
   }
@@ -518,7 +519,7 @@ static size_t ip_collect(
   mask[off] |= mbit;
   ip[off]   |= bit;
   
-  if (p->match != IPCMD_NONE)
+  if (p->match != IFT_NONE)
   {
     array[i].size  = size;
     array[i].count = p->count;

@@ -147,10 +147,10 @@ struct emaildomain  *g_tod;
 
 time_t               g_time_savestate;
 
-int		     g_defto         = IPCMD_GRAYLIST;
-int                  g_deftodomain   = IPCMD_GRAYLIST;
-int		     g_deffrom       = IPCMD_GRAYLIST;
-int                  g_deffromdomain = IPCMD_GRAYLIST;
+int		     g_defto         = IFT_GRAYLIST;
+int                  g_deftodomain   = IFT_GRAYLIST;
+int		     g_deffrom       = IFT_GRAYLIST;
+int                  g_deffromdomain = IFT_GRAYLIST;
 size_t               g_toc;
 size_t               g_todomainc;
 size_t               g_fromc;
@@ -220,7 +220,7 @@ int (GlobalsInit)(int argc,char *argv[])
   g_tree->zero   = NULL;
   g_tree->one    = NULL;
   g_tree->count  = 0;
-  g_tree->match  = IPCMD_GRAYLIST;
+  g_tree->match  = CMD_GRAYLIST;
   
   if (cf_debug)
     dump_defaults();

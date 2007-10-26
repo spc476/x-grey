@@ -351,17 +351,12 @@ void type_graylist(struct request *req)
 
   rc = ip_match(tuple.ip,4);
   
-  if (rc == IPCMD_ACCEPT)
+  if (rc != IFT_GRAYLIST)
   {
-    send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+    send_reply(req,CMD_GRAYLIST_RESP,rc);
     return;
   }
-  else if (rc == IPCMD_REJECT)
-  {
-    send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
-    return;
-  }
-  
+
   /*-------------------------------------------------------
   ; check the from and fromdomain lists.
   ;------------------------------------------------------*/
@@ -373,33 +368,21 @@ void type_graylist(struct request *req)
   if (edvalue != NULL)
   {
     edvalue->count++;
-    
-    if (edvalue->cmd == IPCMD_ACCEPT)
-    {
-      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
-      return;
-    }
-    else if (edvalue->cmd == IPCMD_REJECT)
-    {
-      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
-      return;
-    }
-    else if (edvalue->cmd == IPCMD_GRAYLIST)
+
+    if (edvalue->cmd == IFT_GRAYLIST)
       goto type_graylist_check_to;
     else
-      ddt(0);
+    {
+      send_reply(req,CMD_GRAYLIST_RESP,edvalue->cmd);
+      return;
+    }
   }
   else 
   {
     g_fromc++;
-    if (g_deffrom == IPCMD_ACCEPT)
+    if (g_deffrom != IFT_GRAYLIST)
     {
-      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
-      return;
-    }
-    else if (g_deffrom == IPCMD_REJECT)
-    {
-      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+      send_reply(req,CMD_GRAYLIST_RESP,g_deffrom);
       return;
     }
   }
@@ -410,34 +393,23 @@ void type_graylist(struct request *req)
     edkey.text  = at + 1;
     edkey.tsize = strlen(edkey.text);
     edvalue     = edomain_search(&edkey,&idx,g_fromd,g_sfromd);
+
     if (edvalue != NULL)
     {
       edvalue->count++;
       
-      if (edvalue->cmd == IPCMD_ACCEPT)
+      if (edvalue->cmd != IFT_GRAYLIST)
       {
-        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
-        return;
+        send_reply(req,CMD_GRAYLIST_RESP,edvalue->cmd);
+	return;
       }
-      else if (edvalue->cmd == IPCMD_REJECT)
-      {
-        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
-        return;
-      }
-      else if (edvalue->cmd != IPCMD_GRAYLIST)
-        ddt(0);
     }
     else 
     {
       g_fromdomainc++;
-      if (g_deffromdomain == IPCMD_ACCEPT)
+      if (g_deffromdomain != IFT_GRAYLIST)
       {
-        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
-	return;
-      }
-      else if (g_deffromdomain == IPCMD_REJECT)
-      { 
-        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+        send_reply(req,CMD_GRAYLIST_RESP,g_deffromdomain);
 	return;
       }
     }
@@ -456,33 +428,21 @@ type_graylist_check_to:
   if (edvalue != NULL)
   {
     edvalue->count++;
-    
-    if (edvalue->cmd == IPCMD_ACCEPT)
-    {
-      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
-      return;
-    }
-    else if (edvalue->cmd == IPCMD_REJECT)
-    {
-      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
-      return;
-    }
-    else if (edvalue->cmd == IPCMD_GRAYLIST)
+
+    if (edvalue->cmd == IFT_GRAYLIST)
       goto type_graylist_check_tuple;
     else
-      ddt(0);
+    {
+      send_reply(req,CMD_GRAYLIST_RESP,edvalue->cmd);
+      return;
+    }
   }
   else 
   {
     g_toc++;
-    if (g_defto == IPCMD_ACCEPT)
+    if (g_defto != IFT_GRAYLIST)
     {
-      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
-      return;
-    }
-    else if (g_defto == IPCMD_REJECT)
-    {
-      send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
+      send_reply(req,CMD_GRAYLIST_RESP,g_defto);
       return;
     }
   }
@@ -493,35 +453,25 @@ type_graylist_check_to:
     edkey.text  = at + 1;
     edkey.tsize = strlen(edkey.text);
     edvalue     = edomain_search(&edkey,&idx,g_tod,g_stod);
+
     if (edvalue != NULL)
     {
       edvalue->count++;
       
-      if (edvalue->cmd == IPCMD_ACCEPT)
+      if (edvalue->cmd != IFT_GRAYLIST)
       {
-        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
-        return;
+        send_reply(req,CMD_GRAYLIST_RESP,edvalue->cmd);
+	return;
       }
-      else if (edvalue->cmd == IPCMD_REJECT)
-      {
-        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
-        return;
-      }
-      else if (edvalue->cmd != IPCMD_GRAYLIST)
-        ddt(0);
     }
     else 
     {
       g_todomainc++;
-      if (g_deftodomain == IPCMD_ACCEPT)
+
+      if (g_deftodomain != IFT_GRAYLIST)
       {
-        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+        send_reply(req,CMD_GRAYLIST_RESP,g_deftodomain);
 	return;
-      }
-      else if (g_deftodomain == IPCMD_REJECT)
-      {
-        send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_NAY);
-        return;
       }
     }
   }
@@ -541,7 +491,7 @@ type_graylist_check_tuple:
     memcpy(stored,&tuple,sizeof(struct tuple));
     tuple_add(stored,idx);
     g_graylisted++;
-    send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_LATER);
+    send_reply(req,CMD_GRAYLIST_RESP,IFT_GRAYLIST);
     return;
   }
   
@@ -549,13 +499,13 @@ type_graylist_check_tuple:
 
   if ((stored->f & F_WHITELIST))
   {
-    send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+    send_reply(req,CMD_GRAYLIST_RESP,IFT_ACCEPT);
     return;
   }
 
   if (difftime(req->now,stored->ctime) < c_timeout_embargo)
   {
-    send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_LATER);
+    send_reply(req,CMD_GRAYLIST_RESP,IFT_GRAYLIST);
     return;
   }
   
@@ -565,7 +515,7 @@ type_graylist_check_tuple:
     g_whitelisted++;
   }
     
-  send_reply(req,CMD_GRAYLIST_RESP,GRAYLIST_YEA);
+  send_reply(req,CMD_GRAYLIST_RESP,IFT_ACCEPT);
 }
 
 /*********************************************************************/

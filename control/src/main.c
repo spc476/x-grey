@@ -598,7 +598,7 @@ static void iplist(String *cmdline,size_t cmds)
     return;
   }
   
-  ipr.cmd = ci_map_int(up_string(cmdline[1].d),c_ipcmds,C_IPCMDS);
+  ipr.cmd = ci_map_int(up_string(cmdline[1].d),c_ift,C_IFT);
 
   if (ipr.cmd == (unet16)-1)
   {
@@ -684,7 +684,7 @@ static void iplist_file(char *fname)
     *r++ = '\0';
     
     up_string(p);
-    ipr.cmd = ci_map_int(p,c_ipcmds,C_IPCMDS);
+    ipr.cmd = ci_map_int(p,c_ift,C_IFT);
 
     MemFree(line);
     
@@ -750,7 +750,7 @@ static void iplist_file_relaydelay(char *fname)
     }
     
     ipr.mask = htons((octet + 1) * 8);
-    ipr.cmd  = htons(IPCMD_ACCEPT);
+    ipr.cmd  = htons(IFT_ACCEPT);
     
     rc = send_request(&ipr,sizeof(ipr),data,sizeof(data),CMD_MCP_IPLIST_RESP);
     if (rc != ERR_OKAY)
@@ -797,7 +797,7 @@ static void iplist_file_bogonspace(char *fname)
     ipr.type    = htons(CMD_MCP_IPLIST);
     ipr.ipsize  = htons(4);
     ipr.mask    = htons(32);
-    ipr.cmd     = htons(IPCMD_REJECT);
+    ipr.cmd     = htons(IFT_REJECT);
     
     for (octet = 0 ; octet < 4 ; octet++)
     {
@@ -843,7 +843,7 @@ static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
     }
   }
   
-  ptfr->cmd = ci_map_int(up_string(cmdline[1].d),c_ipcmds,C_IPCMDS);
+  ptfr->cmd = ci_map_int(up_string(cmdline[1].d),c_ift,C_IFT);
   if (ptfr->cmd == (unet16)-1)
     return;
    

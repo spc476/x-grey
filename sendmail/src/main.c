@@ -44,6 +44,7 @@
 #include "../../common/src/graylist.h"
 #include "../../common/src/util.h"
 #include "../../common/src/crc32.h"
+#include "../../common/src/globals.h"
 #include "globals.h"
 
 #define min(a,b)	((a) < (b)) ? (a) : (b)
@@ -167,10 +168,10 @@ static sfsistat mf_rcpt_to(SMFICTX *ctx,char **argv)
   
   switch(response)
   {
-    case GRAYLIST_YEA:   return (SMFIS_ACCEPT);
-    case GRAYLIST_NAY:   return (SMFIS_REJECT);
-    case GRAYLIST_LATER: return (SMFIS_TEMPFAIL);
-    default: ddt(0);     return (SMFIS_ACCEPT);
+    case IFT_ACCEPT:   return (SMFIS_ACCEPT);
+    case IFT_REJECT:   return (SMFIS_REJECT);
+    case IFT_GRAYLIST: return (SMFIS_TEMPFAIL);
+    default: ddt(0);   return (SMFIS_ACCEPT);
   }
 }
 
@@ -244,7 +245,7 @@ static int check_graylist(int sock,byte *ip,char *from,char *to)
   if (rrc == -1)
   {
     (*cv_report)(LOG_ERR,"$","sendto() = %a",strerror(errno));
-    return(GRAYLIST_YEA);
+    return(IFT_ACCEPT);
   }
   
   alarm(c_timeout);
@@ -278,7 +279,7 @@ static int check_graylist(int sock,byte *ip,char *from,char *to)
       (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
     else
       (*cv_report)(LOG_DEBUG,"","timeout");
-    return(GRAYLIST_YEA);
+    return(IFT_ACCEPT);
   }
   
   crc = crc32(INIT_CRC32,&glr->version,rrc - sizeof(unet32));
@@ -287,51 +288,35 @@ static int check_graylist(int sock,byte *ip,char *from,char *to)
   if (crc != ntohl(glr->crc))
   {
     (*cv_report)(LOG_ERR,"","received bad packet");
-    return(GRAYLIST_YEA);
+    return(IFT_ACCEPT);
   }
   
   if (ntohs(glr->version) != VERSION)
   {
     (*cv_report)(LOG_ERR,"","received response from wrong version");
-    return(GRAYLIST_YEA);
+    return(IFT_ACCEPT);
   }
 
   if (ntohs(glr->MTA) != MTA_POSTFIX)
   {
     (*cv_report)(LOG_ERR,"","are we running another MTA here?");
-    return(GRAYLIST_YEA);
+    return(IFT_ACCEPT);
   }
   
   if (ntohs(glr->type) != CMD_GRAYLIST_RESP)
   {
     (*cv_report)(LOG_ERR,"i","received error %a",ntohs(glr->response));
-    return(GRAYLIST_YEA);
+    return(IFT_ACCEPT);
   }
   
   glr->response = ntohs(glr->response);
-  
-  if (glr->response == GRAYLIST_YEA)
-  {
-    (*cv_report)(LOG_DEBUG,"","received okay");
-    return(GRAYLIST_YEA);
-  }
-  else if (glr->response == GRAYLIST_NAY)
-  {
-    (*cv_report)(LOG_DEBUG,"","received nay");
-    return(GRAYLIST_NAY);
-  }
-  else if (glr->response == GRAYLIST_LATER)
-  {
-    (*cv_report)(LOG_DEBUG,"","received later");
-    return(GRAYLIST_LATER);
-  }
-  else
-  {
-    (*cv_report)(LOG_DEBUG,"","received na?");
-    return(GRAYLIST_YEA);
-  }
-  ddt(0);
-  return(GRAYLIST_YEA);
+  (*cv_report)(
+  	LOG_DEBUG,
+	"$",
+	"received %a",
+	ci_map_chars(glr->response,c_ift,C_IFT)
+  );
+  return(glr->response);
 }
 
 /*******************************************************************/

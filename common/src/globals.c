@@ -62,12 +62,12 @@ const struct chars_int c_levels[7] =
   { "WARNING"   , LOG_WARNING   }
 };
 
-const struct chars_int c_ipcmds[5] =
+const struct chars_int c_ift[5] =
 {
-  { "NONE (this is a bug)"	, IPCMD_NONE		} ,
-  { "ACCEPT"			, IPCMD_ACCEPT		} ,
-  { "REJECT"			, IPCMD_REJECT		} ,
-  { "GRAYLIST"			, IPCMD_GRAYLIST	} ,
-  { "REMOVE"			, IPCMD_REMOVE		}
-};
+  { "GRAYLIST"			, IFT_GRAYLIST	} ,
+  { "GREYLIST"			, IFT_GRAYLIST	} ,
+  { "ACCEPT"			, IFT_ACCEPT	} ,
+  { "REJECT"			, IFT_REJECT	} ,
+  { "REMOVE"			, IFT_REMOVE	} ,
+};  
 

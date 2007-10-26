@@ -361,7 +361,7 @@ int to_dump_stream(Stream out)
   ddt(out != NULL);
   
   tofrom_dump_stream(out,g_to,g_sto);
-  cmd = ci_map_chars(g_defto,c_ipcmds,C_IPCMDS);
+  cmd = ci_map_chars(g_defto,c_ift,C_IFT);
   LineSFormat(out,"L10 $8.8l","%a %b DEFAULT\n",g_toc,cmd);
   return(ERR_OKAY);
 }
@@ -375,7 +375,7 @@ int tod_dump_stream(Stream out)
   ddt(out);
   
   tofrom_dump_stream(out,g_tod,g_stod);
-  cmd = ci_map_chars(g_deftodomain,c_ipcmds,C_IPCMDS);
+  cmd = ci_map_chars(g_deftodomain,c_ift,C_IFT);
   LineSFormat(out,"L10 $8.8l","%a %b DEFAULT\n",g_todomainc,cmd);
   return(ERR_OKAY);
 }
@@ -389,7 +389,7 @@ int from_dump_stream(Stream out)
   ddt(out);
   
   tofrom_dump_stream(out,g_from,g_sfrom);
-  cmd = ci_map_chars(g_deffrom,c_ipcmds,C_IPCMDS);
+  cmd = ci_map_chars(g_deffrom,c_ift,C_IFT);
   LineSFormat(out,"L10 $8.8l","%a %b DEFAULT\n",g_fromc,cmd);
   return(ERR_OKAY);
 }
@@ -403,7 +403,7 @@ int fromd_dump_stream(Stream out)
   ddt(out);
   
   tofrom_dump_stream(out,g_fromd,g_sfromd);
-  cmd = ci_map_chars(g_deffromdomain,c_ipcmds,C_IPCMDS);
+  cmd = ci_map_chars(g_deffromdomain,c_ift,C_IFT);
   LineSFormat(out,"L10 $8.8l","%a %b DEFAULT\n",g_fromdomainc,cmd);
   return(ERR_OKAY);
 }
@@ -419,7 +419,7 @@ static void tofrom_dump_stream(Stream out,EDomain list,size_t size)
 
   for (i = 0 ; i < size ; i++)
   {
-    cmd = ci_map_chars(list[i].cmd,c_ipcmds,C_IPCMDS);
+    cmd = ci_map_chars(list[i].cmd,c_ift,C_IFT);
     LineSFormat(out,"L10 $8.8l $","%a %b %c\n",list[i].count,cmd,list[i].text);
   }
 }
@@ -534,7 +534,7 @@ static void tofrom_read_stream(
          || (strcmp(fields[2].d,"DEFAULT") == 0)
        )
     {
-      *pdef   = ci_map_int(fields[1].d,c_ipcmds,C_IPCMDS);
+      *pdef   = ci_map_int(fields[1].d,c_ift,C_IFT);
       *pcount = strtoul(fields[0].d,NULL,10);
       continue;
     }
@@ -542,7 +542,7 @@ static void tofrom_read_stream(
     ed.text  = (char *)fields[2].d;
     ed.tsize = fields[2].s;
     ed.count = strtoul(fields[0].d,NULL,10);
-    ed.cmd   = ci_map_int(fields[1].d,c_ipcmds,C_IPCMDS);
+    ed.cmd   = ci_map_int(fields[1].d,c_ift,C_IFT);
     
     (*cv_report)(LOG_DEBUG,"$ i","adding %a as %b",ed.text,ed.cmd);
 

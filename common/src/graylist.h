@@ -133,18 +133,11 @@ enum
 
 enum
 {
-  GRAYLIST_NAY,
-  GRAYLIST_YEA,
-  GRAYLIST_LATER
-};
-
-enum
-{
-  IPCMD_NONE,
-  IPCMD_ACCEPT,
-  IPCMD_REJECT,
-  IPCMD_GRAYLIST,
-  IPCMD_REMOVE
+  IFT_GRAYLIST,
+  IFT_ACCEPT,
+  IFT_REJECT,
+  IFT_REMOVE,
+  IFT_NONE
 };
 
 struct graylist_response
