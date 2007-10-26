@@ -7,7 +7,9 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -37,6 +39,8 @@ static void	tofrom			(String *,size_t,int,int,int);
 static void	show_stats		(void);
 static void	show_config		(void);
 static void	show_report		(int,int);
+static void	show_warranty		(void);
+static void	show_redistribute	(void);
 
 static void	iplist_file		(char *);
 static void	iplist_file_relaydelay	(char *);
@@ -47,6 +51,7 @@ static void	handler_sigalrm		(int);
 static void	help			(void);
 static void	pager_batch		(int);
 static void	pager_interactive	(int);
+
 
 /*************************************************************/
 
@@ -95,8 +100,22 @@ int main(int argc,char *argv[])
     MemFree(cmdline);
   }
   else
+  {
+    LineSFormat(
+    	StdoutStream,
+    	"$",
+	"\n"
+    	"%a Copyright (C) 2007 Sean Conner\n"
+	"\n"
+    	"This program comes with ABSOLUTELY NO WARRANTY; for details type 'show w'.\n"
+    	"This is free software, and you are welcome to redistribute it\n"
+    	"under certain conditions; type 'show c' for details.\n"
+    	"\n",
+    	argv[0]
+      );    	
     cmdline();
-    
+  }
+  
   return(EXIT_SUCCESS);
 }
 
@@ -130,9 +149,9 @@ static void cmdline(void)
     add_history(cmd);
 
     cmdline = split(&cmds,cmd);    
-    StreamWrite(StdoutStream,'\n');
+    /*StreamWrite(StdoutStream,'\n');*/
     process_cmdline(cmdline,cmds);
-    StreamWrite(StdoutStream,'\n');
+    /*StreamWrite(StdoutStream,'\n');*/
     MemFree(cmdline);
     
     StreamFlush(StdoutStream);  
@@ -175,7 +194,11 @@ static void show(String *cmdline,size_t cmds)
   ddt(cmdline != NULL);
   ddt(cmds    >  0);
   
-  if (strcmp(cmdline[1].d,"stats") == 0)
+  if (strcmp(cmdline[1].d,"w") == 0)
+    show_warranty();
+  else if (strcmp(cmdline[1].d,"c") == 0)
+    show_redistribute();
+  else if (strcmp(cmdline[1].d,"stats") == 0)
     show_stats();
   else if (strcmp(cmdline[1].d,"config") == 0)
     show_config();
@@ -490,6 +513,8 @@ static void help(void)
 	"show to-domains\t\t\tshow recipient domains\n"
 	"show from\t\t\tshow sender addresses\n"
 	"show from-domain\t\tshow sender domains\n"
+	"show w\t\t\t\tshow warranty information\n"
+	"show c\t\t\t\tshow redistribution information\n"
   	"help | ?\t\t\tthis text\n"
   );
 }
@@ -847,4 +872,35 @@ static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
 }
 
 /**********************************************************************/
+
+static void show_warranty(void)
+{
+  LineS(
+  	StdoutStream,
+  	"\n"
+  	"THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY\n"
+  	"APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT\n"
+  	"HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM \"AS IS\" WITHOUT WARRANTY\n"
+  	"OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,\n"
+  	"THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR\n"
+  	"PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM\n"
+  	"IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF\n"
+  	"ALL NECESSARY SERVICING, REPAIR OR CORRECTION.\n"
+  	"\n"
+  );
+}
+
+/**************************************************************************/
+
+static void show_redistribute(void)
+{
+  int fh;
+  
+  fh = open(c_license,O_RDONLY);
+  if (fh == -1) return;
+  (*m_pager)(fh);
+  close(fh);
+}
+
+/***********************************************************************/
 

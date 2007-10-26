@@ -4,6 +4,7 @@
 
 /**************************************************************/
 
+extern const char *const	  c_license;
 extern const char *const          c_host;
 extern const int                  c_port;
 extern const char *const          c_rhost;
