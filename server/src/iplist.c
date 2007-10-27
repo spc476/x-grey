@@ -314,6 +314,9 @@ int ip_add_sm(byte *ip,size_t size,int mask,int cmd)
   ddt(mask >  -1);
   ddt(mask <  33);
   /*ddt(mask != 31);*/	/* mask CAN be /31! */
+
+  if (cmd == IFT_REMOVE)
+    cmd = IFT_NONE;
   
   if (mask == 0)
   {

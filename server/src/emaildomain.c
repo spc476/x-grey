@@ -213,6 +213,28 @@ void edomain_add_from(EDomain rec,size_t index)
 
 /******************************************************************/
 
+void edomain_remove_from(size_t index)
+{
+  size_t count;
+  
+  ddt(index <= g_sfrom);
+  
+  if (g_sfrom == 0) return;
+  count = (g_sfrom - index) - 1;
+  if (count)
+  {
+    memmove(
+    	&g_from[index],
+    	&g_from[index + 1],
+    	count * sizeof(struct emaildomain)
+    );
+  }
+  
+  g_sfrom--;
+}
+
+/*******************************************************************/
+
 void edomain_add_fromd(EDomain rec,size_t index)
 {
   ddt(rec   != NULL);
@@ -235,6 +257,27 @@ void edomain_add_fromd(EDomain rec,size_t index)
 }
 
 /******************************************************************/
+
+void edomain_remove_fromd(size_t index)
+{
+  size_t count;
+  
+  ddt(index <= g_sfromd);
+  
+  if (g_sfromd == 0) return;
+  count = (g_sfromd - index) - 1;
+  if (count)
+  {
+    memmove(
+    	&g_fromd[index],
+    	&g_fromd[index + 1],
+    	count * sizeof(struct emaildomain)
+    );
+  }
+  g_sfromd--;
+}
+
+/*****************************************************************/
 
 void edomain_add_to(EDomain rec,size_t index)
 {
@@ -259,6 +302,28 @@ void edomain_add_to(EDomain rec,size_t index)
 
 /********************************************************************/
 
+void edomain_remove_to(size_t index)
+{
+  size_t count;
+  
+  ddt(index <= g_sto);
+
+  if (g_sto == 0) return;  
+  count = (g_sto - index) - 1;
+
+  if (count)
+  {
+    memmove(
+    	&g_to[index],
+    	&g_to[index + 1],
+    	count * sizeof(struct emaildomain)
+    );
+  }
+  g_sto--;
+}
+
+/*********************************************************************/
+
 void edomain_add_tod(EDomain rec,size_t index)
 {
   ddt(rec   != NULL);
@@ -281,6 +346,27 @@ void edomain_add_tod(EDomain rec,size_t index)
 }
 
 /******************************************************************/
+
+void edomain_remove_tod(size_t index)
+{
+  size_t count;
+  
+  ddt(index <= g_stod);
+  
+  if (g_stod == 0) return;
+  count = (g_stod - index) - 1;
+  if (count)
+  {
+    memmove(
+    	&g_tod[index],
+    	&g_tod[index + 1],
+    	count * sizeof(struct emaildomain)
+    );
+  }
+  g_stod--;
+}
+
+/*******************************************************************/
 
 int to_dump(void)
 {

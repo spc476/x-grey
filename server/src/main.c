@@ -693,89 +693,141 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
 
   (*cv_report)(LOG_DEBUG,"$ i","adding %a as %b",edkey.text,edkey.cmd);
   
+  /*-------------------------------------------------------
+  ; basically, if the command is IFT_REMOVE and the context
+  ; doesn't make sense (like trying to remove an entry that
+  ; doesn't exist, or trying to remove the default setting)
+  ; we silently ignore the condition.  Why be overly chatty
+  ; about this?  See?  I'm fully justified in this regard.
+  ;--------------------------------------------------------*/
+  
   switch(cmd)
   {
     case CMD_MCP_TO:
          if (def)
          {
-           g_defto = edkey.cmd;
-           g_toc   = edkey.count;
+           if (edkey.cmd != IFT_REMOVE)
+           {
+             g_defto = edkey.cmd;
+             g_toc   = edkey.count;
+           }
          }
          else
          {
            value = edomain_search(&edkey,&index,g_to,g_sto);
            if (value == NULL)
            {
-             edkey.text = dup_string(edkey.text);
-             edomain_add_to(&edkey,index);
+             if (edkey.cmd != IFT_REMOVE)
+             {
+               edkey.text = dup_string(edkey.text);
+               edomain_add_to(&edkey,index);
+             }
            }
 	   else
 	   {
-	     value->cmd   = edkey.cmd;
-	     value->count = 0;
+	     if (edkey.cmd == IFT_REMOVE)
+	       edomain_remove_to(index);
+	     else
+	     {
+	       value->cmd   = edkey.cmd;
+	       value->count = 0;
+	     }
 	   }
 	 }
          break;
     case CMD_MCP_TO_DOMAIN:
          if (def)
          {
-           g_deftodomain = edkey.cmd;
-           g_todomainc   = edkey.count;
+           if (edkey.cmd != IFT_REMOVE)
+           {
+             g_deftodomain = edkey.cmd;
+             g_todomainc   = edkey.count;
+           }
          }
          else
          {
            value = edomain_search(&edkey,&index,g_tod,g_stod);
            if (value == NULL)
            {
-             edkey.text = dup_string(edkey.text);
-             edomain_add_tod(&edkey,index);
+             if (edkey.cmd != IFT_REMOVE)
+             {
+               edkey.text = dup_string(edkey.text);
+               edomain_add_tod(&edkey,index);
+             }
            }
 	   else
 	   {
-	     value->cmd   = edkey.cmd;
-	     value->count = 0;
+	     if (edkey.cmd == IFT_REMOVE)
+	       edomain_remove_tod(index);
+	     else
+	     {
+	       value->cmd   = edkey.cmd;
+	       value->count = 0;
+	     }
 	   }
 	 }
          break;
     case CMD_MCP_FROM:
          if (def)
          {
-           g_deffrom = edkey.cmd;
-           g_fromc   = edkey.count;
+           if (edkey.cmd != IFT_REMOVE)
+           {
+             g_deffrom = edkey.cmd;
+             g_fromc   = edkey.count;
+           }
          }
          else
          {
            value = edomain_search(&edkey,&index,g_from,g_sfrom);
            if (value == NULL)
            {
-             edkey.text = dup_string(edkey.text);
-             edomain_add_from(&edkey,index);
+             if (edkey.cmd != IFT_REMOVE)
+             {
+               edkey.text = dup_string(edkey.text);
+               edomain_add_from(&edkey,index);
+             }
            }
 	   else
 	   {
-	     value->cmd   = edkey.cmd;
-	     value->count = 0;
+	     if (edkey.cmd == IFT_REMOVE)
+	       edomain_remove_from(index);
+	     else
+	     {
+	       value->cmd   = edkey.cmd;
+	       value->count = 0;
+	     }
 	   }
 	 }
          break;
     case CMD_MCP_FROM_DOMAIN:
          if (def)
          {
-           g_deffromdomain = edkey.cmd;
-           g_fromdomainc   = edkey.count;
+           if (edkey.cmd != IFT_REMOVE)
+           {
+             g_deffromdomain = edkey.cmd;
+             g_fromdomainc   = edkey.count;
+           }
          }
          else
          {
            value = edomain_search(&edkey,&index,g_fromd,g_sfromd);
            if (value == NULL)
            {
-             edkey.text = dup_string(edkey.text);
-             edomain_add_fromd(&edkey,index);
+             if (edkey.cmd != IFT_REMOVE)
+             {
+               edkey.text = dup_string(edkey.text);
+               edomain_add_fromd(&edkey,index);
+             }
            }
 	   else
 	   {
-	     value->cmd   = edkey.cmd;
-	     value->count = 0;
+	     if (edkey.cmd == IFT_REMOVE)
+	       edomain_remove_fromd(index);
+	     else
+	     {
+	       value->cmd   = edkey.cmd;
+	       value->count = 0;
+	     }
 	   }
 	 }
          break;
