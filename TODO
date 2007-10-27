@@ -2,33 +2,41 @@
 
 	* on brevard, changed SIGCHLD to be handled like any other normal
 	  signal.
+		DONE
 	
 	* Also fixed some possible problems with handle_sigchld
 	* simplified code dealing with gld_fork().
+		DONE
 
 	* next to try:
 		* renaming state files
 		* saving state without the fork
+		DONE - no longer need to do this.
 
 2007-10-03T02:33-05:00
 
 	* Fix pfc to accept---oh, I see I already have that on the todo
 	  list.  Sigh.
+		DONE
 
 2007-09-26T15:22-05:00
 
 	* smc: cleanup c_filterchannel when program ends.
  	* smc: make into daemon (and all that entails)
+		DONE
 
 	* pfc: add code to actually contact a remote host
-
+		DONE
+	
 2007-09-22T03:03-05:00
 
 	* Add IP restrictions on who can connect.
+		DONE - no longer under consideration.  Use iptables.
 
 2007-09-21T20:17-05:00
 
 	* Possibly add code to filter requests from certain IP addresses.
+		DONE - no longer under consideration.  Use iptables.
 
 2007-09-17T03:05-05:00
 
@@ -63,6 +71,7 @@
 
 	* make a configuation file---the command line is getting a bit
 	  silly.
+		DONE - no longer under consideration
 
 	* keep track of unique IP, create time, last activity time, number
 	  of requests, number of whitelist.
@@ -75,8 +84,10 @@
 	  Problem caused by:  The Apache mailing list, which uses a unique
 	  email address for every message sent out.  I'm not sure if I'll
 	  get any more or not.
+		SOLVED
 
 	* Tune down the accept maybe?  cybercom tried again in 22 minutes.
+		DONE
 
 	* Make a /var/run/pid file for daemon.
 		DONE	2007-09-08T03:55-05:00
@@ -84,6 +95,7 @@
 	* If run as root, switch down to a particular user.
 
 	* Report running time on various reports
+		DONE
 
 	* Keep track of unique IP addresses.  If an address has only
 	  graylisted addresses and no whitelisted addresses, add it to the
@@ -94,6 +106,9 @@
 	  Then I can reload a dump and pick up from there.  Or have
 	  iplist_load() read in the extra fields to recreate the entire
 	  list.  Would make upading the server a bit smoother.
+		DONE
 
 	* Investigate maybe using only from and to address, and skip the IP
 	  address.
+		DONE - no longer under consideration, using IP address.
+
