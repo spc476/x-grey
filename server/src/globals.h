@@ -76,19 +76,27 @@ extern size_t	           g_graylist_expired;
 
 extern struct ipnode      *g_tree;
 extern size_t              g_ipcnt;
+extern size_t              g_ip_cmdcnt[3];
 
 extern size_t              g_smaxfrom;
 extern size_t              g_sfrom;
 extern struct emaildomain *g_from;
+extern size_t              g_from_cmdcnt[3];
+
 extern size_t              g_smaxfromd;
 extern size_t              g_sfromd;
 extern struct emaildomain *g_fromd;
+extern size_t              g_fromd_cmdcnt[3];
+
 extern size_t              g_smaxto;
 extern size_t              g_sto;
 extern struct emaildomain *g_to;
+extern size_t              g_to_cmdcnt[3];
+
 extern size_t              g_smaxtod;
 extern size_t              g_stod;
 extern struct emaildomain *g_tod;
+extern size_t              g_tod_cmdcnt[3];
 
 extern time_t              g_time_savestate;
 

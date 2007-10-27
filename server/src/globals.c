@@ -131,19 +131,27 @@ size_t               g_graylist_expired;
 
 struct ipnode       *g_tree;
 size_t               g_ipcnt = 1;
+size_t               g_ip_cmdcnt[3];
 
 size_t		     g_smaxfrom;
 size_t	             g_sfrom;
 struct emaildomain  *g_from;
+size_t               g_from_cmdcnt[3];
+
 size_t               g_smaxfromd;
 size_t               g_sfromd;
 struct emaildomain  *g_fromd;
+size_t               g_fromd_cmdcnt[3];
+
 size_t               g_smaxto;
 size_t               g_sto;
 struct emaildomain  *g_to;
+size_t               g_to_cmdcnt[3];
+
 size_t               g_smaxtod;
 size_t               g_stod;
 struct emaildomain  *g_tod;
+size_t               g_tod_cmdcnt[3];
 
 time_t               g_time_savestate;
 

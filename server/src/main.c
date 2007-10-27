@@ -170,6 +170,9 @@ static void mainloop(int sock)
              stats.nowtime           = htonl(req.now);
              stats.tuples            = htonl(g_poolnum);
 	     stats.ips               = htonl(g_ipcnt);
+	     stats.ip_graylist       = htonl(g_ip_cmdcnt[IFT_GRAYLIST]);
+	     stats.ip_accept         = htonl(g_ip_cmdcnt[IFT_ACCEPT]);
+	     stats.ip_reject         = htonl(g_ip_cmdcnt[IFT_REJECT]);
              stats.graylisted        = htonl(g_graylisted);
              stats.whitelisted       = htonl(g_whitelisted);
              stats.graylist_expired  = htonl(g_graylist_expired);
@@ -179,9 +182,21 @@ static void mainloop(int sock)
 	     stats.requests_cu_max   = htonl(g_req_cumax);
 	     stats.requests_cu_ave   = htonl(ave);
 	     stats.from              = htonl(g_sfrom  + 1);
+	     stats.from_graylist     = htonl(g_from_cmdcnt[IFT_GRAYLIST]);
+	     stats.from_accept       = htonl(g_from_cmdcnt[IFT_ACCEPT]);
+	     stats.from_reject       = htonl(g_from_cmdcnt[IFT_REJECT]);
 	     stats.fromd             = htonl(g_sfromd + 1);
+	     stats.fromd_graylist    = htonl(g_fromd_cmdcnt[IFT_GRAYLIST]);
+	     stats.fromd_accept      = htonl(g_fromd_cmdcnt[IFT_ACCEPT]);
+	     stats.fromd_reject      = htonl(g_fromd_cmdcnt[IFT_REJECT]);
 	     stats.to                = htonl(g_sto    + 1);
+	     stats.to_graylist       = htonl(g_to_cmdcnt[IFT_GRAYLIST]);
+	     stats.to_accept         = htonl(g_to_cmdcnt[IFT_ACCEPT]);
+	     stats.to_reject         = htonl(g_to_cmdcnt[IFT_REJECT]);
 	     stats.tod               = htonl(g_stod   + 1);
+	     stats.tod_graylist      = htonl(g_tod_cmdcnt[IFT_GRAYLIST]);
+	     stats.tod_accept        = htonl(g_tod_cmdcnt[IFT_ACCEPT]);
+	     stats.tod_reject        = htonl(g_tod_cmdcnt[IFT_REJECT]);
              
              send_packet(&req,&stats,sizeof(stats)); /* VVV - uninit mem */
            }
@@ -350,6 +365,7 @@ void type_graylist(struct request *req)
   ;----------------------------------------------------*/
 
   rc = ip_match(tuple.ip,4);
+  g_ip_cmdcnt[rc]++;
   
   if (rc != IFT_GRAYLIST)
   {
@@ -368,6 +384,7 @@ void type_graylist(struct request *req)
   if (edvalue != NULL)
   {
     edvalue->count++;
+    g_from_cmdcnt[edvalue->cmd]++;
 
     if (edvalue->cmd == IFT_GRAYLIST)
       goto type_graylist_check_to;
@@ -380,6 +397,7 @@ void type_graylist(struct request *req)
   else 
   {
     g_fromc++;
+    g_from_cmdcnt[g_deffrom]++;
     if (g_deffrom != IFT_GRAYLIST)
     {
       send_reply(req,CMD_GRAYLIST_RESP,g_deffrom);
@@ -397,7 +415,8 @@ void type_graylist(struct request *req)
     if (edvalue != NULL)
     {
       edvalue->count++;
-      
+      g_fromd_cmdcnt[edvalue->cmd]++; 
+
       if (edvalue->cmd != IFT_GRAYLIST)
       {
         send_reply(req,CMD_GRAYLIST_RESP,edvalue->cmd);
@@ -407,6 +426,7 @@ void type_graylist(struct request *req)
     else 
     {
       g_fromdomainc++;
+      g_fromd_cmdcnt[g_deffromdomain]++;
       if (g_deffromdomain != IFT_GRAYLIST)
       {
         send_reply(req,CMD_GRAYLIST_RESP,g_deffromdomain);
@@ -428,6 +448,7 @@ type_graylist_check_to:
   if (edvalue != NULL)
   {
     edvalue->count++;
+    g_to_cmdcnt[edvalue->cmd]++;
 
     if (edvalue->cmd == IFT_GRAYLIST)
       goto type_graylist_check_tuple;
@@ -440,6 +461,7 @@ type_graylist_check_to:
   else 
   {
     g_toc++;
+    g_to_cmdcnt[g_defto]++;
     if (g_defto != IFT_GRAYLIST)
     {
       send_reply(req,CMD_GRAYLIST_RESP,g_defto);
@@ -457,6 +479,7 @@ type_graylist_check_to:
     if (edvalue != NULL)
     {
       edvalue->count++;
+      g_tod_cmdcnt[edvalue->cmd]++;
       
       if (edvalue->cmd != IFT_GRAYLIST)
       {
@@ -467,6 +490,7 @@ type_graylist_check_to:
     else 
     {
       g_todomainc++;
+      g_tod_cmdcnt[g_deftodomain]++;
 
       if (g_deftodomain != IFT_GRAYLIST)
       {

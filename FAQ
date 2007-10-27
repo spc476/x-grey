@@ -1,0 +1,16 @@
+
+
+
+Why is the value of From-Domain-Graylisted significantly lower than
+From-Graylisted?  
+
+	That's because the sender address might not neccessarily contain a
+	domain.  Local delivery for one thing.  Another are bounce messages
+	that come from an address of "<>", which is legal.
+
+Why is the value of To-Domain-Graylisted lower than To-Graylisted?
+
+	Similarly to the above question, the recipient address might not
+	neccessarily contain a domain.
+
+

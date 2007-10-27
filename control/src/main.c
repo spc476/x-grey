@@ -368,39 +368,106 @@ static void show_stats(void)
   t = report_time(ntohl(gss->starttime),ntohl(gss->nowtime));
 
   LineSFormat(
-      	StdoutStream,
-      	"$ L10 L10 L10 L10 L10 L10 L10 L10 L10 L10 L10 L10 L10 L10",
-      	"%a\n"
-      	"Requests:          %h\n"
-      	"Requests-Cu:       %i\n"
-	"Requests-Cu-Max:   %j\n"
-	"Requests-Cu-Ave:   %k\n"
-      	"IPs:               %c\n"
-	"From:              %l\n"
-	"From-Domain:       %m\n"
-	"To:                %n\n"
-	"To-Domain:         %o\n"
-      	"Tuples:            %b\n"
-      	"Graylisted:        %d\n"
-      	"Whitelisted:       %e\n"
-      	"Graylist-Expired:  %f\n"
-      	"Whitelist-Expired: %g\n",
-        t,
-        (unsigned long)ntohl(gss->tuples),
-        (unsigned long)ntohl(gss->ips),
-        (unsigned long)ntohl(gss->graylisted),
-        (unsigned long)ntohl(gss->whitelisted),
-        (unsigned long)ntohl(gss->graylist_expired),
-        (unsigned long)ntohl(gss->whitelist_expired),
-        (unsigned long)ntohl(gss->requests),
-        (unsigned long)ntohl(gss->requests_cu),
-	(unsigned long)ntohl(gss->requests_cu_max),
-	(unsigned long)ntohl(gss->requests_cu_ave),
-	(unsigned long)ntohl(gss->from),
-	(unsigned long)ntohl(gss->fromd),
-	(unsigned long)ntohl(gss->to),
-	(unsigned long)ntohl(gss->tod)
-       );
+  	StdoutStream,
+  	"$ L10 L10 L10 L10",
+  	"%a\n"
+  	"Requests:               %b\n"
+  	"Requests-Cu:            %c\n"
+  	"Requests-Cu-Max:        %d\n"
+  	"Requests-Cu-Ave:        %e\n"
+	"\n",
+  	t,
+  	(unsigned long)ntohl(gss->requests),
+  	(unsigned long)ntohl(gss->requests_cu),
+  	(unsigned long)ntohl(gss->requests_cu_max),
+  	(unsigned long)ntohl(gss->requests_cu_ave)
+  );
+  
+  LineSFormat(
+  	StdoutStream,
+  	"L10 L10 L10 L10",
+  	"IP-Entries:             %a\n"
+  	"IP-Graylisted:          %b\n"
+  	"IP-Accepted:            %c\n"
+  	"IP-Rejected:            %d\n"
+	"\n",
+  	(unsigned long)ntohl(gss->ips),
+  	(unsigned long)ntohl(gss->ip_graylist),
+  	(unsigned long)ntohl(gss->ip_accept),
+  	(unsigned long)ntohl(gss->ip_reject)
+  );
+  
+  LineSFormat(
+  	StdoutStream,
+  	"L10 L10 L10 L10",
+  	"From-Entries:           %a\n"
+  	"From-Graylisted:        %b\n"
+  	"From-Accepted:          %c\n"
+  	"From-Rejected:          %d\n"
+	"\n",
+  	(unsigned long)ntohl(gss->from),
+  	(unsigned long)ntohl(gss->from_graylist),
+  	(unsigned long)ntohl(gss->from_accept),
+  	(unsigned long)ntohl(gss->from_reject)
+  );
+  
+  LineSFormat(
+  	StdoutStream,
+  	"L10 L10 L10 L10",
+  	"From-Domain-Entries:    %a\n"
+  	"From-Domain-Graylisted: %b\n"
+  	"From-Domain-Accepted:   %c\n"
+  	"From-Domain-Rejected:   %d\n"
+	"\n",
+  	(unsigned long)ntohl(gss->fromd),
+  	(unsigned long)ntohl(gss->fromd_graylist),
+  	(unsigned long)ntohl(gss->fromd_accept),
+  	(unsigned long)ntohl(gss->fromd_reject)
+  );
+  
+  LineSFormat(
+  	StdoutStream,
+  	"L10 L10 L10 L10",
+  	"To-Entries:             %a\n"
+  	"To-Graylisted:          %b\n"
+  	"To-Accepted:            %c\n"
+  	"To-Rejected:            %d\n"
+	"\n",
+  	(unsigned long)ntohl(gss->to),
+  	(unsigned long)ntohl(gss->to_graylist),
+  	(unsigned long)ntohl(gss->to_accept),
+  	(unsigned long)ntohl(gss->to_reject)
+  );
+  
+  LineSFormat(
+  	StdoutStream,
+  	"L10 L10 L10 L10",
+  	"To-Domain-Entries:      %a\n"
+  	"To-Domain-Graylisted:   %b\n"
+  	"To-Domain-Accepted:     %c\n"
+  	"To-Domain-Rejected:     %d\n"
+	"\n",
+  	(unsigned long)ntohl(gss->tod),
+  	(unsigned long)ntohl(gss->tod_graylist),
+  	(unsigned long)ntohl(gss->tod_accept),
+  	(unsigned long)ntohl(gss->tod_reject)
+  );
+  
+  LineSFormat(
+  	StdoutStream,
+  	"L10 L10 L10 L10 L10",
+  	"Tuples:                 %a\n"
+  	"Graylisted:             %b\n"
+  	"Graylisted-Expired:     %c\n"
+  	"Whitelisted:            %d\n"
+  	"Whitelisted-Expired:    %e\n",
+  	(unsigned long)ntohl(gss->tuples),
+  	(unsigned long)ntohl(gss->graylisted),
+  	(unsigned long)ntohl(gss->graylist_expired),
+  	(unsigned long)ntohl(gss->whitelisted),
+  	(unsigned long)ntohl(gss->whitelist_expired)
+  );
+  	
   MemFree(t);
 }
 

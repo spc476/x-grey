@@ -188,6 +188,9 @@ struct glmcp_response_show_stats
   unet32 nowtime;
   unet32 tuples;
   unet32 ips;
+  unet32 ip_graylist;
+  unet32 ip_accept;
+  unet32 ip_reject;
   unet32 graylisted;
   unet32 whitelisted;
   unet32 graylist_expired;
@@ -197,9 +200,21 @@ struct glmcp_response_show_stats
   unet32 requests_cu_max;
   unet32 requests_cu_ave;
   unet32 from;
+  unet32 from_graylist;
+  unet32 from_accept;
+  unet32 from_reject;
   unet32 fromd;
+  unet32 fromd_graylist;
+  unet32 fromd_accept;
+  unet32 fromd_reject;
   unet32 to;
+  unet32 to_graylist;
+  unet32 to_accept;
+  unet32 to_reject;
   unet32 tod;
+  unet32 tod_graylist;
+  unet32 tod_accept;
+  unet32 tod_reject;
 };
 
 struct glmcp_response_show_config
