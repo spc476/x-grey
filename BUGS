@@ -1,6 +1,8 @@
 2007-09-22T16:33-05:00
 
 	* Around 6 hours, saving state fails for some reason.
+		FIXED - see http://boston.conman.org/2007/10/18.1 
+			for details
 
 2007-09-17T01:00-05:00
 
@@ -19,6 +21,7 @@
 2007-09-07T03:10-05:00
 
 	* Check memory allocations, I may have a small leak
+		DONE - there are none (using valgrind)
 
 	* I think the help message on the server is incorrect.
 		DONE 2007-09-08T03:55-05:00
