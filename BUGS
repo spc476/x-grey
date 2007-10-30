@@ -3,6 +3,9 @@
 	* Either restore the counts, or set them back to zero when
 	  restarting.
 
+	* When removing an IFT entry, adjust count accordingly.
+		FIXED 2007-10-27T22:38-05:00
+
 2007-09-22T16:33-05:00
 
 	* Around 6 hours, saving state fails for some reason.
@@ -22,6 +25,8 @@
 
 2007-09-15T01:32-05:00
 	* duplicates in the whitelist.txt aren't detected and removed.
+		DONE 2007-10-27T22:41-05:00 doesn't seem to be a problem.
+		probably fixed in some earlier incarnation.
 
 2007-09-07T03:10-05:00
 
@@ -34,6 +39,7 @@
 2007-09-06T03:00-05:00
 
 *	If whitelist.ip doesn't end in a linefeed, it segfaults.
+		FIXED 2007-10-27T22:38-05:00
 
 *	There's a problem under Linux 2.6.9-023stab032.1-smp with fork(). At
 	first, I thought it was the calls to _exit() were failing, but nope,
