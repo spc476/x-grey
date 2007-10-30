@@ -2,7 +2,6 @@
 *
 * Copyright 2007 by Sean Conner.
 *
-*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
@@ -39,6 +38,8 @@ void	 tuple_add		(Tuple,size_t);
 void	 tuple_expire		(time_t);
 int	 tuple_dump		(void);
 int	 tuple_dump_stream	(Stream);
+int	 tuple_all_dump		(void);
+int	 tuple_all_dump_stream	(Stream);
 int	 whitelist_dump		(void);
 int	 whitelist_dump_stream	(Stream);
 int	 whitelist_load		(void);

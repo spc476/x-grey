@@ -2,7 +2,6 @@
 *
 * Copyright 2007 by Sean Conner.
 *
-*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
@@ -220,6 +219,7 @@ void edomain_remove_from(size_t index)
   ddt(index <= g_sfrom);
   
   if (g_sfrom == 0) return;
+  MemFree(g_from[index].text);
   count = (g_sfrom - index) - 1;
   if (count)
   {
@@ -265,6 +265,7 @@ void edomain_remove_fromd(size_t index)
   ddt(index <= g_sfromd);
   
   if (g_sfromd == 0) return;
+  MemFree(g_fromd[index].text);
   count = (g_sfromd - index) - 1;
   if (count)
   {
@@ -309,6 +310,7 @@ void edomain_remove_to(size_t index)
   ddt(index <= g_sto);
 
   if (g_sto == 0) return;  
+  MemFree(g_to[index].text);
   count = (g_sto - index) - 1;
 
   if (count)
@@ -354,6 +356,7 @@ void edomain_remove_tod(size_t index)
   ddt(index <= g_stod);
   
   if (g_stod == 0) return;
+  MemFree(g_tod[index].text);
   count = (g_stod - index) - 1;
   if (count)
   {

@@ -1,5 +1,11 @@
 
+I just deleted a tuple (whitelist or graylist), yet I'm still getting emails
+through.  What's up with that?
 
+	The entry is only marked for deletion.  It won't actually be deleted
+	until the next cleanup period (default: 5m).  They're still active
+	in the tuple list, but only the MCP "show tuples all" command will
+	show them.
 
 Why is the value of From-Domain-Graylisted significantly lower than
 From-Graylisted?  

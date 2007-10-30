@@ -1,3 +1,38 @@
+2007-10-30
+
+	* but in handle_sigchld() whereby I wasn't resetting mf_sigchld back
+	  to 0.
+		FIXED
+
+	* bug in ip_add_sm() what would not decrement g_ipcnt when removing
+	an IP address.
+		FIXED
+
+	* default IPLIST command was incorrect.
+		FIXED
+
+	* apparent bug where if whitelist.ip didn't end in a newline,
+	  program would crash
+		FIXED
+
+	* memory leak in edomain_remove_*() functions.
+		FIXED
+
+	* forgot to update the g_whitelist count when expiring whitelist
+	  entries.
+		FIXED
+
+	* when printing out tuples, print "-" for empty sender/recipient
+	  address.
+		FIXED
+
+	* handling SIGPIPE in server children processes.
+		FIXED
+
+	* logged the max-cu-req stat at LOG_INFO
+		FIXED
+
+
 2007-10-27
 
 	* Either restore the counts, or set them back to zero when

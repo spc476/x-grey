@@ -25,7 +25,7 @@
 
 #include <time.h>
 
-#define VERSION		0x0102
+#define VERSION		0x0100
 
 #define DEF_HOST	"localhost"
 #define DEF_PORT	9990
@@ -78,6 +78,10 @@ enum
   CMD_NONE_RESP,
   CMD_GRAYLIST,
   CMD_GRAYLIST_RESP,
+  CMD_WHITELIST,
+  CMD_WHITELIST_RESP,
+  CMD_TUPLE_REMOVE,
+  CMD_TUPLE_REMOVE_RESP,
   
   /*------------------------------------
   ; commands from the MCP
@@ -89,6 +93,8 @@ enum
   CMD_MCP_SHOW_CONFIG_RESP,
   CMD_MCP_SHOW_IPLIST,
   CMD_MCP_SHOW_IPLIST_RESP,
+  CMD_MCP_SHOW_TUPLE,
+  CMD_MCP_SHOW_TUPLE_RESP,
   CMD_MCP_SHOW_TUPLE_ALL,
   CMD_MCP_SHOW_TUPLE_ALL_RESP,
   CMD_MCP_SHOW_WHITELIST,
@@ -116,6 +122,7 @@ enum
   CMD_MCP_FROM_RESP,
   CMD_MCP_FROM_DOMAIN,
   CMD_MCP_FROM_DOMAIN_RESP,
+
   CMD_MAX
 };
 
@@ -129,6 +136,18 @@ enum
   GLERR_CANT_GENERATE_REPORT,
   GLERR_IPADDR_NOT_SUPPORTED,
   GLERR_MAX
+};
+
+enum
+{
+  REASON_NONE,
+  REASON_IP,
+  REASON_FROM,
+  REASON_FROM_DOMAIN,
+  REASON_TO,
+  REASON_TO_DOMAIN,
+  REASON_GRAYLIST,
+  REASON_WHITELIST
 };
 
 enum
@@ -147,6 +166,7 @@ struct graylist_response
   unet16 MTA;
   unet16 type;
   unet16 response;
+  unet16 why;
 };
 
 struct graylist_request

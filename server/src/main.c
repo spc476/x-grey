@@ -2,7 +2,6 @@
 *
 * Copyright 2007 by Sean Conner.
 *
-*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
@@ -53,13 +52,14 @@
 
 /********************************************************************/
 
-void 		 type_graylist		(struct request *);
-
+void 		 type_graylist		(struct request *,int);
+void		 type_tuple_remove	(struct request *);
 static void	 mainloop		(int);
-static void	 send_reply		(struct request *,int,int);
+static void	 send_reply		(struct request *,int,int,int);
 static void	 send_packet		(struct request *,void *,size_t);
 static void	 cmd_mcp_report		(struct request *,int (*)(Stream),int);
 static void	 cmd_mcp_tofrom		(struct request *,int,int);
+static int	 graylist_sanitize_req	(struct tuple *,struct request *);
 
 /********************************************************************/
 
@@ -139,17 +139,25 @@ static void mainloop(int sock)
     if (ntohs(req.glr->version) != VERSION)
     {
       (*cv_report)(LOG_DEBUG,"","received bad version");
-      send_reply(&req,CMD_NONE_RESP,GLERR_VERSION_NOT_SUPPORTED);
+      send_reply(&req,CMD_NONE_RESP,GLERR_VERSION_NOT_SUPPORTED,REASON_NONE);
       continue;
     }
     
-    switch(ntohs(req.glr->type))
+    req.glr->type = ntohs(req.glr->type);
+
+    switch(req.glr->type)
     {
       case CMD_NONE:
-           send_reply(&req,CMD_NONE_RESP,GLERR_OKAY);
+           send_reply(&req,CMD_NONE_RESP,GLERR_OKAY,REASON_NONE);
            break;
       case CMD_GRAYLIST:
-           type_graylist(&req);
+           type_graylist(&req,CMD_GRAYLIST_RESP);
+           break;
+      case CMD_WHITELIST:
+           type_graylist(&req,CMD_WHITELIST_RESP);
+	   break;
+      case CMD_TUPLE_REMOVE:
+           type_tuple_remove(&req);
            break;
       case CMD_MCP_SHOW_STATS:
            {
@@ -220,8 +228,11 @@ static void mainloop(int sock)
       case CMD_MCP_SHOW_IPLIST:
            cmd_mcp_report(&req,ip_print,CMD_MCP_SHOW_IPLIST_RESP);
            break;
+      case CMD_MCP_SHOW_TUPLE:
+           cmd_mcp_report(&req,tuple_dump_stream,CMD_MCP_SHOW_TUPLE_RESP);
+           break;
       case CMD_MCP_SHOW_TUPLE_ALL:
-           cmd_mcp_report(&req,tuple_dump_stream,CMD_MCP_SHOW_TUPLE_ALL_RESP);
+           cmd_mcp_report(&req,tuple_all_dump_stream,CMD_MCP_SHOW_TUPLE_ALL_RESP);
            break;
       case CMD_MCP_SHOW_WHITELIST:
            cmd_mcp_report(&req,whitelist_dump_stream,CMD_MCP_SHOW_WHITELIST_RESP);
@@ -247,7 +258,7 @@ static void mainloop(int sock)
              
              if (ntohs(pip->ipsize) != 4)
              {
-               send_reply(&req,CMD_NONE_RESP,GLERR_IPADDR_NOT_SUPPORTED);
+               send_reply(&req,CMD_NONE_RESP,GLERR_IPADDR_NOT_SUPPORTED,REASON_NONE);
                break;
              }
 
@@ -255,7 +266,7 @@ static void mainloop(int sock)
 	     (*cv_report)(LOG_DEBUG,"$ i i","about to add %a/%b %c",t,mask,cmd);
              
              ip_add_sm(pip->data,4,mask,cmd);
-             send_reply(&req,CMD_MCP_IPLIST_RESP,0);
+             send_reply(&req,CMD_MCP_IPLIST_RESP,0,REASON_NONE);
            }
            break;
       case CMD_MCP_TO:
@@ -271,7 +282,7 @@ static void mainloop(int sock)
            cmd_mcp_tofrom(&req,CMD_MCP_FROM_DOMAIN,CMD_MCP_FROM_DOMAIN_RESP);
            break;
       default:
-           send_reply(&req,CMD_NONE_RESP,GLERR_TYPE_NOT_SUPPORTED);
+           send_reply(&req,CMD_NONE_RESP,GLERR_TYPE_NOT_SUPPORTED,REASON_NONE);
            break;
     }
   }
@@ -279,83 +290,42 @@ static void mainloop(int sock)
 
 /*******************************************************************/
 
-void type_graylist(struct request *req)
+void type_tuple_remove(struct request *req)
 {
-  struct graylist_request *glr;
+  struct tuple tuple;
+  Tuple        stored;
+  int          rc;
+  size_t       idx;
+  
+  ddt(req != NULL);
+  
+  rc = graylist_sanitize_req(&tuple,req);
+  if (rc != ERR_OKAY) return;
+
+  stored = tuple_search(&tuple,&idx);
+
+  if (stored != NULL)
+    stored->f |= F_REMOVE;
+
+  send_reply(req,CMD_TUPLE_REMOVE_RESP,0,REASON_GRAYLIST);
+}
+
+/********************************************************************/
+
+void type_graylist(struct request *req,int response)
+{
   struct tuple             tuple;
   struct emaildomain       edkey;
   EDomain                  edvalue;
   Tuple                    stored;
-  size_t                   rsize;
   size_t                   idx;
-  byte                    *p;
   char                    *at;
   int                      rc;
 
   ddt(req != NULL);
 
-  /*---------------------------------------------------
-  ; sanitize the request, and form a tuple from it.
-  ;---------------------------------------------------*/
-  
-  glr = req->glr;
-  p   = glr->data;
-
-  glr->ipsize    = ntohs(glr->ipsize);
-  glr->fromsize  = ntohs(glr->fromsize);
-  glr->tosize    = ntohs(glr->tosize);
-
-  if ((glr->ipsize != 4) && (glr->ipsize != 16))
-  {
-    send_reply(req,CMD_NONE_RESP,GLERR_BAD_DATA);
-    return;
-  }
-
-  rsize = glr->ipsize 
-        + glr->fromsize 
-	+ glr->tosize 
-	+ sizeof(struct graylist_request) 
-	- 4;	/* empiracally found --- this is bad XXX */
-
-  if (rsize > req->size)
-  {
-    (*cv_report)(LOG_DEBUG,"L L","bad size, expected %a got %b",(unsigned long)req->size,(unsigned long)rsize);
-    send_reply(req,CMD_NONE_RESP,GLERR_BAD_DATA);
-    return;
-  }
-  
-  memset(&tuple,0,sizeof(struct tuple));
-  D(tuple.pad    = 0xDECAFBAD;)
-  tuple.ctime    = tuple.atime = req->now;
-  tuple.fromsize = min(sizeof(tuple.from) - 1,glr->fromsize);
-  tuple.tosize   = min(sizeof(tuple.to)   - 1,glr->tosize);
-  tuple.f        = 0;
-
-  memcpy(tuple.ip,  p,glr->ipsize);    p += glr->ipsize;
-  memcpy(tuple.from,p,tuple.fromsize); p += glr->fromsize;
-  memcpy(tuple.to,  p,tuple.tosize);
-
-  tuple.from[tuple.fromsize] = '\0';
-  tuple.to  [tuple.tosize]   = '\0';
-
-  if (tuple.fromsize <  glr->fromsize) tuple.f |= F_TRUNCFROM;
-  if (tuple.tosize   <  glr->tosize)   tuple.f |= F_TRUNCTO;
-  if (glr->ipsize    == 16)            tuple.f |= F_IPv6;
-
-  (*cv_report)(
-  	LOG_INFO,
-  	"$ $ $ $ $",
-  	"tuple: [%a , %b , %c]%d%e",
-  	ipv4(tuple.ip),
-  	tuple.from,
-  	tuple.to,
-  	(tuple.f & F_TRUNCFROM) ? " Tf" : "",
-  	(tuple.f & F_TRUNCTO)   ? " Tt" : ""
-  );
-
-  /*------------------------------------------------
-  ; we have a valid GREYLIST request.  Count it.
-  ;------------------------------------------------*/
+  rc = graylist_sanitize_req(&tuple,req);
+  if (rc != ERR_OKAY) return;
   
   g_requests++;
   g_req_cucurrent++;
@@ -369,7 +339,7 @@ void type_graylist(struct request *req)
   
   if (rc != IFT_GRAYLIST)
   {
-    send_reply(req,CMD_GRAYLIST_RESP,rc);
+    send_reply(req,response,rc,REASON_IP);
     return;
   }
 
@@ -390,7 +360,7 @@ void type_graylist(struct request *req)
       goto type_graylist_check_to;
     else
     {
-      send_reply(req,CMD_GRAYLIST_RESP,edvalue->cmd);
+      send_reply(req,response,edvalue->cmd,REASON_FROM);
       return;
     }
   }
@@ -400,7 +370,7 @@ void type_graylist(struct request *req)
     g_from_cmdcnt[g_deffrom]++;
     if (g_deffrom != IFT_GRAYLIST)
     {
-      send_reply(req,CMD_GRAYLIST_RESP,g_deffrom);
+      send_reply(req,response,g_deffrom,REASON_FROM);
       return;
     }
   }
@@ -419,7 +389,7 @@ void type_graylist(struct request *req)
 
       if (edvalue->cmd != IFT_GRAYLIST)
       {
-        send_reply(req,CMD_GRAYLIST_RESP,edvalue->cmd);
+        send_reply(req,response,edvalue->cmd,REASON_FROM_DOMAIN);
 	return;
       }
     }
@@ -429,7 +399,7 @@ void type_graylist(struct request *req)
       g_fromd_cmdcnt[g_deffromdomain]++;
       if (g_deffromdomain != IFT_GRAYLIST)
       {
-        send_reply(req,CMD_GRAYLIST_RESP,g_deffromdomain);
+        send_reply(req,response,g_deffromdomain,REASON_FROM_DOMAIN);
 	return;
       }
     }
@@ -454,7 +424,7 @@ type_graylist_check_to:
       goto type_graylist_check_tuple;
     else
     {
-      send_reply(req,CMD_GRAYLIST_RESP,edvalue->cmd);
+      send_reply(req,response,edvalue->cmd,REASON_TO);
       return;
     }
   }
@@ -464,7 +434,7 @@ type_graylist_check_to:
     g_to_cmdcnt[g_defto]++;
     if (g_defto != IFT_GRAYLIST)
     {
-      send_reply(req,CMD_GRAYLIST_RESP,g_defto);
+      send_reply(req,response,g_defto,REASON_TO);
       return;
     }
   }
@@ -483,7 +453,7 @@ type_graylist_check_to:
       
       if (edvalue->cmd != IFT_GRAYLIST)
       {
-        send_reply(req,CMD_GRAYLIST_RESP,edvalue->cmd);
+        send_reply(req,response,edvalue->cmd,REASON_TO_DOMAIN);
 	return;
       }
     }
@@ -494,7 +464,7 @@ type_graylist_check_to:
 
       if (g_deftodomain != IFT_GRAYLIST)
       {
-        send_reply(req,CMD_GRAYLIST_RESP,g_deftodomain);
+        send_reply(req,response,g_deftodomain,REASON_TO_DOMAIN);
 	return;
       }
     }
@@ -515,21 +485,39 @@ type_graylist_check_tuple:
     memcpy(stored,&tuple,sizeof(struct tuple));
     tuple_add(stored,idx);
     g_graylisted++;
-    send_reply(req,CMD_GRAYLIST_RESP,IFT_GRAYLIST);
+    
+    if (req->glr->type == CMD_WHITELIST)
+    {
+      stored->f |= F_WHITELIST;
+      g_whitelisted++;
+      send_reply(req,response,IFT_ACCEPT,REASON_WHITELIST);
+    }
+    else
+      send_reply(req,response,IFT_GRAYLIST,REASON_GRAYLIST);
+
     return;
   }
   
   stored->atime = req->now;
-
+  
+  if (req->glr->type == CMD_WHITELIST)
+  {
+    if ((stored->f & F_WHITELIST) == 0)
+    {
+      stored->f |= F_WHITELIST;
+      g_whitelisted++;
+    }
+  }
+  
   if ((stored->f & F_WHITELIST))
   {
-    send_reply(req,CMD_GRAYLIST_RESP,IFT_ACCEPT);
+    send_reply(req,response,IFT_ACCEPT,REASON_WHITELIST);
     return;
   }
 
   if (difftime(req->now,stored->ctime) < c_timeout_embargo)
   {
-    send_reply(req,CMD_GRAYLIST_RESP,IFT_GRAYLIST);
+    send_reply(req,response,IFT_GRAYLIST,REASON_GRAYLIST);
     return;
   }
   
@@ -539,12 +527,81 @@ type_graylist_check_tuple:
     g_whitelisted++;
   }
     
-  send_reply(req,CMD_GRAYLIST_RESP,IFT_ACCEPT);
+  send_reply(req,response,IFT_ACCEPT,REASON_WHITELIST);
 }
 
 /*********************************************************************/
 
-static void send_reply(struct request *req,int type,int response)
+static int graylist_sanitize_req(struct tuple *tuple,struct request *req)
+{
+  struct graylist_request *glr;
+  byte                    *p;
+  size_t                   rsize;
+  
+  ddt(tuple != NULL);
+  ddt(req   != NULL);
+  
+  glr = req->glr;
+  p   = glr->data;
+
+  glr->ipsize    = ntohs(glr->ipsize);
+  glr->fromsize  = ntohs(glr->fromsize);
+  glr->tosize    = ntohs(glr->tosize);
+
+  if ((glr->ipsize != 4) && (glr->ipsize != 16))
+  {
+    send_reply(req,CMD_NONE_RESP,GLERR_BAD_DATA,REASON_NONE);
+    return(ERR_ERR);
+  }
+
+  rsize = glr->ipsize 
+        + glr->fromsize 
+	+ glr->tosize 
+	+ sizeof(struct graylist_request) 
+	- 4;	/* empiracally found --- this is bad XXX */
+
+  if (rsize > req->size)
+  {
+    (*cv_report)(LOG_DEBUG,"L L","bad size, expected %a got %b",(unsigned long)req->size,(unsigned long)rsize);
+    send_reply(req,CMD_NONE_RESP,GLERR_BAD_DATA,REASON_NONE);
+    return(ERR_ERR);
+  }
+  
+  memset(tuple,0,sizeof(struct tuple));
+  D(tuple->pad    = 0xDECAFBAD;)
+  tuple->ctime    = tuple->atime = req->now;
+  tuple->fromsize = min(sizeof(tuple->from) - 1,glr->fromsize);
+  tuple->tosize   = min(sizeof(tuple->to)   - 1,glr->tosize);
+  tuple->f        = 0;
+
+  memcpy(tuple->ip,  p,glr->ipsize);     p += glr->ipsize;
+  memcpy(tuple->from,p,tuple->fromsize); p += glr->fromsize;
+  memcpy(tuple->to,  p,tuple->tosize);
+
+  tuple->from[tuple->fromsize] = '\0';
+  tuple->to  [tuple->tosize]   = '\0';
+
+  if (tuple->fromsize <  glr->fromsize) tuple->f |= F_TRUNCFROM;
+  if (tuple->tosize   <  glr->tosize)   tuple->f |= F_TRUNCTO;
+  if (glr->ipsize    == 16)             tuple->f |= F_IPv6;
+
+  (*cv_report)(
+  	LOG_INFO,
+  	"$ $ $ $ $",
+  	"tuple: [%a , %b , %c]%d%e",
+  	ipv4(tuple->ip),
+  	tuple->from,
+  	tuple->to,
+  	(tuple->f & F_TRUNCFROM) ? " Tf" : "",
+  	(tuple->f & F_TRUNCTO)   ? " Tt" : ""
+  );
+  
+  return(ERR_OKAY);
+}
+
+/*****************************************************************************/
+
+static void send_reply(struct request *req,int type,int response,int why)
 {
   struct graylist_response resp;
   
@@ -556,6 +613,7 @@ static void send_reply(struct request *req,int type,int response)
   resp.MTA      = req->glr->MTA;
   resp.type     = htons(type);
   resp.response = htons(response);
+  resp.why      = htons(why);
   
   send_packet(req,&resp,sizeof(struct graylist_response));
 }
@@ -627,12 +685,12 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
   if (pid == -1)
   {
     close(tcp);
-    send_reply(req,CMD_NONE_RESP,GLERR_CANT_GENERATE_REPORT);
+    send_reply(req,CMD_NONE_RESP,GLERR_CANT_GENERATE_REPORT,REASON_NONE);
     return;
   }
   else if (pid > 0)	/* parent process */
   {
-    send_reply(req,resp,0);
+    send_reply(req,resp,0,REASON_NONE);
     close(tcp);
     return;
   }
@@ -835,7 +893,7 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
          ddt(0);
   }
   
-  send_reply(req,resp,0);
+  send_reply(req,resp,0,REASON_NONE);
 }
 
 /*************************************************************************/

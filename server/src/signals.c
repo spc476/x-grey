@@ -2,7 +2,6 @@
 *
 * Copyright 2007 by Sean Conner.
 *
-*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
@@ -154,10 +153,11 @@ void handle_sigchld(void)
   int   status;
   
   (*cv_report)(LOG_DEBUG,"","child process ended");
+  mf_sigchld = 0;
 
   while(1)
   {
-    child = waitpid(0,&status,WNOHANG);
+    child = waitpid(-1,&status,WNOHANG);
   
     if (child == (pid_t)-1)
     {
@@ -212,6 +212,7 @@ pid_t gld_fork(void)
   set_signal(SIGILL, sighandler_critical_child);
   set_signal(SIGXCPU,sighandler_critical_child);
   set_signal(SIGXFSZ,sighandler_critical_child);
+  set_signal(SIGPIPE,sighandler_critical_child);
 
   return(pid);
 }
@@ -286,6 +287,8 @@ static void handle_sigalrm(void)
   if (g_req_cu > g_req_cumax)
     g_req_cumax = g_req_cu;
 
+  (*cv_report)(LOG_INFO,"L","max-cu-expire: %a",(unsigned long)g_req_cumax);
+
   tuple_expire(now);
 
   if (difftime(now,g_time_savestate) >= c_time_savestate)
@@ -320,7 +323,7 @@ static void handle_sigusr1(void)
 
   if (child == 0)
   {
-    tuple_dump();
+    tuple_all_dump();
     _exit(0);
   }
 }

@@ -69,6 +69,7 @@ char       *report_delta		(double);
 String	   *split			(size_t *,char *);
 
 void	    write_pidfile		(const char *);
+int	    parse_ip			(byte *,int *,char *);
 
 /***************************************************************/
 

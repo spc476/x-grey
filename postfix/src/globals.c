@@ -74,7 +74,7 @@ void               (*cv_report)(int,char *,char *,...) = report_syslog;
 static const struct option mc_options[] =
 {
   { "host"		, required_argument	, NULL	, OPT_HOST		} ,
-  { "port"		, required_argument	, NULL	, OPT_HOST		} ,
+  { "port"		, required_argument	, NULL	, OPT_PORT		} ,
   { "remote-host"	, required_argument	, NULL	, OPT_RHOST		} ,
   { "remote-port"	, required_argument	, NULL	, OPT_RPORT		} ,
   { "timeout"		, required_argument	, NULL  , OPT_TIMEOUT		} ,

@@ -56,6 +56,7 @@ static void	process_cmdline		(String *,size_t);
 static void	show			(String *,size_t);
 static void	iplist			(String *,size_t);
 static void	tofrom			(String *,size_t,int,int,int);
+static void	tuple			(String *,size_t);
 
 static void	show_stats		(void);
 static void	show_config		(void);
@@ -202,6 +203,8 @@ static void process_cmdline(String *cmdline,size_t cmds)
     tofrom(cmdline,cmds,CMD_MCP_FROM,CMD_MCP_FROM_RESP,FALSE);
   else if (strcmp(cmdline[0].d,"from-domain") == 0)
     tofrom(cmdline,cmds,CMD_MCP_FROM_DOMAIN,CMD_MCP_FROM_DOMAIN_RESP,TRUE);
+  else if (strcmp(cmdline[0].d,"tuple") == 0)
+    tuple(cmdline,cmds);
   else if (strcmp(cmdline[0].d,"help") == 0)
     help();
   else if (strcmp(cmdline[0].d,"?") == 0)
@@ -228,7 +231,7 @@ static void show(String *cmdline,size_t cmds)
   else if (strcmp(cmdline[1].d,"tuples") == 0)
   {
     if (cmds == 2)
-      show_report(CMD_MCP_SHOW_TUPLE_ALL,CMD_MCP_SHOW_TUPLE_ALL_RESP);
+      show_report(CMD_MCP_SHOW_TUPLE,CMD_MCP_SHOW_TUPLE_RESP);
     else if (strcmp(cmdline[2].d,"all") == 0)
       show_report(CMD_MCP_SHOW_TUPLE_ALL,CMD_MCP_SHOW_TUPLE_ALL_RESP);
     else if (strcmp(cmdline[2].d,"whitelist") == 0)
@@ -966,3 +969,89 @@ static void show_redistribute(void)
 
 /***********************************************************************/
 
+static const struct chars_int m_tuple_cmd[4] =
+{
+  { "GRAYLIST"	, CMD_GRAYLIST		} ,
+  { "GREYLIST"	, CMD_GRAYLIST		} ,
+  { "WHITELIST" , CMD_WHITELIST		} ,
+  { "REMOVE"	, CMD_TUPLE_REMOVE	}
+};
+
+static const struct chars_int m_reason[8] =
+{
+  { "NONE"		, REASON_NONE		} ,
+  { "IP"		, REASON_IP		} ,
+  { "To"		, REASON_TO		} ,
+  { "To-Domain"		, REASON_TO_DOMAIN	} ,
+  { "From"		, REASON_FROM		} ,
+  { "From-Domain"	, REASON_FROM_DOMAIN	} ,
+  { "Greylist"		, REASON_GRAYLIST	} ,
+  { "Whitelist"		, REASON_WHITELIST	} 
+};
+  
+static void tuple(String *cmdline,size_t cmds)
+{
+  byte                      outpacket[600];
+  byte                      inpacket [1500];
+  struct graylist_request  *glq;
+  struct graylist_response *glr;
+  int                       cmd;
+  int                       mask;
+  size_t                    packetsize;
+  size_t                    sfrom;
+  size_t                    sto;
+  byte                     *p;
+  int                       rc;
+  
+  ddt(cmdline != NULL);
+  ddt(cmds    >  0);
+
+  cmd = ci_map_int((const char *)up_string(cmdline[1].d),m_tuple_cmd,4);  
+  if (cmd == -1)
+    return;
+      
+  sfrom = min(strlen(cmdline[3].d),200);
+  sto   = min(strlen(cmdline[4].d),200);
+  glq   = (struct graylist_request *)outpacket;
+  p     = glq->data;
+  
+  glq->version  = htons(VERSION);
+  glq->MTA      = htons(MTA_MCP);
+  glq->type     = htons(cmd);
+  glq->ipsize   = htons(4);
+  glq->fromsize = htons(sfrom);
+  glq->tosize   = htons(sto);
+  
+  rc = parse_ip(p,&mask,cmdline[2].d); p += 4;
+  if (rc == ERR_ERR)
+    return;
+
+  if (mask != 32)
+    return;
+
+  memcpy(p,cmdline[3].d,sfrom); p += sfrom;
+  memcpy(p,cmdline[4].d,sto);   p += sto;
+
+  packetsize = (size_t)(p - outpacket);
+  
+  rc = send_request(outpacket,packetsize,inpacket,sizeof(inpacket),cmd + 1);    
+  if (rc != ERR_OKAY)
+    LineS(StdoutStream,"bad response\n");   
+    
+  glr           = (struct graylist_response *)&inpacket;
+  glr->response = ntohs(glr->response);
+  glr->why      = ntohs(glr->why);
+  
+  if (!((glr->why == REASON_GRAYLIST) || (glr->why == REASON_WHITELIST)))
+  {
+    LineSFormat(
+    	StdoutStream,
+    	"$ $",
+    	"Tuple not added because of %a %b rule\n",
+    	ci_map_chars(glr->why,m_reason,8),
+    	ci_map_chars(glr->response,c_ift,C_IFT)
+    );
+  } 
+}
+
+/***********************************************************************/

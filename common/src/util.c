@@ -173,6 +173,7 @@ void report_stderr(int level,char *format,char *msg, ... )
   {
     LineSFormatv(StderrStream,format,msg,arg);
     StreamWrite(StderrStream,'\n');
+    StreamFlush(StderrStream);
   }
   va_end(arg);
 }
@@ -517,4 +518,37 @@ void write_pidfile(const char *fname)
 }
 
 /*********************************************************************/
+
+int parse_ip(byte *ip,int *mask,char *text)
+{
+  size_t octetcount = 0;
+  
+  ddt(ip   != NULL);
+  ddt(mask != NULL);
+  ddt(text != NULL);
+
+  do  
+  {
+    ip[octetcount] = strtoul(text,&text,10);
+    if (text[0] == '\0') break;
+    if (text[0] == '/')  break;
+    if (text[0] != '.')
+      return(ERR_ERR);
+    
+    octetcount++;
+    text++;
+  } while(octetcount < 4);
+  
+  if (*text++ == '/')
+  {
+    *mask = strtoul(text,&text,10);
+    if (*mask > 32) return(ERR_ERR);
+  }
+  else
+    *mask = 32;
+  
+  return(ERR_OKAY);
+}
+
+/************************************************************************/
 

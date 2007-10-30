@@ -2,7 +2,6 @@
 *
 * Copyright 2007 by Sean Conner.
 *
-*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
@@ -238,6 +237,18 @@ void tuple_expire(time_t Tao)
 
   for (i = j = 0 ; i < g_poolnum ; i++)
   {
+    if ((g_pool[i].f & F_REMOVE))
+    {
+      if (g_pool[i].f & F_WHITELIST)
+      {
+        g_whitelisted--;
+        g_whitelist_expired++;
+      }
+      else
+        g_graylist_expired++;
+      continue;
+    }
+
     if ((g_pool[i].f & F_WHITELIST))
     {
       if (difftime(Tao,g_pool[i].atime) < c_timeout_white)
@@ -248,7 +259,10 @@ void tuple_expire(time_t Tao)
 	  j++;
       }
       else
+      {
+        g_whitelisted--;
         g_whitelist_expired++;
+      }
       continue;
     }
     
@@ -301,15 +315,15 @@ int whitelist_dump_stream(Stream out)
   
   for (i = 0 ; (!StreamEOF(out)) && (i < g_poolnum) ; i++)
   {
-    if ((g_tuplespace[i]->f & F_WHITELIST))
+    if ((g_tuplespace[i]->f & (F_WHITELIST | F_REMOVE)) == F_WHITELIST)
     {
       LineSFormat(
       		out,
       		"$ $ $",
       		"%a %b %c\n",
       		ipv4(g_tuplespace[i]->ip),
-      		g_tuplespace[i]->from,
-      		g_tuplespace[i]->to
+      		(g_tuplespace[i]->fromsize) ? g_tuplespace[i]->from : "-",
+      		(g_tuplespace[i]->tosize)   ? g_tuplespace[i]->to   : "-"
       	);
     }
   }
@@ -339,6 +353,56 @@ int tuple_dump(void)
 int tuple_dump_stream(Stream out)
 {
   size_t i;
+  
+  ddt(out != NULL);
+  
+  for (i = 0 ; (!StreamEOF(out)) && (i < g_poolnum) ; i++)
+  {
+    if ((!g_tuplespace[i]->f & F_WHITELIST))
+    {
+      LineSFormat(
+      	out,
+        "$ $ $ $ $ $ $ $ L L",
+        "%a %b %c %d%e%f%g%h %i %j\n",
+        ipv4(g_tuplespace[i]->ip),
+        (g_tuplespace[i]->fromsize) ? g_tuplespace[i]->from : "-",
+        (g_tuplespace[i]->tosize)   ? g_tuplespace[i]->to   : "-",
+        (g_tuplespace[i]->f & F_WHITELIST) ? "W" : "-",
+        (g_tuplespace[i]->f & F_REMOVE)    ? "D" : "-",
+        (g_tuplespace[i]->f & F_TRUNCFROM) ? "F" : "-",
+        (g_tuplespace[i]->f & F_TRUNCTO)   ? "T" : "-",
+        (g_tuplespace[i]->f & F_IPv6)      ? "6" : "-",
+        (unsigned long)g_tuplespace[i]->ctime,
+        (unsigned long)g_tuplespace[i]->atime
+      );
+    }
+  }
+  return(ERR_OKAY);
+}
+
+/******************************************************************/
+
+int tuple_all_dump(void)
+{
+  Stream out;
+  
+  out = FileStreamWrite(c_dumpfile,FILE_CREATE | FILE_TRUNCATE);
+  if (out == NULL)
+  {
+    (*cv_report)(LOG_ERR,"$","could not open %a",c_dumpfile);
+    return(ERR_ERR);
+  }
+  
+  tuple_all_dump_stream(out);
+  StreamFree(out);
+  return(ERR_OKAY);
+}
+
+/******************************************************************/
+
+int tuple_all_dump_stream(Stream out)
+{
+  size_t i;
 
   ddt(out != NULL);
 
@@ -349,10 +413,10 @@ int tuple_dump_stream(Stream out)
         "$ $ $ $ $ $ $ $ L L",
         "%a %b %c %d%e%f%g%h %i %j\n",
         ipv4(g_tuplespace[i]->ip),
-        g_tuplespace[i]->from,
-        g_tuplespace[i]->to,
+        (g_tuplespace[i]->fromsize) ? g_tuplespace[i]->from : "-",
+        (g_tuplespace[i]->tosize)   ? g_tuplespace[i]->to   : "-",
         (g_tuplespace[i]->f & F_WHITELIST) ? "W" : "-",
-        (g_tuplespace[i]->f & F_GRAYLIST)  ? "G" : "-",
+        (g_tuplespace[i]->f & F_REMOVE)    ? "D" : "-",
         (g_tuplespace[i]->f & F_TRUNCFROM) ? "F" : "-",
         (g_tuplespace[i]->f & F_TRUNCTO)   ? "T" : "-",
         (g_tuplespace[i]->f & F_IPv6)      ? "6" : "-",
@@ -387,8 +451,12 @@ int whitelist_load(void)
     memset(&tuple,0,sizeof(struct tuple));
     
     line = LineSRead(in);
-    if (empty_string(line)) continue;
-    
+    if (empty_string(line)) 
+    {
+      MemFree(line);
+      continue;
+    }
+
     D(tuple.pad = 0xDECAFBAD);
     tuple.ip[0] = strtoul(line,&p,10); p++;
     tuple.ip[1] = strtoul(p,&p,10);    p++;
@@ -409,11 +477,29 @@ int whitelist_load(void)
     }
     
     *n++ = '\0';
-    
-    strncpy(tuple.from,p,sizeof(tuple.from) - 1);
-    strncpy(tuple.to,  n,sizeof(tuple.to)   - 1);
-    tuple.fromsize = strlen(tuple.from);
-    tuple.tosize   = strlen(tuple.to);
+   
+    if (strcmp(p,"-") == 0)
+    {
+      tuple.from[0]   = '\0';
+      tuple.fromsize = 0;
+    }
+    else
+    {
+      strncpy(tuple.from,p,sizeof(tuple.from) - 1);
+      tuple.fromsize = strlen(tuple.from);
+    }
+
+    if (strcmp(n,"-") == 0)
+    {
+      tuple.to[0]  = '\0';
+      tuple.tosize = 0;
+    }
+    else
+    {
+      strncpy(tuple.to,  n,sizeof(tuple.to)   - 1);
+      tuple.tosize = strlen(tuple.to);
+    }
+
     tuple.ctime    = tuple.atime = now;
 
     (*cv_report)(

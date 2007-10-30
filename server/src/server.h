@@ -2,7 +2,6 @@
 *
 * Copyright 2007 by Sean Conner.
 *
-*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
@@ -37,7 +36,7 @@
 #define UDP_MAX		1500
 
 #define F_WHITELIST     (1uL << 0)
-#define F_GRAYLIST      (1uL << 1)
+#define F_REMOVE        (1uL << 1)
 #define F_TRUNCFROM     (1uL << 2)
 #define F_TRUNCTO       (1uL << 3)
 #define F_IPv6          (1uL << 4)

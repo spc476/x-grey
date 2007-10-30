@@ -2,7 +2,6 @@
 *
 * Copyright 2007 by Sean Conner.
 *
-*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
@@ -39,11 +38,6 @@
 
 /*****************************************************************/
 
-#if 0
-static void		 ip_prune	(struct ipnode *,int);
-#endif
-
-
 static size_t	         ip_collect	(
 				  	  byte *,
 				  	  byte *,
@@ -63,7 +57,7 @@ int iplist_read(const char *fname)
   byte           ip   [16];
   Stream         in;
   char          *line;
-  char    *tline;
+  char          *tline;
   int            lcount = 0;
   size_t         octetcount;
   int            mask;
@@ -142,7 +136,7 @@ int iplist_read(const char *fname)
     cmd = ci_map_int(tokens[1].d,c_ift,C_IFT);
     if (cmd == -1)    
     {
-      (*cv_report)(LOG_ERR,"$ i $","syntax error on %a(%b)-needs to be ACCEPT or REJECT but not %c",fname,lcount,tline);
+      (*cv_report)(LOG_ERR,"$ i $","syntax error on %a(%b)-needs to be ACCEPT or REJECT but not %c",fname,lcount,tokens[1].d);
       MemFree(line);
       StreamFree(in);
       return(ERR_ERR);
@@ -205,10 +199,13 @@ int iplist_cmp(const void *left,const void *right)
   ddt(right   != NULL);
   ddt(l->size == 4);
   ddt(r->size == 4);
-
+#if 1
   if ((rc = memcmp(l->mask,r->mask,l->size)) != 0) return(-rc);
   if ((rc = memcmp(l->addr,r->addr,l->size)) != 0) return(rc);
-
+#else
+  if ((rc = memcmp(l->addr,r->addr,l->size)) != 0) return(rc);
+  if ((rc = memcmp(l->mask,r->mask,l->size)) != 0) return(-rc);
+#endif
   return(0);
 }
 
@@ -304,23 +301,20 @@ int ip_match(byte *ip,size_t size)
 int ip_add_sm(byte *ip,size_t size,int mask,int cmd)
 {
   struct ipnode *new;
-  struct ipnode *p   = g_tree;
-  int            off = -1;
-  int            bit =  0;
+  struct ipnode *p     = g_tree;
+  int            off   = -1;
+  int            bit   =  0;
   int            b;
   
   ddt(ip   != NULL);
   ddt(size == 4);
   ddt(mask >  -1);
   ddt(mask <  33);
-  /*ddt(mask != 31);*/	/* mask CAN be /31! */
 
-  if (cmd == IFT_REMOVE)
-    cmd = IFT_NONE;
-  
   if (mask == 0)
   {
-    g_tree->match = cmd;
+    if (cmd != IFT_REMOVE)
+      g_tree->match = cmd;
     return(0);
   }
 
@@ -368,42 +362,24 @@ int ip_add_sm(byte *ip,size_t size,int mask,int cmd)
   }
   
   if (p->match == IFT_NONE)
-    g_ipcnt++;
+  {
+    if (cmd != IFT_REMOVE)
+      g_ipcnt++;
+    else
+      return(0);
+  }
+
+  if (cmd == IFT_REMOVE)
+  {
+    cmd = IFT_NONE;
+    g_ipcnt--;
+  }
 
   p->match = cmd;
-
-#if 0
-  ip_prune(p->zero,cmd);
-  ip_prune(p->one,cmd);
-#endif
-
   return(0);
 }
 
 /*******************************************************************/
-
-#if 0
-static void ip_prune(struct ipnode *p,int match)
-{
-  if (p == NULL)
-    return;
-
-  if (p->match == IFT_NONE)
-  {
-    ip_prune(p->zero,match);
-    ip_prune(p->one,match);
-    return;
-  }
-  
-  if (p->match == match)
-  {
-    p->match = IFT_NONE;
-    g_ipcnt--;
-  }
-}  
-#endif
-
-/******************************************************************/
 
 int ip_print(Stream out)
 {
@@ -468,7 +444,7 @@ struct ipblock *ip_table(size_t *ps)
     rc = ip_collect(addr,mask,4,g_tree->one, 0,0x80,0x80,array,rc);
 
   (*cv_report)(LOG_DEBUG,"L L","g: %a rc: %b",g_ipcnt,rc);
-  qsort(array,rc,sizeof(struct ipblock),iplist_cmp);
+/*  qsort(array,rc,sizeof(struct ipblock),iplist_cmp);*/
   *ps = rc;
   return(array);
 }
@@ -521,7 +497,21 @@ static size_t ip_collect(
 
   mask[off] |= mbit;
   ip[off]   |= bit;
+
+  noff = off;
+  nmb  = mbit >> 1;
+  if (nmb == 0) 
+  {
+    nmb = 0x80;
+    noff ++;
+  }
   
+  if (p->zero)
+    i = ip_collect(ip,mask,4,p->zero,noff,nmb,0,array,i);
+    
+  if (p->one)
+    i = ip_collect(ip,mask,4,p->one,noff,nmb,nmb,array,i);
+
   if (p->match != IFT_NONE)
   {
     array[i].size  = size;
@@ -541,24 +531,9 @@ static size_t ip_collect(
     i++;
   }
   
-  noff = off;
-  nmb  = mbit >> 1;
-  if (nmb == 0) 
-  {
-    nmb = 0x80;
-    noff ++;
-  }
-  
-  if (p->zero)
-    i = ip_collect(ip,mask,4,p->zero,noff,nmb,0,array,i);
-    
-  if (p->one)
-    i = ip_collect(ip,mask,4,p->one,noff,nmb,nmb,array,i);
-  
   mask[off] ^= mbit;
   ip  [off] ^= bit;
   return(i);
 }
 
 /********************************************************************/
-
