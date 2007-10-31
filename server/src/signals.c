@@ -287,7 +287,7 @@ static void handle_sigalrm(void)
   if (g_req_cu > g_req_cumax)
     g_req_cumax = g_req_cu;
 
-  (*cv_report)(LOG_INFO,"L","max-cu-expire: %a",(unsigned long)g_req_cumax);
+  (*cv_report)(LOG_INFO,"L","cu-expire: %a",(unsigned long)g_req_cu);
 
   tuple_expire(now);
 
