@@ -136,7 +136,7 @@ int main(int argc,char *argv[])
   packet = vba;
   sock   = create_socket(c_host,c_port,SOCK_DGRAM);
 
-#if 0
+#if 1
   child = fork();
   if (child == (pid_t)-1)
   {
@@ -216,8 +216,8 @@ int main(int argc,char *argv[])
     _exit(EXIT_SUCCESS);
   }  
 
-  sleep(1);
-#if 0
+#if 1
+  /*sleep(1);*/
   kill(child,SIGTERM);
 #endif
 
