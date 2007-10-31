@@ -1029,8 +1029,21 @@ static void tuple(String *cmdline,size_t cmds)
   if (mask != 32)
     return;
 
-  memcpy(p,cmdline[3].d,sfrom); p += sfrom;
-  memcpy(p,cmdline[4].d,sto);   p += sto;
+  if (strcmp(cmdline[3].d,"-") != 0)
+  {
+    memcpy(p,cmdline[3].d,sfrom); 
+    p += sfrom;
+  }
+  else
+    glq->fromsize = htons(0);
+    
+  if (strcmp(cmdline[4].d,"-") != 0)
+  {
+    memcpy(p,cmdline[4].d,sto);
+    p += sto;
+  }
+  else
+    glq->tosize = htons(0);
 
   packetsize = (size_t)(p - outpacket);
   
