@@ -71,11 +71,6 @@ int main(int argc,char *argv[])
   DdtInit();
   StreamInit();
 
-  /*----------------------------------------------------
-  ; A bit of a hack to set the close on exec flags for
-  ; various streams opened up by the CGILIB.
-  ;----------------------------------------------------*/
-
   GlobalsInit(argc,argv);
 
   sock = create_socket(c_host,c_port,SOCK_DGRAM);
