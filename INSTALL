@@ -1,0 +1,353 @@
+
+To install the greylist daemon:
+
+Dependencies:
+
+	All programs require the CGILIB library I wrote.  The latest version
+	is available at:
+
+		http://....
+
+	The "gld-mcp" program requires the GNU readline package.  The latest
+	version of that is available at:
+
+		http://tiswww.case.edu/php/chet/readline/rltop.html
+
+	The "smc" (sendmail client) requires the milter and pthreads
+	library.  You are on your own for installing milter and pthreads.
+	Sorry.
+
+Extraction:
+
+	If you're reading this, you've already extracted the files. 
+	Congratulations!
+
+Compilation:
+
+	Edit both the top level Makefile and conf.h to reflect your system's
+	layout and preferences.  Once you are satisified with the parameter
+	settings, you can then compile the program.
+
+	To compile and install the server portion:
+
+		make server
+		make server-install
+
+	This will make the server and the Master Control Program, and
+	install them (default: /usr/local/bin).  It will also install some
+	help files used by the MCP program (default: /usr/local/share/gld).
+
+
+	If you are using Postfix:
+
+		make postfix
+		make postfix-install
+
+	If you are using Sendmail:
+
+		make sendmail
+		make sendmail-install
+
+	If you are using Qmail:
+
+		I feel sorry for you.
+
+Installation and starting the various programs:
+
+	Server:
+
+		There's a sample startup script for the server in the
+		scripts directory.  It was written for a SysV type system
+		(okay, RedHat Linux and derivatives) but it will give you an
+		indication of how the server is started.  Basically, it's
+		just "./gld" but you can use the command line options to
+		override the built-in defaults ("gld --help" for more
+		inforamtion).
+
+		To start the gld process:
+
+			# /usr/local/bin/gld
+
+		To stop the gld process:
+
+			# kill `cat /var/run/gld.pid`
+
+		It will dump its current state and then stop.
+
+		The greylist daemon does not need to be root to run,
+		although it does need write access to its state files and
+		pid file.
+
+		The gld-mcp program is used to manage the server process
+		(although you can't use it to stop gld).
+	
+		To run the gld-map program:
+
+			# /usr/local/bin/gld-mcp
+
+		(at the gld-mcp prompt, type 'help' for more information)
+
+	Postfix:
+
+		Edit '/etc/postfix/master.cf' to include the following line:
+
+		---[ line to add ]----------------
+
+		policy unix - n n - - spawn user=nobody argv=/usr/local/bin/pfc
+
+		---[ end of line ]------------------
+
+		and restart Postfix.   
+
+	Sendmail:
+
+		You need to make sure the 'smc' program is running before
+		sendmail starts.  To start smc:
+
+			# /usr/local/bin/smc
+
+		And to stop smc:
+
+			# kill `cat /var/run/smc.pid`
+
+		To configure sendmail to use smc, add the following to
+		'/etc/mail/sendmail.mc':
+
+		---[ line to add ]---------------------------------
+
+		define (`_FFR_MILTER', `1')dnl.
+		INPUT_MAIL_FILTER(`filter', `S=unix:/var/state/gld/milter')
+
+		---[ end of line ]---------------------------------
+
+		Then run make in '/etc/mail'.  That will regenerate
+		'/etc/mail/sendmail.cf'.  Then restart sendmail.
+
+Example Setups:
+
+	Running the clients and server on the same system:  just run as-is. 
+	This is the default setting of the greylist daemon.
+
+	Running the client on one host, the greylist daemon on another host:
+	run the client(s) as:
+
+		# ./pfc --server gldserver
+		# ./smc --server gldserver
+		# ./gld-mcp --server gldserver
+
+	On the machine running gld, start the process as:
+
+		# ./gld --host 0.0.0.0
+
+	if you want it to accept connections on all available interfaces. If
+	you only want to accept requests on a specific interface, specify
+	the IP address of that interface:
+
+		# ./gld --host gldserver
+
+	The server can only accept requests from all interfaces (using
+	"0.0.0.0" or the one specified interface.
+
+	You can have multiple clients all communicating to a common server.
+
+Restricting access:
+
+	The best way is to run both the server and clients on the same box.
+	All communications happen over the loopback address.  If that's not
+	desirable, then you can run the server on a private IP address.  If
+	you need to run the server process on a public port, then you'll
+	need to use other methods to restrict access (such as a firewall). 
+	The greylist daemon does not have facilities for restricting access
+	at this time.
+
+Managing the server:
+
+Each request to the greylist daemon consists of a tuple
+
+	[
+	  IP-address-of-sender
+	  sender-email-address
+	  recipient-email-address
+	]
+
+The greylist daemon filters each tuple through five lists before it adds the
+tuple to the greylist.  The lists are, in order:
+
+		iplist
+		from
+		from-domain
+		to
+		to-domain
+
+('from' is easier to type than 'sender' and 'to' is easier to type than
+'recipient'; 'to' and 'from' have nothing to do with the email headers 'To:'
+and 'From:')
+
+Tuples can be accepted or rejected at each stage.  If a tuple is not
+accepted or rejected, it continues forward through the filters.  The default
+rule for each filter is to 'GREYLIST' (which means the tuple continues
+through the system).
+
+	gld-mcp>show iplist
+	         0 GRAYLIST 0.0.0.0         0.0.0.0        
+	gld-mcp>show from
+	         0 GRAYLIST DEFAULT
+	gld-mcp>show from-domain
+	         0 GRAYLIST DEFAULT
+	gld-mcp>show to
+	         0 GRAYLIST DEFAULT
+	gld-mcp>show to-domain
+	         0 GRAYLIST DEFAULT
+	gld-mcp>
+
+The initial 0 is the number of requests that matched that rule.  In this
+case, since there have been no requests, these counts are zero.
+
+Installing rules is quite simple.  For example:
+
+	gld-mcp>iplist accept 10/8
+	gld-mcp>iplist reject 10.10/16
+	gld-mcp>iplist greylist 10.10.10/24
+	gld-mcp>iplist accept 10.10.10.10
+	gld-mcp>show iplist
+	         0 GRAYLIST 0.0.0.0         0.0.0.0        
+		 0 GRAYLIST 10.10.10.10	    255.255.255.255
+	         0 GRAYLIST 10.10.10.0      255.255.255.0  
+	         0 REJECT   10.10.0.0       255.255.0.0    
+	         0 ACCEPT   10.0.0.0        255.0.0.0      
+	gld-mcp>
+
+This modifies the IPlist filter to accept all tuples coming from the
+'10.0.0.0/8' network, reject them from the subnetwork of '10.10.0.0/16', but
+within that block, greylist tuples from '10.10.10.0/24', and accept anything
+from the host 10.10.10.10; Any IP address not matching one of those rules
+will be greylisted.
+
+Adding rules to the 'To', 'To-domain', 'From' and 'From-domain' filters is
+just as easy:
+
+	gld-mcp>from accept bob@example.net
+	gld-mcp>from-domain reject example.net
+	gld-mcp>to greylist info@example.com
+	gld-mcp>to greylist postmaster@example.com
+	gld-mcp>to-domain reject example.com
+	gld-mcp>show from
+	         0 ACCEPT   bob@example.net
+	         0 GRAYLIST DEFAULT
+	gld-mcp>show from-domain
+	         0 REJECT   example.net
+	         0 GRAYLIST DEFAULT
+	gld-mcp>show to
+	         0 GRAYLIST info@example.com
+	         0 GRAYLIST postmaster@example.com
+	         0 GRAYLIST DEFAULT
+	gld-mcp>show to-domain
+	         0 REJECT   example.com
+	         0 GRAYLIST DEFAULT
+	gld-mcp>
+
+So here, mail from 'bob@example.net' will be accepted (by the rule in the
+from-filter) but anything else from 'example.net' will be rejected (by the
+rule in the from-domain-filter).  Mail addressed to 'info@example.com' and
+'postmaster@example.com' will be greylisted, but anything else will be
+rejected outright.
+
+	NOTE: the default action of the to-list is to GREYLIST, we
+	explicitely listed 'info@example.com' and 'postmaster@example.com'
+	since an explicit (a non-default) match there will bypass the
+	to-domain-filter; explicit matches in the from-list will bypass the
+	from-domain-filter as well.
+
+Removing items from these lists is easy:
+
+	gld-mcp>to remove info@example.com
+	gld-mcp>show to
+	         0 GRAYLIST postmaster@example.com
+	         0 GRAYLIST DEFAULT
+	gld-mcp>iplist remove 10.10.10.10
+	gld-mcp>show iplist
+	         0 GRAYLIST 0.0.0.0         0.0.0.0        
+	         0 GRAYLIST 10.10.10.0      255.255.255.0  
+	         0 REJECT   10.10.0.0       255.255.0.0    
+	         0 ACCEPT   10.0.0.0        255.0.0.0    
+	gld-mcp>
+
+To see the currently greylisted tuples:
+
+	gld-mcp>show tuples
+	...
+	71.165.201.120 gladdenedf@ncweb.com apache@armigeron.com ----- 1194031754 1194031754
+	71.186.172.232 jrafert471@hersheys.com mail@floridabroadband.net ----- 1194025414 1194025414
+	71.186.172.232 jrafert471@hersheys.com billing@floridabroadband.net ----- 1194025410 1194025410
+	71.186.172.232 jrafert471@hersheys.com mailer-daemon@floridabroadband.net ----- 1194025413 1194025413
+	71.232.226.15 TonirenalMilligan@gasupreme.us ftp@armigeron.com ----- 1194040172 1194040172
+	...
+	gld-mcp>
+
+In order, you have the IP address, sender address, recipient address,
+various flags used internally, the timestamp (which on this system, is the
+number of seconds since Jan. 1, 1970) when the tuple was created, and last
+seen (in this case, the ones presented here have only been seen once).  To
+see tuples that have been whitelisted:
+
+	gld-mcp>show tuples whitelist
+	...
+	72.35.226.105 ret@perfear.com chuck@armigeron.com
+	72.35.226.110 ret@taxedfear.com chuck@armigeron.com
+	72.35.226.112 ret@venicecalling.com chuck@armigeron.com
+	72.35.226.113 ret@wehavenofear.com chuck@armigeron.com
+	72.52.73.3 info@email-marketing-group.com chuck@armigeron.com
+	...
+
+Tuples can be added, whitelisted and removed from the MCP program:
+
+	gld-mcp>tuple greylist 10.100.1.1 alice@example.net info@example.com
+	gld-mcp>tuple whitelist 10.101.2.2 bob@example.net postmaster@example.com
+	gld-mcp>tuple remove 71.186.172.232 jrafert471@hersheys.com mailer-daemon@floridabroadband.net
+	gld-mcp>tuple remove 72.35.226.113 ret@wehavenofear.com chuck@armigeron.com
+
+And finally, to see some stats from the server:
+
+	gld-mcp>show stats
+	Start: Tue Oct 30 23:49:02 2007 End: Fri Nov  2 17:42:11 2007 Running time: 2d 17h 53m 9s
+	Requests:                    12166
+	Requests-Cu:                     6
+	Requests-Cu-Max:               283
+	Requests-Cu-Ave:                15
+	
+	IP-Entries:                    121
+	IP-Graylisted:               11887
+	IP-Accepted:                   279
+	IP-Rejected:                     0
+	
+	From-Entries:                    1
+	From-Graylisted:             11887
+	From-Accepted:                   0
+	From-Rejected:                   0
+	
+	From-Domain-Entries:             1
+	From-Domain-Graylisted:      11851
+	From-Domain-Accepted:            0
+	From-Domain-Rejected:            0
+
+	To-Entries:                      1
+	To-Graylisted:               11887
+	To-Accepted:                     0
+	To-Rejected:                     0
+	
+	To-Domain-Entries:               3
+	To-Domain-Graylisted:        10917
+	To-Domain-Accepted:              0
+	To-Domain-Rejected:            970
+	
+	Tuples:                       1624
+	Graylisted:                  10700
+	Graylisted-Expired:           9171
+	Whitelisted:                   116
+	Whitelisted-Expired:             7
+	gld-mcp>
+
+(this is from my private email server, and I manually removed seven entries
+from the whitelist, and thus they show up as being expired)
+
+This should be enough to get you up and running with the greylist daemon.

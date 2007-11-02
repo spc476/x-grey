@@ -88,8 +88,8 @@ static const struct option mc_options[] =
 {
   { "host"		, required_argument	, NULL	, OPT_HOST		} ,
   { "port"		, required_argument	, NULL	, OPT_PORT		} ,
-  { "remote-host"	, required_argument	, NULL	, OPT_RHOST		} ,
-  { "remote-port"	, required_argument	, NULL	, OPT_RPORT		} ,
+  { "server"		, required_argument	, NULL	, OPT_RHOST		} ,
+  { "server-port"	, required_argument	, NULL	, OPT_RPORT		} ,
   { "timeout"		, required_argument	, NULL  , OPT_TIMEOUT		} ,
   { "foreground"	, no_argument		, NULL	, OPT_FOREGROUND	} ,
   { "log-facility"	, required_argument	, NULL	, OPT_LOG_FACILITY	} ,
