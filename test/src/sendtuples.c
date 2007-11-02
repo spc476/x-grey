@@ -21,6 +21,7 @@
 #include "../../common/src/graylist.h"
 #include "../../common/src/crc32.h"
 #include "../../common/src/util.h"
+#include "../../conf.h"
 
 #define min(a,b)	((a) < (b)) ? (a) : (b)
 
@@ -37,7 +38,7 @@ enum
 	; required for linkage
 	;-----------------------*/
 	
-char   *c_host         = DEF_LHOST;
+char   *c_host         = "0.0.0.0";
 int     c_port         = 0;
 char   *c_timeformat   = "%c";
 int     c_log_facility = 0;
@@ -52,8 +53,8 @@ void  (*cv_report)(int,char *,char *,...) = report_syslog;
 
 struct sockaddr_in  g_raddr;
 socklen_t           g_raddrsize  = sizeof(struct sockaddr_in);
-char               *g_rhost      = DEF_RHOST;
-int                 g_rport      = DEF_RPORT;
+char               *g_rhost      = SERVER_HOST;
+int                 g_rport      = SERVER_PORT;
 char               *g_inputfile  = "precanned-tuple.01";
 
 static const struct option mc_options[] =

@@ -40,6 +40,7 @@
 #include "../../common/src/graylist.h"
 #include "../../common/src/util.h"
 #include "../../common/src/globals.h"
+#include "../../conf.h"
 
 /*********************************************************/
 
@@ -49,23 +50,23 @@ static void	my_exit		(void);
 
 /**********************************************************/
 
-const char	    *c_license	    = "/home/spc/projects/graylist/LICENSE";
-const char          *c_commands	    = "/home/spc/projects/graylist/COMMANDS";
+const char	    *c_license	    = MCP_HELPDIR "/LICENSE";
+const char          *c_commands	    = MCP_HELPDIR "/COMMANDS";
 const char          *c_host         = "0.0.0.0";
 int                  c_port         = 0;
-const char          *c_rhost        = DEF_RHOST;
-int                  c_rport        = DEF_RPORT;
-int                  c_timeout      = 5;
+const char          *c_rhost        = SERVER_HOST;
+int                  c_rport        = SERVER_PORT;
+int                  c_timeout      = MCP_TIMEOUT;
 struct sockaddr_in   c_raddr;
 socklen_t            c_raddrsize = sizeof(struct sockaddr_in);
-int                  c_log_facility = LOG_LOCAL5;
-int                  c_log_level    = LOG_ERR;
-const char          *c_log_id       = "gld-mcp";
+int                  c_log_facility = MCP_LOG_FACILITY;
+int                  c_log_level    = MCP_LOG_LEVEL;
+const char          *c_log_id       = MCP_LOG_ID;
 int                  cf_debug       = FALSE;
 const char          *c_timeformat   = "%c";
-const char          *c_pager        = "/bin/more";
-char                *c_secret       = "decafbad";
-size_t               c_secretsize   = 8;
+const char          *c_pager        = MCP_PAGER;
+char                *c_secret       = SECRET;
+size_t               c_secretsize   = SECRETSIZE;
 void               (*cv_report)(int,char *,char *, ... ) = report_stderr;
 
 /**********************************************************/

@@ -42,7 +42,7 @@ obj/tuple.o : src/tuple.c
 	$(CC) $(CFLAGS) -c -o $@ src/tuple.c
 
 clean:
-	/bin/rm -f obj/gld
+	/bin/rm -f ../bin/gld
 	/bin/rm -f obj/*.o
 	/bin/rm -f src/*~
 

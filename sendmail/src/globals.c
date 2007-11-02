@@ -43,6 +43,7 @@
 #include "../../common/src/graylist.h"
 #include "../../common/src/globals.h"
 #include "../../common/src/util.h"
+#include "../../conf.h"
 
 enum
 {
@@ -60,21 +61,21 @@ static void		 my_exit	(void);
 
 /****************************************************************/
 
-char		    *c_pidfile	    = "/var/run/smc.pid";
-char                *c_host         = DEF_LHOST;
-int                  c_port         = 0;
-char                *c_timeformat   = "%c";
-char                *c_rhost        = DEF_RHOST;
-int                  c_rport        = DEF_RPORT;
-int                  c_timeout       = 5;
+char		    *c_pidfile	     = SENDMAIL_PIDFILE;
+char                *c_host          = SENDMAIL_HOST;
+int                  c_port          = 0;
+char                *c_timeformat    = "%c";
+char                *c_rhost         = SERVER_HOST;
+int                  c_rport         = SERVER_PORT;
+int                  c_timeout       = SENDMAIL_TIMEOUT;
 struct sockaddr_in   c_raddr;
 socklen_t            c_raddrsize     = sizeof(struct sockaddr_in);
-int                  c_log_facility  = LOG_LOCAL5;
-int                  c_log_level     = LOG_DEBUG;
-char                *c_log_id	     = "smgl";
-char                *c_secret        = "decafbad";
-size_t               c_secretsize    = 8;
-char                *c_filterchannel = "unix:/var/state/graylist/milter";
+int                  c_log_facility  = SENDMAIL_LOG_FACILITY;
+int                  c_log_level     = SENDMAIL_LOG_LEVEL;
+char                *c_log_id	     = SENDMAIL_LOG_ID;
+char                *c_secret        = SECRET;
+size_t               c_secretsize    = SECRETSIZE;
+char                *c_filterchannel = SENDMAIL_FILTERCHANNEL;
 int                  cf_foreground   = 0;
 int                  cf_debug        = 0;
 void               (*cv_report)(int,char *,char *,...) = report_syslog;

@@ -40,6 +40,7 @@
 #include "../../common/src/graylist.h"
 #include "../../common/src/globals.h"
 #include "../../common/src/util.h"
+#include "../../conf.h"
 
 enum
 {
@@ -53,20 +54,20 @@ static void		 dump_defaults	(void);
 
 /****************************************************************/
 
-char                *c_host        = DEF_LHOST;
+char                *c_host        = POSTFIX_HOST;
 int                  c_port        = 0;
 char                *c_timeformat  = "%c";
-char                *c_rhost       = DEF_RHOST;
-int                  c_rport       = DEF_RPORT;
+char                *c_rhost       = SERVER_HOST;
+int                  c_rport       = SERVER_PORT;
 struct sockaddr_in   c_raddr;
 socklen_t            c_raddrsize    = sizeof(struct sockaddr_in);
-int                  c_timeout      = 5;
-int                  c_log_facility = LOG_LOCAL5;
-int                  c_log_level    = LOG_DEBUG;
-char                *c_log_id	    = "pfgl";
+int                  c_timeout      = POSTFIX_TIMEOUT;
+int                  c_log_facility = POSTFIX_LOG_FACILITY;
+int                  c_log_level    = POSTFIX_LOG_LEVEL;
+char                *c_log_id	    = POSTFIX_LOG_ID;
 int                  cf_debug       = 0;
-char                *c_secret       = "decafbad";
-size_t               c_secretsize   = 8;
+char                *c_secret       = SECRET;
+size_t               c_secretsize   = SECRETSIZE;
 void               (*cv_report)(int,char *,char *,...) = report_syslog;
 
   /*----------------------------------------------------*/

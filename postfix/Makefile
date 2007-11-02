@@ -22,7 +22,7 @@ obj/globals.o : src/globals.c
 	$(CC) $(CFLAGS) -c -o $@ src/globals.c
 
 clean:
-	/bin/rm -f obj/pfc
+	/bin/rm -f ../bin/pfc
 	/bin/rm -f obj/*.o
 	/bin/rm -f src/*~
 

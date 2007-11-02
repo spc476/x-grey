@@ -45,6 +45,7 @@
 #include "../../common/src/graylist.h"
 #include "../../common/src/globals.h"
 #include "../../common/src/util.h"
+#include "../../conf.h"
 
 #include "tuple.h"
 #include "signals.h"
@@ -80,34 +81,34 @@ static void		 my_exit	(void);
 
 extern char **environ;
 
-char          *c_pidfile         = "/var/run/graylist.pid";
-char          *c_host            = DEF_HOST;
-int            c_port            = DEF_PORT;
-int            c_log_facility    = LOG_LOCAL6;
-int            c_log_level       = LOG_INFO;
-char	      *c_log_id          = "graylist";
-char	      *c_secret		 = "decafbad";
-size_t         c_secretsize	 = 8;
+char          *c_pidfile         = SERVER_PIDFILE;
+char          *c_host            = SERVER_BINDHOST;
+int            c_port            = SERVER_PORT;
+int            c_log_facility    = SERVER_LOG_FACILITY;
+int            c_log_level       = SERVER_LOG_LEVEL;
+char	      *c_log_id          = SERVER_LOG_ID;
+char	      *c_secret		 = SECRET;
+size_t         c_secretsize	 = SECRETSIZE;
 int            cf_debug          = 0;
 void         (*cv_report)(int,char *,char *, ...) = report_syslog;
 
-char          *c_whitefile       = "/var/state/graylist/whitelist.txt";
-char          *c_grayfile        = "/var/state/graylist/grayfile.txt";	
-char          *c_dumpfile        = "/var/state/graylist/dump.txt";
-char          *c_iplistfile      = "/var/state/graylist/iplist.txt";
-char          *c_tofile          = "/var/state/graylist/to.txt";
-char          *c_todfile         = "/var/state/graylist/to-domain.txt";
-char          *c_fromfile        = "/var/state/graylist/from.txt";
-char          *c_fromdfile       = "/var/state/graylist/from-domain.txt";
+char          *c_whitefile       = SERVER_STATEDIR "/whitelist.txt";
+char          *c_grayfile        = SERVER_STATEDIR "/grayfile.txt";	
+char          *c_dumpfile        = SERVER_STATEDIR "/dump.txt";
+char          *c_iplistfile      = SERVER_STATEDIR "/iplist.txt";
+char          *c_tofile          = SERVER_STATEDIR "/to.txt";
+char          *c_todfile         = SERVER_STATEDIR "/to-domain.txt";
+char          *c_fromfile        = SERVER_STATEDIR "/from.txt";
+char          *c_fromdfile       = SERVER_STATEDIR "/from-domain.txt";
 char          *c_timeformat      = "%c";
-size_t         c_poolmax         = 65536uL;
-unsigned int   c_time_cleanup    =    60   * 5;
-double         c_time_savestate  =  3600.0;
-double	       c_timeout_embargo =    60.0 * 25.0; /* down from an hour */
-double         c_timeout_gray    =  3600.0 * 6.0;  /* 4.0;*/
-double	       c_timeout_white   =  3600.0 * 24.0 * 36.0;
-time_t         c_starttime       =     0;
-int            cf_foreground     =     0;
+size_t         c_poolmax         = SERVER_MAX_TUPLES;
+unsigned int   c_time_cleanup    = SERVER_CLEANUP;
+double         c_time_savestate  = SERVER_SAVESTATE;
+double	       c_timeout_embargo = SERVER_TIMEOUT_EMBARGO;
+double         c_timeout_gray    = SERVER_TIMEOUT_GREYLIST;
+double	       c_timeout_white   = SERVER_TIMEOUT_WHITELIST;
+time_t         c_starttime       = 0;
+int            cf_foreground     = 0;
 
 	/*---------------------------------------------------*/
 
