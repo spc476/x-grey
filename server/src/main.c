@@ -43,7 +43,6 @@
 #include "tuple.h"
 #include "globals.h"
 #include "signals.h"
-#include "util.h"
 #include "server.h"
 #include "iplist.h"
 #include "emaildomain.h"
