@@ -119,7 +119,7 @@ int main(int argc,char *argv[])
     
     m_pager = pager_batch;
     process_cmdline(what,cmds);  
-    MemFree(cmdline);
+    MemFree(what);
   }
   else
   {
@@ -533,9 +533,7 @@ static void show_report(int req,int resp)
   struct glmcp_request   request;
   struct glmcp_response *gr;
   int                    conn;
-  Stream                 in;
   byte                   data[1500];
-  char                  *line;
   int                    rc;
   
   gr = (struct glmcp_response *)data;
@@ -743,7 +741,7 @@ static void iplist_file(char *fname)
     }
     
     if (*p == '/')
-      ipr.mask = htons(strtoul(++p,&p,10));
+      ipr.mask = htons(strtoul(p + 1,&p,10));
     
     for ( ; *p && isspace(*p) ; p++)
       ;
@@ -782,7 +780,6 @@ static void iplist_file_relaydelay(char *fname)
   Stream                       in;
   byte                         data[1500];
   size_t                       octet;
-  char                        *p;
   int                          rc;
   int                          linecnt;
   
@@ -837,7 +834,6 @@ static void iplist_file_bogonspace(char *fname)
   Stream                       in;
   byte                         data[1500];
   size_t                       octet;
-  char                        *p;
   int                          rc;
   int                          linecnt;
   
