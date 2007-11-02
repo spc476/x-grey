@@ -1,7 +1,8 @@
 .git
 big.tuple.list
 tuple.list
-bin/*
-test/obj/mktuples
-test/obj/sendtuples
+*.o
+graylist/bin/*
+graylist/test/obj/mktuples
+graylist/test/obj/sendtuples
 

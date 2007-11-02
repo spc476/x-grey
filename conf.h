@@ -236,7 +236,7 @@
 	; really pathetic script kiddies from mucking things up.
 	;------------------------------------------------------*/
 	
-#define SECRET	"decafbad"
+#define SECRET		"decafbad"
 #define SECRETSIZE	8
 
 #endif

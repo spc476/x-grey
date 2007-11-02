@@ -36,3 +36,6 @@ clean:
 	/bin/rm -f *~
 	/bin/rm -f bin/*
 
+tarball:
+	(cd .. ; tar czvf /tmp/graylist.tar.gz -X graylist/.exclude graylist/ )
+
