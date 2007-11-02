@@ -1,27 +1,24 @@
 
-CGILIB=/home/spc/source/cgi
-CINCL=-I $(CGILIB)/src
-
 #CC=gcc -g -pg
 CC=gcc -g 
 #CC=gcc -fomit-frame-pointer -O3
-CFLAGS=-Wall -pedantic $(CINCL)
-LFLAGS=-L$(CGILIB)/$(HOSTDIR) -lcgi5
+CFLAGS=-Wall -pedantic
+LFLAGS=-lcgi5
 
-all : $(HOSTDIR)/globals.o	\
-		$(HOSTDIR)/util.o	\
-		$(HOSTDIR)/crc32.o
+all : obj/globals.o		\
+		obj/util.o	\
+		obj/crc32.o
 
-$(HOSTDIR)/globals.o : src/globals.c
+obj/globals.o : src/globals.c
 	$(CC) $(CFLAGS) -c -o $@ src/globals.c
 
-$(HOSTDIR)/util.o : src/util.c
+obj/util.o : src/util.c
 	$(CC) $(CFLAGS) -c -o $@ src/util.c
 
-$(HOSTDIR)/crc32.o : src/crc32.c
+obj/crc32.o : src/crc32.c
 	$(CC) $(CFLAGS) -c -o $@ src/crc32.c
 
 clean:
-	/bin/rm -f $(HOSTDIR)/*.o
+	/bin/rm -f obj/*.o
 	/bin/rm -f src/*~
 

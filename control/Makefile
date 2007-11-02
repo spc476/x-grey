@@ -1,31 +1,27 @@
 
-CGILIB=/home/spc/source/cgi
-CINCL=-I $(CGILIB)/src
-
 #CC=gcc -g -pg
 CC=gcc -g
-#CFLAGS=-Wall -pedantic $(CINCL)
-CFLAGS=$(CINCL)
-LFLAGS=-L$(CGILIB)/$(HOSTDIR) -lcgi5 -lreadline -lcurses
+CFLAGS=-Wall -pedantic
+LFLAGS=-lcgi5 -lreadline -lcurses
 
-$(HOSTDIR)/gld-mcp : $(HOSTDIR)/main.o	\
-		$(HOSTDIR)/globals.o
-	$(CC) $(CFLAGS) -o $@			\
-		$(HOSTDIR)/main.o		\
-		$(HOSTDIR)/globals.o		\
-		../common/$(HOSTDIR)/globals.o	\
-		../common/$(HOSTDIR)/util.o	\
-		../common/$(HOSTDIR)/crc32.o	\
+../bin/gld-mcp : obj/main.o	\
+		obj/globals.o
+	$(CC) $(CFLAGS) -o $@		\
+		obj/main.o		\
+		obj/globals.o		\
+		../common/obj/globals.o	\
+		../common/obj/util.o	\
+		../common/obj/crc32.o	\
 		$(LFLAGS)
 
-$(HOSTDIR)/main.o : src/main.c	
+obj/main.o : src/main.c	
 	$(CC) $(CFLAGS) -c -o $@ src/main.c
 
-$(HOSTDIR)/globals.o : src/globals.c
+obj/globals.o : src/globals.c
 	$(CC) $(CFLAGS) -c -o $@ src/globals.c
 
 clean:
-	/bin/rm -f $(HOSTDIR)/gld-mcp
-	/bin/rm -f $(HOSTDIR)/*.o
+	/bin/rm -f obj/gld-mcp
+	/bin/rm -f obj/*.o
 	/bin/rm -f src/*~
 

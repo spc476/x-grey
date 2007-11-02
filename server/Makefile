@@ -1,51 +1,48 @@
 
-CGILIB=/home/spc/source/cgi
-CINCL=-I $(CGILIB)/src
-
 #CC=gcc -g -pg
 CC=gcc -g
 #CC=gcc -fomit-frame-pointer -O3
-CFLAGS=-Wall -pedantic $(CINCL)
-LFLAGS=-L$(CGILIB)/$(HOSTDIR) -lcgi5
+CFLAGS=-Wall -pedantic 
+LFLAGS=-lcgi5
 
-$(HOSTDIR)/gld : $(HOSTDIR)/main.o		\
-		$(HOSTDIR)/globals.o		\
-		$(HOSTDIR)/signals.o		\
-		$(HOSTDIR)/iplist.o		\
-		$(HOSTDIR)/emaildomain.o	\
-		$(HOSTDIR)/tuple.o		
-	$(CC) $(CFLAGS) -o $@			\
-		$(HOSTDIR)/main.o		\
-		$(HOSTDIR)/globals.o		\
-		$(HOSTDIR)/signals.o		\
-		$(HOSTDIR)/iplist.o		\
-		$(HOSTDIR)/emaildomain.o	\
-		$(HOSTDIR)/tuple.o		\
-		../common/$(HOSTDIR)/globals.o	\
-		../common/$(HOSTDIR)/util.o	\
-		../common/$(HOSTDIR)/crc32.o	\
+../bin/gld : obj/main.o			\
+		obj/globals.o		\
+		obj/signals.o		\
+		obj/iplist.o		\
+		obj/emaildomain.o	\
+		obj/tuple.o		
+	$(CC) $(CFLAGS) -o $@		\
+		obj/main.o		\
+		obj/globals.o		\
+		obj/signals.o		\
+		obj/iplist.o		\
+		obj/emaildomain.o	\
+		obj/tuple.o		\
+		../common/obj/globals.o	\
+		../common/obj/util.o	\
+		../common/obj/crc32.o	\
 		$(LFLAGS)
 
-$(HOSTDIR)/main.o : src/main.c	
+obj/main.o : src/main.c	
 	$(CC) $(CFLAGS) -c -o $@ src/main.c
 
-$(HOSTDIR)/globals.o : src/globals.c
+obj/globals.o : src/globals.c
 	$(CC) $(CFLAGS) -c -o $@ src/globals.c
 
-$(HOSTDIR)/signals.o : src/signals.c
+obj/signals.o : src/signals.c
 	$(CC) $(CFLAGS) -c -o $@ src/signals.c
 
-$(HOSTDIR)/iplist.o : src/iplist.c
+obj/iplist.o : src/iplist.c
 	$(CC) $(CFLAGS) -c -o $@ src/iplist.c
 
-$(HOSTDIR)/emaildomain.o : src/emaildomain.c
+obj/emaildomain.o : src/emaildomain.c
 	$(CC) $(CFLAGS) -c -o $@ src/emaildomain.c
 
-$(HOSTDIR)/tuple.o : src/tuple.c
+obj/tuple.o : src/tuple.c
 	$(CC) $(CFLAGS) -c -o $@ src/tuple.c
 
 clean:
-	/bin/rm -f $(HOSTDIR)/gld
-	/bin/rm -f $(HOSTDIR)/*.o
+	/bin/rm -f obj/gld
+	/bin/rm -f obj/*.o
 	/bin/rm -f src/*~
 
