@@ -1,0 +1,50 @@
+#!/bin/bash
+#
+# greylist	This shell script takes care of starting and stopping
+#		greylist.
+#
+# chkconfig: 2345 75 25 
+# description: greylist is an anti-spam method program.
+# processname: gld
+# pidfile: /var/run/graylist.pid
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+[ -f /etc/sysconfig/network ] && . /etc/sysconfig/network
+
+# Check that networking is up.
+[ "${NETWORKING}" = "no" ] && exit 0
+
+[ -f /usr/sbin/sendmail ] || exit 0
+
+RETVAL=0
+prog="sendmail"
+
+start() {
+	/root/projects/graylist/server/oslo/gld
+	/root/projects/graylist/sendmail/oslo/smc
+	return $RETVAL
+}
+
+stop() {
+	kill `cat /var/run/smc.pid`
+	kill `cat /var/run/graylist.pid`
+	return $RETVAL
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart|condrestart|status}"
+	exit 1
+esac
+
+exit $RETVAL
