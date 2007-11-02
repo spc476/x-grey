@@ -48,7 +48,6 @@
 
 #include "tuple.h"
 #include "signals.h"
-#include "util.h"
 #include "iplist.h"
 #include "emaildomain.h"
 
