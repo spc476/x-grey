@@ -20,17 +20,16 @@
 [ -f /usr/sbin/sendmail ] || exit 0
 
 RETVAL=0
-prog="sendmail"
 
 start() {
-	/root/projects/graylist/server/oslo/gld
-	/root/projects/graylist/sendmail/oslo/smc
+	/usr/local/bin/gld
+	/usr/local/bin/smc
 	return $RETVAL
 }
 
 stop() {
 	kill `cat /var/run/smc.pid`
-	kill `cat /var/run/graylist.pid`
+	kill `cat /var/run/gld.pid`
 	return $RETVAL
 }
 
