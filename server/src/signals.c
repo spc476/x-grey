@@ -29,7 +29,7 @@
 #include <syslog.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <linux/limits.h>
+/*#include <linux/limits.h>*/
 
 #include <cgilib/memory.h>
 #include <cgilib/stream.h>
