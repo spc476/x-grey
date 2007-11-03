@@ -1,3 +1,11 @@
+2007-11-03T14:22-05:00
+
+	* need to move the 'obj/' directories to 'build/' directories
+	  becuase gcc/make on OpenBSD does wierd things when you try to use
+	  a directory called 'obj/'.
+
+	* Also, finish replacing <arpa/inet.h> with <netinet/in.h>
+
 2007-10-30
 
 	* remove IFT entries
