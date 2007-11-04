@@ -6,7 +6,10 @@ Dependencies:
 	All programs require the CGILIB library I wrote.  The latest version
 	is available at:
 
-		http://....
+		http://www.conman.org/software/cgilib/cgilib.tar.gz
+
+	All programs require the GNU getopt library, or an equivilent
+	replacement.
 
 	The "gld-mcp" program requires the GNU readline package.  The latest
 	version of that is available at:
@@ -26,7 +29,9 @@ Compilation:
 
 	Edit both the top level Makefile and conf.h to reflect your system's
 	layout and preferences.  Once you are satisified with the parameter
-	settings, you can then compile the program.
+	settings, you can then compile the program.  One setting you may
+	need to set is MCP_PAGER in conf.h---this is the location of your
+	favorite pagination program.
 
 	To compile and install the server portion:
 
