@@ -3,6 +3,6 @@ big.tuple.list
 tuple.list
 *.o
 graylist/bin/*
-graylist/test/obj/mktuples
-graylist/test/obj/sendtuples
+graylist/test/build/mktuples
+graylist/test/build/sendtuples
 

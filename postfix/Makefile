@@ -1,6 +1,6 @@
 
-#CINCL=/usr/local/include
-#LINCL=/usr/local/lib
+#CINCL=-I /usr/local/include
+#LINCL=-L /usr/local/lib
 
 #CC=gcc -g -pg
 CC=gcc $(CINCL)
