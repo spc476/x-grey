@@ -25,7 +25,17 @@
 
 #define INIT_CRC32	0xFFFFFFFF
 
-typedef unsigned long CRC32;
+#if (UINT_MAX == 4294967295UL)
+  typedef unsigned int CRC32;
+#elif (ULONG_MAX == 4294967295UL)
+  typedef unsigned long CRC32;
+#elif (USHORT_MAX == 4294967295UL)
+  typedef unsigned short CRC32;
+#elif (UCHAR_MAX == 4294967295UL)
+  typedef unsigned char CRC32;
+#else
+# error No integral type is 32 bits on this platform
+#endif
 
 CRC32	crc32	(CRC32,const void *,size_t);
 

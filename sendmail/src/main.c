@@ -30,7 +30,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <netdb.h>
-#include <arpa/inet.h>
+#include <netinet/in.h>
 #include <unistd.h>
 
 #include <libmilter/mfapi.h>

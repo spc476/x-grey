@@ -211,25 +211,25 @@ static int process_request(int sock)
 
 int check_graylist(int sock,char *ip,char *from,char *to)
 {
-  byte                      outpacket[600];
-  byte                      inpacket [1500];
-  struct graylist_request  *glq;
-  struct graylist_response *glr;
-  struct sockaddr_in        sip;
-  socklen_t                 sipsize;
-  size_t                    sfrom;
-  size_t                    sto;
-  byte                     *p;
-  char                     *d;
-  ssize_t                   rrc;
-  size_t                    packetsize; 
-  CRC32                     crc;
+  union graylist_all_packets  outpacket;
+  union graylist_all_packets  inpacket;
+  struct graylist_request    *glq;
+  struct graylist_response   *glr;
+  struct sockaddr_in          sip;
+  socklen_t                   sipsize;
+  size_t                      sfrom;
+  size_t                      sto;
+  byte                       *p;
+  char                       *d;
+  ssize_t                     rrc;
+  size_t                      packetsize; 
+  CRC32                       crc;
 
   sfrom = min(strlen(from),200);
   sto   = min(strlen(to),  200);
   
-  glq = (struct graylist_request *)outpacket;
-  glr = (struct graylist_response *)inpacket;
+  glq = &outpacket.req;
+  glr = &inpacket.res;
   
   p = glq->data;
   
@@ -248,7 +248,7 @@ int check_graylist(int sock,char *ip,char *from,char *to)
   memcpy(p,from,sfrom);	p += sfrom;
   memcpy(p,to,sto);     p += sto;
 
-  packetsize = (size_t)(p - outpacket);
+  packetsize = (size_t)(p - outpacket.data);
 
   crc        = crc32(INIT_CRC32,&glq->version,packetsize - sizeof(CRC32));
   crc        = crc32(crc,c_secret,c_secretsize);
@@ -256,7 +256,7 @@ int check_graylist(int sock,char *ip,char *from,char *to)
 
   rrc = sendto(
   		sock,
-  		outpacket,
+  		glq,
   		packetsize,
   		0,
   		(const struct sockaddr *)&c_raddr,
@@ -273,7 +273,7 @@ int check_graylist(int sock,char *ip,char *from,char *to)
   sipsize = sizeof(struct sockaddr_in);
   rrc     = recvfrom(
   		sock,
-  		inpacket,
+  		inpacket.data,
   		sizeof(inpacket),
   		0,
   		(struct sockaddr *)&sip,

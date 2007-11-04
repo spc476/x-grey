@@ -24,17 +24,50 @@
 #define GRAYLIST_COMMON_H
 
 #include <time.h>
+#include <limits.h>
 
 #define VERSION		0x0100
 
 /********************************************************************/
 
-typedef unsigned char  byte;
-typedef unsigned long  IP;
-typedef unsigned long  flags;
-typedef unsigned short Port;
-typedef unsigned short unet16;
-typedef unsigned long  unet32;
+#if (UCHAR_MAX == 255U)
+  typedef unsigned char byte;
+#else
+#  error No integral type is 8 bits on this platform
+#endif
+
+#if (UINT_MAX == 65535U)
+  typedef unsigned int unet16;
+  typedef unsigned int Port;
+#elif (USHRT_MAX == 65535U)
+  typedef unsigned short unet16;
+  typedef unsigned short Port;
+#elif (UCHAR_MAX == 65535U)
+  typedef unsigned char unet16;
+  typedef unsigned char Port;
+#else
+# error No integral type is 16 bits on this platform.
+#endif
+
+#if (UINT_MAX == 4294967295UL)
+  typedef unsigned int unet32;
+  typedef unsigned int IP;
+  typedef unsigned int flags;
+#elif (ULONG_MAX == 4294967295UL)
+  typedef unsigned long unet32;
+  typedef unsigned long IP;
+  typedef unsigned long flags;
+#elif (USHORT_MAX == 4294967295UL)
+  typedef unsigned short unet32;
+  typedef unsigned short IP;
+  typedef unsigned short flags;
+#elif (UCHAR_MAX == 4294967295UL)
+  typedef unsigned char unet32;
+  typedef unsigned char IP;
+  typedef unsigned char flags;
+#else
+# error No integral type is 32 bits on this platform.
+#endif
 
 enum
 {
@@ -265,6 +298,19 @@ struct glmcp_request_tofrom
   unet16 cmd;
   unet16 size;
   byte   data[1];
+};
+
+union graylist_all_packets
+{
+  struct graylist_request           req;
+  struct graylist_response          res;
+  struct glmcp_request              mcp_req;
+  struct glmcp_response             mcp_res;
+  struct glmcp_response_show_stats  mcp_show_stats;
+  struct glmcp_response_show_config mcp_show_config;
+  struct glmcp_request_iplist       mcp_iplist;
+  struct glmcp_request_tofrom       mcp_tofrom;
+  byte                              data[1500];
 };
 
 /***************************************************************/

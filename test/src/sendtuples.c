@@ -10,7 +10,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <arpa/inet.h>
+#include <netinet/in.h>
 #include <signal.h>
 
 #include <cgilib/memory.h>

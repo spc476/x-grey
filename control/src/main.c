@@ -352,11 +352,11 @@ static void show_stats(void)
 {
   struct glmcp_request              request;
   struct glmcp_response_show_stats *gss;
-  byte                              data[1500];
+  union graylist_all_packets        data;
   int                               rc;
   char                             *t;
 
-  gss             = (struct glmcp_response_show_stats *)data;
+  gss             = &data.mcp_show_stats;;
   request.version = htons(VERSION);
   request.MTA     = htons(MTA_MCP);
   request.type    = htons(CMD_MCP_SHOW_STATS);
@@ -481,14 +481,14 @@ static void show_config(void)
 {
   struct glmcp_request               request;
   struct glmcp_response_show_config *gsc;
-  byte                               data[1500];
+  union graylist_all_packets         data;
   int                                rc;
   char                              *cleanup;
   char                              *embargo;
   char                              *graylist;
   char                              *whitelist;
   
-  gsc = (struct glmcp_response_show_config *)data;
+  gsc             = &data.mcp_show_config;
   request.version = htons(VERSION);
   request.MTA     = htons(MTA_MCP);
   request.type    = htons(CMD_MCP_SHOW_CONFIG);
@@ -531,13 +531,13 @@ static void show_config(void)
 
 static void show_report(int req,int resp)
 {
-  struct glmcp_request   request;
-  struct glmcp_response *gr;
-  int                    conn;
-  byte                   data[1500];
-  int                    rc;
-  
-  gr = (struct glmcp_response *)data;
+  struct glmcp_request        request;
+  struct glmcp_response      *gr;
+  int                         conn;
+  union graylist_all_packets  data;
+  int                         rc;
+
+  gr = &data.mcp_res;  
   
   request.version = htons(VERSION);
   request.MTA     = htons(MTA_MCP);
@@ -634,7 +634,7 @@ static void pager_interactive(int fh)
 static void iplist(String *cmdline,size_t cmds)
 {
   struct glmcp_request_iplist  ipr;
-  byte                         data[1500];
+  union graylist_all_packets   data;
   size_t                       octet;
   char                        *p;
   int                          rc;
@@ -699,7 +699,7 @@ static void iplist_file(char *fname)
 {
   Stream                       in;
   struct glmcp_request_iplist  ipr;
-  byte                         data[1500];
+  union graylist_all_packets   data;
   int                          linecnt;
 
   ddt(fname != NULL);
@@ -765,7 +765,7 @@ static void iplist_file(char *fname)
   
     ipr.cmd = htons(ipr.cmd);
 
-    rc = send_request(&ipr,sizeof(ipr),data,sizeof(data),CMD_MCP_IPLIST_RESP);
+    rc = send_request(&ipr,sizeof(ipr),&data,sizeof(data),CMD_MCP_IPLIST_RESP);
     if (rc != ERR_OKAY)
       LineS(StdoutStream,"bad response\n");
   }
@@ -779,7 +779,7 @@ static void iplist_file_relaydelay(char *fname)
 {
   struct glmcp_request_iplist  ipr;
   Stream                       in;
-  byte                         data[1500];
+  union graylist_all_packets   data;
   size_t                       octet;
   int                          rc;
   int                          linecnt;
@@ -820,7 +820,7 @@ static void iplist_file_relaydelay(char *fname)
     ipr.mask = htons((octet + 1) * 8);
     ipr.cmd  = htons(IFT_ACCEPT);
     
-    rc = send_request(&ipr,sizeof(ipr),data,sizeof(data),CMD_MCP_IPLIST_RESP);
+    rc = send_request(&ipr,sizeof(ipr),&data,sizeof(data),CMD_MCP_IPLIST_RESP);
     if (rc != ERR_OKAY)
       LineS(StdoutStream,"bad response\n");
   }
@@ -833,7 +833,7 @@ static void iplist_file_bogonspace(char *fname)
 {
   struct glmcp_request_iplist  ipr;
   Stream                       in;
-  byte                         data[1500];
+  union graylist_all_packets   data;
   size_t                       octet;
   int                          rc;
   int                          linecnt;
@@ -876,7 +876,7 @@ static void iplist_file_bogonspace(char *fname)
     if (*p == '/')
       ipr.mask = htons(strtoul(++p,NULL,10));
     
-    rc = send_request(&ipr,sizeof(ipr),data,sizeof(data),CMD_MCP_IPLIST_RESP);
+    rc = send_request(&ipr,sizeof(ipr),&data,sizeof(data),CMD_MCP_IPLIST_RESP);
     if (rc != ERR_OKAY)
       LineS(StdoutStream,"bad response\n");
   }
@@ -887,8 +887,8 @@ static void iplist_file_bogonspace(char *fname)
 
 static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
 {
-  byte                         packet[1500];
-  byte                         data  [1500];
+  union graylist_all_packets   packet;
+  union graylist_all_packets   data;
   struct glmcp_request_tofrom *ptfr;
   size_t                       addrsize;
   int                          rc;
@@ -896,7 +896,7 @@ static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
   ddt(cmdline != NULL);
   ddt(cmds    >  0);
   
-  ptfr     = (struct glmcp_request_tofrom *)packet;
+  ptfr     = &packet.mcp_tofrom;
   addrsize = min(strlen(cmdline[2].d),200);  
   up_string(cmdline[1].d);
 
@@ -924,7 +924,7 @@ static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
   rc = send_request(
   		ptfr,
   		sizeof(struct glmcp_request_tofrom) + addrsize,
-  		data,
+  		&data,
   		sizeof(data),
   		resp
   	);
@@ -988,17 +988,17 @@ static const struct chars_int m_reason[8] =
   
 static void tuple(String *cmdline,size_t cmds)
 {
-  byte                      outpacket[600];
-  byte                      inpacket [1500];
-  struct graylist_request  *glq;
-  struct graylist_response *glr;
-  int                       cmd;
-  int                       mask;
-  size_t                    packetsize;
-  size_t                    sfrom;
-  size_t                    sto;
-  byte                     *p;
-  int                       rc;
+  union graylist_all_packets  outpacket;
+  union graylist_all_packets  inpacket;
+  struct graylist_request    *glq;
+  struct graylist_response   *glr;
+  int                         cmd;
+  int                         mask;
+  size_t                      packetsize;
+  size_t                      sfrom;
+  size_t                      sto;
+  byte                       *p;
+  int                         rc;
   
   ddt(cmdline != NULL);
   ddt(cmds    >  0);
@@ -1009,7 +1009,7 @@ static void tuple(String *cmdline,size_t cmds)
       
   sfrom = min(strlen(cmdline[3].d),200);
   sto   = min(strlen(cmdline[4].d),200);
-  glq   = (struct graylist_request *)outpacket;
+  glq   = &outpacket.req;
   p     = glq->data;
   
   glq->version  = htons(VERSION);
@@ -1042,9 +1042,9 @@ static void tuple(String *cmdline,size_t cmds)
   else
     glq->tosize = htons(0);
 
-  packetsize = (size_t)(p - outpacket);
+  packetsize = (size_t)(p - outpacket.data);
   
-  rc = send_request(outpacket,packetsize,inpacket,sizeof(inpacket),cmd + 1);    
+  rc = send_request(&outpacket,packetsize,&inpacket,sizeof(inpacket),cmd + 1);    
   if (rc != ERR_OKAY)
     LineS(StdoutStream,"bad response\n");   
     

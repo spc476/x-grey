@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include <cgilib/memory.h>
 #include <cgilib/ddt.h>

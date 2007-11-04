@@ -25,15 +25,14 @@
 #include <time.h>
 
 #include <netdb.h>
-#include <arpa/inet.h>
+#include <netinet/in.h>
+/*#include <arpa/inet.h>*/
 #include <sys/types.h>
 #include <sys/socket.h>
 
 #include "../../common/src/graylist.h"
 
 /************************************************************/
-
-#define UDP_MAX		1500
 
 #define F_WHITELIST     (1uL << 0)
 #define F_REMOVE        (1uL << 1)
@@ -58,17 +57,14 @@ typedef struct tuple
 
 struct request
 {
-  int                      sock;
-  time_t                   now;
-  struct sockaddr          remote;
-  socklen_t                rsize;
-  char                     packet[1500];
-  struct graylist_request *glr;
-  size_t                   size;
+  int                         sock;
+  time_t                      now;
+  struct sockaddr             remote;
+  socklen_t                   rsize;
+  union graylist_all_packets  packet;
+  struct graylist_request    *glr;
+  size_t                      size;
 };
 
 #endif
 
-
-  
-  

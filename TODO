@@ -6,6 +6,8 @@
 
 	* Also, finish replacing <arpa/inet.h> with <netinet/in.h>
 
+	* Document PAGER stuff.
+
 2007-10-30
 
 	* remove IFT entries

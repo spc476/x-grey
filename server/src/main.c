@@ -24,7 +24,8 @@
 #include <string.h>
 
 #include <netdb.h>
-#include <arpa/inet.h>
+#include <netinet/in.h>
+/*#include <arpa/inet.h>*/
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -102,8 +103,8 @@ static void mainloop(int sock)
 
     rrc = recvfrom(
     	sock,
-    	req.packet,
-    	sizeof(req.packet),
+    	req.packet.data,
+    	sizeof(req.packet.data),
     	0,
     	&req.remote,
     	&req.rsize
@@ -118,7 +119,7 @@ static void mainloop(int sock)
     
     req.now  = time(NULL);
     req.sock = sock;
-    req.glr  = (struct graylist_request *)req.packet;
+    req.glr  = &req.packet.req;
     req.size = rrc;
     
     crc = crc32(INIT_CRC32,&req.glr->version,req.size - sizeof(CRC32));
@@ -724,7 +725,7 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
   
   ddt(req != NULL);
   
-  ptf = (struct glmcp_request_tofrom *)req->packet;
+  ptf = &req->packet.mcp_tofrom;
   
   edkey.text  = (char *)ptf->data;
   edkey.tsize = ntohs(ptf->size);

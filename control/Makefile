@@ -1,27 +1,29 @@
+#CINCL=-I /usr/local/include
+#LINCL=-L /usr/local/lib
 
 #CC=gcc -g -pg
-CC=gcc -g
-CFLAGS=-Wall -pedantic
-LFLAGS=-lcgi5 -lreadline -lcurses
+CC=gcc $(CINCL)
+CFLAGS=-Wall -pedantic -g
+LFLAGS=$(LINCL) -lcgi5 -lreadline -lcurses
 
-../bin/gld-mcp : obj/main.o	\
-		obj/globals.o
+../bin/gld-mcp : build/main.o	\
+		build/globals.o
 	$(CC) $(CFLAGS) -o $@		\
-		obj/main.o		\
-		obj/globals.o		\
-		../common/obj/globals.o	\
-		../common/obj/util.o	\
-		../common/obj/crc32.o	\
+		build/main.o		\
+		build/globals.o		\
+		../common/build/globals.o	\
+		../common/build/util.o	\
+		../common/build/crc32.o	\
 		$(LFLAGS)
 
-obj/main.o : src/main.c	
+build/main.o : src/main.c	
 	$(CC) $(CFLAGS) -c -o $@ src/main.c
 
-obj/globals.o : src/globals.c
+build/globals.o : src/globals.c
 	$(CC) $(CFLAGS) -c -o $@ src/globals.c
 
 clean:
-	/bin/rm -f obj/gld-mcp
-	/bin/rm -f obj/*.o
+	/bin/rm -f ../bin/gld-mcp
+	/bin/rm -f build/*.o
 	/bin/rm -f src/*~
 

@@ -1,24 +1,26 @@
 
-#CC=gcc -g -pg
-CC=gcc -g 
+#CINCL=-I /usr/local/include
+#LINCL=-L /usr/local/lib
+#CC=gcc -pg
+CC=gcc $(CINCL)
 #CC=gcc -fomit-frame-pointer -O3
-CFLAGS=-Wall -pedantic
-LFLAGS=-lcgi5
+CFLAGS=-Wall -pedantic -g
+LFLAGS=$(LINCL) -lcgi5
 
-all : obj/globals.o		\
-		obj/util.o	\
-		obj/crc32.o
+all : build/globals.o		\
+		build/util.o	\
+		build/crc32.o
 
-obj/globals.o : src/globals.c
+build/globals.o : src/globals.c
 	$(CC) $(CFLAGS) -c -o $@ src/globals.c
 
-obj/util.o : src/util.c
+build/util.o : src/util.c
 	$(CC) $(CFLAGS) -c -o $@ src/util.c
 
-obj/crc32.o : src/crc32.c
+build/crc32.o : src/crc32.c
 	$(CC) $(CFLAGS) -c -o $@ src/crc32.c
 
 clean:
-	/bin/rm -f obj/*.o
+	/bin/rm -f build/*.o
 	/bin/rm -f src/*~
 
