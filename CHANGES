@@ -1,0 +1,14 @@
+
+
+1.0.1	2007-11-03
+
+	* Fixed datatypes relating to the network protocol on 64b systems.
+
+	* GCC on OpenBSD dosn't like compiling into 'obj/'.
+
+	* Removed Linux specific headers.
+
+	* Fixed some dodgy, not quite legal C code relating to networking.
+
+1.0.0	2007-11-01
+	* Initial release.
