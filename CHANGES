@@ -1,4 +1,6 @@
+1.0.2	2007-11-04
 
+	* Fixed some segfaults in the handling of commands in the MCP.
 
 1.0.1	2007-11-03
 
