@@ -219,6 +219,9 @@ static void show(String *cmdline,size_t cmds)
   ddt(cmdline != NULL);
   ddt(cmds    >  0);
   
+  if (cmds < 2)
+    return;
+
   if (strcmp(cmdline[1].d,"w") == 0)
     show_warranty();
   else if (strcmp(cmdline[1].d,"c") == 0)
@@ -896,6 +899,9 @@ static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
   ddt(cmdline != NULL);
   ddt(cmds    >  0);
   
+  if (cmds != 3)
+    return;
+
   ptfr     = &packet.mcp_tofrom;
   addrsize = min(strlen(cmdline[2].d),200);  
   up_string(cmdline[1].d);
@@ -1002,6 +1008,9 @@ static void tuple(String *cmdline,size_t cmds)
   
   ddt(cmdline != NULL);
   ddt(cmds    >  0);
+
+  if (cmds != 5)
+    return;
 
   cmd = ci_map_int((const char *)up_string(cmdline[1].d),m_tuple_cmd,4);  
   if (cmd == -1)
