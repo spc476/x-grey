@@ -2,6 +2,8 @@
 
 	* Fixed some segfaults in the handling of commands in the MCP.
 
+	* Changed a return to _exit(0) in cmd_mcp_report().
+
 1.0.1	2007-11-03
 
 	* Fixed datatypes relating to the network protocol on 64b systems.

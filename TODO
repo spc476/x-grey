@@ -1,3 +1,8 @@
+2007-11-05
+
+	* MCP:  Detect if the pager is available, and if not, use the
+	  built-in pager.
+
 2007-11-03T14:22-05:00
 
 	* need to move the 'obj/' directories to 'build/' directories

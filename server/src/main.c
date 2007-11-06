@@ -695,7 +695,7 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
   if (conn == -1)
   {
     (*cv_report)(LOG_ERR,"$","accept() = %a",strerror(errno));
-    return;
+    _exit(0);
   }
   
   close(tcp);
