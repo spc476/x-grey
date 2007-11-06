@@ -4,6 +4,11 @@
 	  sendmail's general policy of shutting down when the system
 	  load gets too high?
 
+		FIXED - 2007-11-06
+	
+		libmilter creates a ton of threads, each thread using a ton
+		of memory.  I added code to limit stack space in SMC.
+
 2007-10-30
 
 	* but in handle_sigchld() whereby I wasn't resetting mf_sigchld back

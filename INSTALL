@@ -167,4 +167,20 @@ Restricting access:
 
 Managing the server:
 
-	See the file RUNNING on how to manage the server.
+	By default, there's no filtering in the IP address.  You may want to
+	consider doing so.  Take a look at the files "lists/whitelist.ip"
+	and "lists/whitelist_ip.txt", which are a list of IP addresses of
+	problematic SMTP hosts that have problems with greylisting. 
+	"lists/whitelist_ip.txt" is from
+
+<http://cvs.puremagic.com/viewcvs/*checkout*/greylisting/schema/whitelist_ip.txt>
+
+	which have been collected over several years.  The othe file,
+	"lists/whitelist.ip", is a bunch I've discovered over the few months
+	in developing this software, and contains wider groupings of
+	netblocks.  You won't go too wrong with using the following:
+
+  GenericUnixPrompt> gld-mcp iplist file path/to/whitelist.ip
+  GenericUnixPrompt> gld-mcp iplist file path/to/whitelist_ip.txt relaydelay
+
+	See the file RUNNING for more on how to manage the server.

@@ -1,9 +1,17 @@
-4.2.2.2			reject	# some stuff to reject
-10.0.0.0/8		reject
-11.0.0.255/32		reject
-192.168.0.0/16		reject
-255.255.255.254/32	reject
-255.255.255.255/32	reject
+
+#####################################################################
+#
+# Lists of IP blocks you might want to accept, which are generally
+# very large ISPs or Email hosting companies with multiple outgoing
+# SMTP servers.  Email from these servers will eventually get 
+# through, but because of the shared outoing SMTP queues, might take
+# longer to actually be accepted.  This file can be loaded into
+# the Greylist Daemon by running gld-mcp and using the following
+# command:
+#
+#	gld-mcp> iplist file whitelist.ip
+#
+######################################################################
 
 152.163.225.0/24 	accept	# AOL (via SPF)
 205.188.139.0/24	accept	# AOL (via SPF)
@@ -52,15 +60,4 @@
 
 68.168.78.0/24		accept	# Adelphia (via SPF)
 68.168.75.0/24		accept	# Adelphia (via SPF)
-
-209.145.140.57		accept	# Classiccomputer mailing list
-140.211.11.2		accept	# Apache mailing list
-66.33.206.23		accept	# Niteowl's mailing list
-209.42.40.102		accept	# Gladesoft, that of the 30m retry
-
-#66.70.91.14		accept	# um ... spam I actually like getting
-#66.70.91.15		accept	#    "
-#69.10.237.0/24		accept	#    "
-
-#209.42.32.238		accept	# Server at Casa New Jersey
 
