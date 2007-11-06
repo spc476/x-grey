@@ -72,9 +72,6 @@ static void	iplist_file_bogonspace	(char *);
 static int	send_request		(void *,size_t,void *,size_t,int);
 static void	handler_sigalrm		(int);
 static void	help			(void);
-static void	pager_batch		(int);
-static void	pager_interactive	(int);
-
 
 /*************************************************************/
 
@@ -82,7 +79,6 @@ extern char **environ;
 
 static volatile sig_atomic_t   mf_sigalrm;
 static int                     m_sock;
-static void                  (*m_pager)(int) = pager_interactive;
 
 /************************************************************/
 
@@ -118,7 +114,7 @@ int main(int argc,char *argv[])
       what[i].s = strlen(argv[cmd]);
     }
     
-    m_pager = pager_batch;
+    cv_pager = pager_batch;
     process_cmdline(what,cmds);  
     MemFree(what);
   }
@@ -172,9 +168,7 @@ static void cmdline(void)
     add_history(cmd);
 
     cmdline = split(&cmds,cmd);    
-    /*StreamWrite(StdoutStream,'\n');*/
     process_cmdline(cmdline,cmds);
-    /*StreamWrite(StdoutStream,'\n');*/
     MemFree(cmdline);
     
     StreamFlush(StdoutStream);  
@@ -191,6 +185,8 @@ static void process_cmdline(String *cmdline,size_t cmds)
 {
   ddt(cmdline != NULL);
   ddt(cmds    >  0);
+
+  if (cmds == 0) return;
   
   if (strcmp(cmdline[0].d,"show") == 0)
     show(cmdline,cmds);
@@ -360,6 +356,7 @@ static void show_stats(void)
   char                             *t;
 
   gss             = &data.mcp_show_stats;;
+  request.crc     = htons(0);
   request.version = htons(VERSION);
   request.MTA     = htons(MTA_MCP);
   request.type    = htons(CMD_MCP_SHOW_STATS);
@@ -492,6 +489,7 @@ static void show_config(void)
   char                              *whitelist;
   
   gsc             = &data.mcp_show_config;
+  request.crc     = htons(0);
   request.version = htons(VERSION);
   request.MTA     = htons(MTA_MCP);
   request.type    = htons(CMD_MCP_SHOW_CONFIG);
@@ -540,8 +538,8 @@ static void show_report(int req,int resp)
   union graylist_all_packets  data;
   int                         rc;
 
-  gr = &data.mcp_res;  
-  
+  gr              = &data.mcp_res;  
+  request.crc     = htons(0);
   request.version = htons(VERSION);
   request.MTA     = htons(MTA_MCP);
   request.type    = htons(req);
@@ -568,10 +566,8 @@ static void show_report(int req,int resp)
     return;
   }
 
-  /*StreamWrite(StdoutStream,'\n');*/
-  (*m_pager)(conn);
+  (*cv_pager)(conn);
   close(conn); 
-  /*StreamWrite(StdoutStream,'\n');*/
 }
 
 /************************************************************/
@@ -582,13 +578,13 @@ static void help(void)
   
   fh = open(c_commands,O_RDONLY);
   if (fh == -1) return;
-  (*m_pager)(fh);
+  (*cv_pager)(fh);
   close(fh);
 }
 
 /**************************************************************/
 
-static void pager_batch(int fh)
+void pager_batch(int fh)
 {
   Stream in;
   
@@ -599,7 +595,7 @@ static void pager_batch(int fh)
 
 /*************************************************************/
 
-static void pager_interactive(int fh)
+void pager_interactive(int fh)
 {
   pid_t  child;
   pid_t  pid;
@@ -649,7 +645,8 @@ static void iplist(String *cmdline,size_t cmds)
     return;
 
   memset(ipr.data,0,16);
-  
+
+  ipr.crc     = htons(0);  
   ipr.version = htons(VERSION);
   ipr.MTA     = htons(MTA_MCP);
   ipr.type    = htons(CMD_MCP_IPLIST);
@@ -731,6 +728,8 @@ static void iplist_file(char *fname)
     if (*p == '#') continue;
     
     memset(ipr.data,0,sizeof(ipr.data));
+    
+    ipr.crc     = htons(0);
     ipr.version = htons(VERSION);
     ipr.MTA     = htons(MTA_MCP);
     ipr.type    = htons(CMD_MCP_IPLIST);
@@ -808,6 +807,8 @@ static void iplist_file_relaydelay(char *fname)
     if (*p == '#') continue;
     
     memset(ipr.data,0,sizeof(ipr.data));
+    
+    ipr.crc     = htons(0);
     ipr.version = htons(VERSION);
     ipr.MTA     = htons(MTA_MCP);
     ipr.type    = htons(CMD_MCP_IPLIST);
@@ -862,6 +863,8 @@ static void iplist_file_bogonspace(char *fname)
     if (*p == '#') continue;
     
     memset(ipr.data,0,sizeof(ipr.data));
+    
+    ipr.crc     = htons(0);
     ipr.version = htons(VERSION);
     ipr.MTA     = htons(MTA_MCP);
     ipr.type    = htons(CMD_MCP_IPLIST);
@@ -920,6 +923,7 @@ static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
   if (ptfr->cmd == (unet16)-1)
     return;
    
+  ptfr->crc     = htons(0);
   ptfr->version = htons(VERSION);
   ptfr->MTA     = htons(MTA_MCP);
   ptfr->type    = htons(cmd);
@@ -966,7 +970,7 @@ static void show_redistribute(void)
   
   fh = open(c_license,O_RDONLY);
   if (fh == -1) return;
-  (*m_pager)(fh);
+  (*cv_pager)(fh);
   close(fh);
 }
 
@@ -1021,6 +1025,7 @@ static void tuple(String *cmdline,size_t cmds)
   glq   = &outpacket.req;
   p     = glq->data;
   
+  glq->crc      = htons(0);
   glq->version  = htons(VERSION);
   glq->MTA      = htons(MTA_MCP);
   glq->type     = htons(cmd);

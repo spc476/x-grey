@@ -45,8 +45,6 @@
 #include "../../common/src/globals.h"
 #include "globals.h"
 
-#define min(a,b)	((a) < (b)) ? (a) : (b)
-
 /***********************************************************/
 
 int		check_graylist	(int,char *,char *,char *);	
@@ -233,6 +231,7 @@ int check_graylist(int sock,char *ip,char *from,char *to)
   
   p = glq->data;
   
+  glq->crc      = htons(0);
   glq->version  = htons(VERSION);
   glq->MTA      = htons(MTA_POSTFIX);
   glq->type     = htons(CMD_GRAYLIST);
@@ -330,7 +329,6 @@ int check_graylist(int sock,char *ip,char *from,char *to)
   }
   
   glr->response = ntohs(glr->response);
-  
   (*cv_report)(
   	LOG_DEBUG,
 	"$",
@@ -338,7 +336,6 @@ int check_graylist(int sock,char *ip,char *from,char *to)
 	ci_map_chars(glr->response,c_ift,C_IFT)
   );
   return(glr->response);
-
 }
 
 /*******************************************************************/

@@ -161,7 +161,7 @@ int (GlobalsInit)(int argc,char *argv[])
   if (!cf_foreground)
     daemon_init();
   
-  unlink(&c_filterchannel[5]);
+  unlink(&c_filterchannel[5]);	/* making sure it doesn't exist */
   atexit(my_exit);
   write_pidfile(c_pidfile);
   return(EXIT_SUCCESS);

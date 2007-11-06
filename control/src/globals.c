@@ -45,6 +45,9 @@
 
 /*********************************************************/
 
+void		pager_interactive	(int);
+void		pager_batch		(int);
+
 static int	parse_cmdline	(int,char *[]);
 static void	dump_defaults	(void);
 static void	my_exit		(void);
@@ -69,6 +72,7 @@ const char          *c_pager        = MCP_PAGER;
 char                *c_secret       = SECRET;
 size_t               c_secretsize   = SECRETSIZE;
 void               (*cv_report)(int,char *,char *, ... ) = report_stderr;
+void               (*cv_pager) (int)                     = pager_interactive;
 
 /**********************************************************/
 
@@ -103,6 +107,13 @@ int (GlobalsInit)(int argc,char *argv[])
   if (pager)
     c_pager = dup_string(pager);
 
+  rc = access(c_pager,X_OK);
+  if (rc != 0)
+  {
+    (*cv_report)(LOG_DEBUG,"$","pager %a not found-using internal one",c_pager);
+    cv_pager = pager_batch;
+  }
+  
   rc = parse_cmdline(argc,argv);
 
   remote = gethostbyname(c_rhost);

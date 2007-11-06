@@ -61,6 +61,7 @@ static volatile sig_atomic_t mf_sigalrm;
 static volatile sig_atomic_t mf_sigusr1;
 static volatile sig_atomic_t mf_sigusr2;
 static volatile sig_atomic_t mf_sighup;
+static volatile sig_atomic_t mf_stupid;
 
 /**********************************************************************/
 
@@ -75,6 +76,15 @@ void check_signals(void)
   if (mf_sigusr1)  handle_sigusr1();
   if (mf_sigusr2)  handle_sigusr2();
   if (mf_sighup)   handle_sighup();
+  if (mf_stupid)
+  {
+    (*cv_report)(
+    		LOG_ERR,
+		"",
+    		"set a signal handler,but forgot to write code to handle it"
+    	);
+    mf_stupid = 0;
+  }
 }
 
 /********************************************************************/
@@ -139,7 +149,7 @@ void sighandler_sigs(int sig)
     case SIGUSR1  : mf_sigusr1  = 1; break;
     case SIGUSR2  : mf_sigusr2  = 1; break;
     case SIGHUP   : mf_sighup   = 1; break;
-    default: _exit(EXIT_FAILURE); /* because I'm stupid */
+    default:        mf_stupid   = 1; break;
   }
 }
 

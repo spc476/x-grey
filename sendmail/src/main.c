@@ -52,7 +52,7 @@
 struct mfprivate
 {
   size_t  sip;
-  byte    ip[16];
+  byte    ip    [16];
   char    sender[200];
 };
 
@@ -196,27 +196,28 @@ static sfsistat mf_close(SMFICTX *ctx)
 
 static int check_graylist(int sock,byte *ip,char *from,char *to)
 {
-  byte                      outpacket[600];
-  byte                      inpacket [1500];
-  struct graylist_request  *glq;
-  struct graylist_response *glr;
-  struct sockaddr_in        sip;
-  socklen_t                 sipsize;
-  size_t                    sfrom;
-  size_t                    sto;
-  byte                     *p;
-  ssize_t                   rrc;
-  size_t                    packetsize;
-  CRC32                     crc;
+  union graylist_all_packets  outpacket;
+  union graylist_all_packets  inpacket;
+  struct graylist_request    *glq;
+  struct graylist_response   *glr;
+  struct sockaddr_in          sip;
+  socklen_t                   sipsize;
+  size_t                      sfrom;
+  size_t                      sto;
+  byte                       *p;
+  ssize_t                     rrc;
+  size_t                      packetsize;
+  CRC32                       crc;
   
   sfrom = min(strlen(from),200);
   sto   = min(strlen(to),  200);
   
-  glq = (struct graylist_request *)outpacket;
-  glr = (struct graylist_response *)inpacket;
+  glq = &outpacket.req;
+  glr = &inpacket.res;
   
   p = glq->data;
-  
+
+  glq->crc      = htons(0);  
   glq->version  = htons(VERSION);
   glq->MTA      = htons(MTA_POSTFIX);
   glq->type     = htons(CMD_GRAYLIST);
@@ -228,7 +229,7 @@ static int check_graylist(int sock,byte *ip,char *from,char *to)
   memcpy(p,from,sfrom);	p += sfrom;
   memcpy(p,to,sto);     p += sto;
   
-  packetsize = (size_t)(p - outpacket);
+  packetsize = (size_t)(p - outpacket.data);
 
   crc      = crc32(INIT_CRC32,&glq->version,packetsize - sizeof(CRC32));
   crc      = crc32(crc,c_secret,c_secretsize);
@@ -236,8 +237,8 @@ static int check_graylist(int sock,byte *ip,char *from,char *to)
   
   rrc = sendto(
   		sock,
-  		outpacket,
-  		(size_t)(p - outpacket),
+  		glq,
+  		packetsize,
   		0,
   		(const struct sockaddr *)&c_raddr,
   		c_raddrsize
@@ -253,7 +254,7 @@ static int check_graylist(int sock,byte *ip,char *from,char *to)
   sipsize = sizeof(struct sockaddr_in);
   rrc     = recvfrom(
   		sock,
-  		inpacket,
+  		inpacket.data,
   		sizeof(inpacket),
   		0,
   		(struct sockaddr *)&sip,

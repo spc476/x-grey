@@ -189,28 +189,6 @@ int iplist_read(const char *fname)
 
 /**************************************************************/
 
-int iplist_cmp(const void *left,const void *right)
-{
-  const struct ipblock *l = left;
-  const struct ipblock *r = right;
-  int                   rc;
-  
-  ddt(left    != NULL);
-  ddt(right   != NULL);
-  ddt(l->size == 4);
-  ddt(r->size == 4);
-#if 1
-  if ((rc = memcmp(l->mask,r->mask,l->size)) != 0) return(-rc);
-  if ((rc = memcmp(l->addr,r->addr,l->size)) != 0) return(rc);
-#else
-  if ((rc = memcmp(l->addr,r->addr,l->size)) != 0) return(rc);
-  if ((rc = memcmp(l->mask,r->mask,l->size)) != 0) return(-rc);
-#endif
-  return(0);
-}
-
-/******************************************************************/
-
 int iplist_dump(void)
 {
   Stream out;
@@ -292,8 +270,8 @@ int ip_match(byte *ip,size_t size)
     
     bit >>= 1;
   }
-  
-  return(IFT_GRAYLIST);
+
+  return(g_tree->match);
 }
 
 /******************************************************************/
@@ -311,6 +289,11 @@ int ip_add_sm(byte *ip,size_t size,int mask,int cmd)
   ddt(mask >  -1);
   ddt(mask <  33);
 
+  /*----------------------------------
+  ; if the mask is 0, we don't support
+  ; removing the default match.  Sorry
+  ;----------------------------------*/
+  
   if (mask == 0)
   {
     if (cmd != IFT_REMOVE)
@@ -444,7 +427,6 @@ struct ipblock *ip_table(size_t *ps)
     rc = ip_collect(addr,mask,4,g_tree->one, 0,0x80,0x80,array,rc);
 
   (*cv_report)(LOG_DEBUG,"L L","g: %a rc: %b",g_ipcnt,rc);
-/*  qsort(array,rc,sizeof(struct ipblock),iplist_cmp);*/
   *ps = rc;
   return(array);
 }

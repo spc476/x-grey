@@ -59,13 +59,6 @@ int edomain_cmp(EDomain key,EDomain node)
   ddt(key  != NULL);
   ddt(node != NULL);
   
-#if 0
-  if (key->tsize < node->tsize)
-    return(-1);
-  else if (key->tsize > node->tsize)
-    return( 1);
-#endif
-
   return(strcmp(key->text,node->text));
 }
 

@@ -8,6 +8,9 @@
 
 	* Added version information to each program.
 
+	* Made sure all fields in the packets were initialized before
+	  calculating the CRC.
+
 1.0.1	2007-11-03
 
 	* Fixed datatypes relating to the network protocol on 64b systems.

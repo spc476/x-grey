@@ -43,11 +43,15 @@ extern const char *const          c_pager;
 extern const char *const          c_secret;
 extern const size_t               c_secretsize;
 extern void                     (*cv_report)(int,char *,char *, ... );
+extern void                     (*cv_pager) (int);
 
 /*************************************************************/
 
-int	(GlobalsInit)	(int,char *[]);
-int	(GlobalsDeinit)	(void);
+int	(GlobalsInit)		(int,char *[]);
+int	(GlobalsDeinit)		(void);
+
+void	 pager_batch		(int);
+void	 pager_interactive	(int);
 
 /************************************************************/
 

@@ -48,7 +48,6 @@ struct ipnode
 /******************************************************/
 
 int		 iplist_read		(const char *);
-int		 iplist_cmp		(const void *,const void *);
 int		 iplist_check		(byte *,size_t);
 int		 iplist_dump		(void);
 int		 iplist_dump_stream	(Stream);

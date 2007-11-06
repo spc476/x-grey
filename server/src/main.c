@@ -25,7 +25,6 @@
 
 #include <netdb.h>
 #include <netinet/in.h>
-/*#include <arpa/inet.h>*/
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -47,8 +46,6 @@
 #include "server.h"
 #include "iplist.h"
 #include "emaildomain.h"
-
-#define min(a,b)	((a) < (b)) ? (a) : (b)
 
 /********************************************************************/
 
@@ -99,9 +96,9 @@ static void mainloop(int sock)
     check_signals();
 
     memset(&req.remote,0,sizeof(req.remote));
-    req.rsize = sizeof(req.remote);
 
-    rrc = recvfrom(
+    req.rsize = sizeof(req.remote);
+    rrc       = recvfrom(
     	sock,
     	req.packet.data,
     	sizeof(req.packet.data),
@@ -208,14 +205,15 @@ static void mainloop(int sock)
            {
              struct glmcp_response_show_config config;
              
-             config.version         = htons(VERSION);
-             config.MTA             = req.glr->MTA;
-             config.type            = htons(CMD_MCP_SHOW_CONFIG_RESP);
-             config.max_tuples      = htonl(c_poolmax);
-             config.timeout_cleanup = htonl(c_time_cleanup);
-             config.timeout_embargo = htonl(c_timeout_embargo);
-             config.timeout_gray    = htonl(c_timeout_gray);
-             config.timeout_white   = htonl(c_timeout_white);
+	     config.crc = config.pad = htons(0);
+             config.version          = htons(VERSION);
+             config.MTA              = req.glr->MTA;
+             config.type             = htons(CMD_MCP_SHOW_CONFIG_RESP);
+             config.max_tuples       = htonl(c_poolmax);
+             config.timeout_cleanup  = htonl(c_time_cleanup);
+             config.timeout_embargo  = htonl(c_timeout_embargo);
+             config.timeout_gray     = htonl(c_timeout_gray);
+             config.timeout_white    = htonl(c_timeout_white);
              
              send_packet(&req,&config,sizeof(config));
            }
@@ -604,6 +602,7 @@ static void send_reply(struct request *req,int type,int response,int why)
   ddt(type     >= 0);
   ddt(response >= 0);
   
+  resp.crc      = htons(0);
   resp.version  = htons(VERSION);
   resp.MTA      = req->glr->MTA;
   resp.type     = htons(type);
@@ -673,9 +672,9 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
     (*cv_report)(LOG_ERR,"","could not create socket for report");
     return;
   }
-    
-  listen(tcp,5);
 
+  /* listen(tcp,5); */
+    
   pid = gld_fork();
   if (pid == -1)
   {
@@ -689,6 +688,8 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
     close(tcp);
     return;
   }
+
+  listen(tcp,5);
 
   do
   {

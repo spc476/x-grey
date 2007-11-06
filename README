@@ -1,7 +1,48 @@
 
-There.  You read me.
+The Greylist Daemon.
 
-Yeah, later, I'll add some more verbiage to this file.
+This implements greylisting, as described in
 
-Until then ... 
+	http://projects.puremagic.com/greylisting/
+
+This is an anti-spam measure and has been shown to reduce the amount of spam
+by 90% (at least, on the systems I've installed this program on).  This
+program is different than most greylist implementations in that it keeps
+everything in memory, and supports more than one MTA.
+
+Features:
+
+	* Fast.  It can handle around 6,000 sustained requests per second on
+	  a 2.6GHz machine.  When tested on a 120MHz 486, it peaked out to
+	  380 requests per second.  It's fast because everything about the
+	  server is stored in memory.
+
+	* Configurable.  You can have everything greylisted, or only mail
+	  from one particular server, from a particular sender to a
+	  particular recipient.  Or anything in between.  Email can be
+	  accepted, rejected or greylisted based upon the IP address, sender
+	  email or recipient email.
+
+	* Dependable.  Configuration changes can be made while the server is
+	  running, so you never have to shut it down.  If the program ever
+	  crashes, it will restart itself, picking up where it left off.
+
+	* Flexible.  It currently supports Sendmail and Postfix, and
+	  extending it to support other MTAs is not hard.
+
+	* Networkable.  Have more than one email server?  It can support
+	  multiple MTAs (even different types) across a network (although it
+	  can work over the Internet, it's best to keep an instance of the
+	  Greylist Daemon on a local segment).
+
+	* Boundable.  It consumes a predictable amount of memory and disk
+	  space.  Expired tuples are automatically purged from the system.
+
+Acknowledgements:
+
+	I would like to thank Pick Internet <http://www.pickint.net/> and
+	Harmony Logic for funding the development of this program and for
+	alpha testing this program.  I would also like to thank Gladesoft
+	<http://gladesoft.com/> for feedback and keeping me honest in coding
+	the program, and for running a beta test version of this program.
 
