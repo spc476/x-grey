@@ -183,4 +183,10 @@ Managing the server:
   GenericUnixPrompt> gld-mcp iplist file path/to/whitelist.ip
   GenericUnixPrompt> gld-mcp iplist file path/to/whitelist_ip.txt relaydelay
 
+	The files "lists/bogon-bn-nonagg.txt" and
+	"lists/bogons-cidr-all.txt" contain netblocks of unallocated network
+	space.  Emperical testing on 600,000 tuples showed that adding these
+	to the IPlist in the greylist daemon wasn't worth it. See
+	<http://boston.conman.org/2007/10/12.1> for more information.
+
 	See the file RUNNING for more on how to manage the server.
