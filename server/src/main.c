@@ -690,13 +690,19 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
     return;
   }
 
-  rsize = sizeof(struct sockaddr);
-  conn  = accept(tcp,&remote,&rsize);
-  if (conn == -1)
+  do
   {
-    (*cv_report)(LOG_ERR,"$","accept() = %a",strerror(errno));
-    _exit(0);
-  }
+    rsize = sizeof(struct sockaddr);
+    conn  = accept(tcp,&remote,&rsize);
+    if (conn == -1)
+    {
+      if (errno != EINTR)
+      {
+        (*cv_report)(LOG_ERR,"$","accept() = %a",strerror(errno));
+        _exit(0);
+      }
+    }
+  } while (conn == -1);
   
   close(tcp);
   out = FHStreamWrite(conn);
