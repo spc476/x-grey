@@ -26,6 +26,7 @@
 #include <time.h>
 #include <limits.h>
 
+#define PROG_VERSION	"1.0.2"
 #define VERSION		0x0100
 
 /********************************************************************/
@@ -73,6 +74,7 @@ enum
 {
   OPT_NONE,
   OPT_HELP,
+  OPT_VERSION,
   OPT_DEBUG,
   OPT_LOG_FACILITY,
   OPT_LOG_LEVEL,

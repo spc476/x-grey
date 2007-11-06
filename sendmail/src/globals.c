@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include <syslog.h>
 #include <getopt.h>
@@ -32,6 +33,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -49,7 +51,8 @@ enum
 {
   OPT_TIMEOUT = OPT_USER,
   OPT_CHANNEL,
-  OPT_FOREGROUND
+  OPT_FOREGROUND,
+  OPT_MAXSTACK
 };
 
 /*****************************************************************/
@@ -78,6 +81,7 @@ size_t               c_secretsize    = SECRETSIZE;
 char                *c_filterchannel = SENDMAIL_FILTERCHANNEL;
 int                  cf_foreground   = 0;
 int                  cf_debug        = 0;
+size_t               c_maxstack      = (1024uL * 1024uL);
 void               (*cv_report)(int,char *,char *,...) = report_syslog;
 
 int                  gl_sock;
@@ -92,12 +96,14 @@ static const struct option mc_options[] =
   { "server-port"	, required_argument	, NULL	, OPT_RPORT		} ,
   { "timeout"		, required_argument	, NULL  , OPT_TIMEOUT		} ,
   { "foreground"	, no_argument		, NULL	, OPT_FOREGROUND	} ,
+  { "max-stack"		, required_argument	, NULL	, OPT_MAXSTACK		} ,
   { "log-facility"	, required_argument	, NULL	, OPT_LOG_FACILITY	} ,
   { "log-level"		, required_argument	, NULL	, OPT_LOG_LEVEL		} ,
   { "log-id"		, required_argument	, NULL	, OPT_LOG_ID		} ,
   { "channel"		, required_argument	, NULL	, OPT_CHANNEL		} ,
   { "secret"		, required_argument	, NULL	, OPT_SECRET		} ,
   { "debug"		, no_argument		, NULL	, OPT_DEBUG		} ,
+  { "version"		, no_argument		, NULL	, OPT_VERSION		} ,
   { "help"		, no_argument		, NULL	, OPT_HELP		} ,
   { NULL		, 0			, NULL	, 0			} 
 };
@@ -107,11 +113,38 @@ static const struct option mc_options[] =
 int (GlobalsInit)(int argc,char *argv[])
 {
   struct hostent *remote;
-
+  struct rlimit   limit;
+  int             rc;
+  
   ddt(argc >  0);
   ddt(argv != NULL);
   
   parse_cmdline(argc,argv);
+
+  /*----------------------------------------------------------
+  ; on some systems, the default stack is set as high as 10M,
+  ; and libmilter creates a lot of threads, which can lead to
+  ; out-of-memory problems (and I thought I was using a lot
+  ; of memory in the greylist daemon!).  This will set the 
+  ; default stack size to something a bit more reasonable.
+  ;----------------------------------------------------------*/
+  
+  rc = getrlimit(RLIMIT_STACK,&limit);
+  if (rc != 0)
+    (*cv_report)(LOG_WARNING,"$","getrlimit(RLIMIT_STACK) = %a, can't modify stack size, program may crash",strerror(errno));
+  else
+  {
+    if (limit.rlim_cur > c_maxstack)
+      limit.rlim_cur = c_maxstack;
+  
+    if (limit.rlim_max > c_maxstack)
+      limit.rlim_max = c_maxstack;
+    
+    rc = setrlimit(RLIMIT_STACK,&limit);
+    if (rc != 0)
+      (*cv_report)(LOG_WARNING,"$","setrlimit(RLIMIT_STACK) = %a , can't modify stack size, program may crash",strerror(errno));
+  }
+  
   remote = gethostbyname(c_rhost);
   if (remote == NULL)
   {
@@ -176,6 +209,9 @@ static void parse_cmdline(int argc,char *argv[])
       case OPT_CHANNEL:
            c_filterchannel = dup_string(optarg);
            break;
+      case OPT_MAXSTACK:
+           c_maxstack = strtoul(optarg,NULL,10);	/* fix later */
+           break;
       case OPT_LOG_FACILITY:
            {
              char *tmp = up_string(dup_string(optarg));
@@ -203,6 +239,9 @@ static void parse_cmdline(int argc,char *argv[])
       case OPT_DEBUG:
            cf_debug = 1;
            break;
+      case OPT_VERSION:
+           LineS(StdoutStream,"Version: " PROG_VERSION "\n");
+           exit(EXIT_FAILURE);
       case OPT_HELP:
       default:
            fprintf(stderr,"usage: %s [options]\n",argv[0]);
@@ -228,6 +267,7 @@ static void dump_defaults(void)
     "\t--log-id <id>             (%s)\n"
     "\t--channel <channel>       (%s)\n"
     "\t--debug                   (%s)\n"
+    "\t--version                 (" PROG_VERSION ")\n"
     "\t--help\n",
     tout,
     ci_map_chars(c_log_facility,c_facilities,C_FACILITIES),

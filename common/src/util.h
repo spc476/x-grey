@@ -60,6 +60,7 @@ void	    log_address			(struct sockaddr *);
 char	   *ipv4			(const byte *);
 void	    set_signal			(int,void (*)(int));
 double	    read_dtime			(char *);
+size_t	    read_size			(char *);
 
 char       *iptoa			(IP);
 char       *ipptoa			(IP,Port);

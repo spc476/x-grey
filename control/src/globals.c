@@ -83,6 +83,7 @@ static const struct option mc_options[] =
   { "log-id"		, required_argument	, NULL	, OPT_LOG_ID		} ,
   { "secret"		, required_argument	, NULL	, OPT_SECRET		} ,
   { "debug"		, no_argument		, NULL	, OPT_DEBUG		} ,
+  { "version"		, no_argument		, NULL	, OPT_VERSION		} ,
   { "help"		, no_argument		, NULL	, OPT_HELP		} ,
   { NULL		, 0			, NULL	, 0			}
 };
@@ -178,6 +179,9 @@ static int parse_cmdline(int argc,char *argv[])
            c_log_level = LOG_DEBUG;
            LineSFormat(StderrStream,"","using '--log-facility debug'\n");
            break;
+      case OPT_VERSION:
+           LineS(StdoutStream,"Version: " PROG_VERSION "\n");
+           exit(EXIT_FAILURE);
       case OPT_HELP:
       default:
            LineSFormat(StderrStream,"$","usage: %a [options] command [data]\n",argv[0]);
@@ -196,12 +200,13 @@ static void dump_defaults(void)
   	"$ i $ $ $ $ $ i",
   	"\t--addr <hostname>\t\t(%a)\n"
   	"\t--port <num>\t\t\t(%b)\n"
-  	"\t--server <hostname>\t(%g)\n"
+  	"\t--server <hostname>\t\t(%g)\n"
   	"\t--server-port <num>\t\t(%h)\n"
   	"\t--log-facility <facility>\t(%c)\n"
   	"\t--log-level <level>\t\t(%d)\n"
   	"\t--log-id <string>\t\t(%e)\n"
   	"\t--debug\t\t\t\t(%f)\n"
+  	"\t--version\t\t\t(" PROG_VERSION ")\n"
   	"\t--help\n",
   	c_host,
   	c_port,

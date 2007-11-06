@@ -295,6 +295,28 @@ double read_dtime(char *arg)
 
 /*******************************************************************/
 
+size_t read_size(char *arg)
+{
+  size_t value;
+  char   *p;
+  
+  ddt(arg != NULL);
+  
+  value = strtoul(arg,&p,10);
+  
+  switch(*p)
+  {
+    case 'k': value *= 1024uL ; break;
+    case 'm': value *= (1024uL * 1024uL); break;
+    case 'g': value *= (1024uL * 1024uL * 1024uL) ; break;
+    case 'b':
+    default:   break;
+  }
+  return(value);
+}
+
+/*******************************************************************/
+
 char *iptoa(IP addr)
 {
   Stream ip;

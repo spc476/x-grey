@@ -128,7 +128,7 @@ int main(int argc,char *argv[])
     	StdoutStream,
     	"$",
 	"\n"
-    	"%a Copyright (C) 2007 Sean Conner\n"
+    	"%a " PROG_VERSION " Copyright (C) 2007 Sean Conner\n"
 	"\n"
     	"This program comes with ABSOLUTELY NO WARRANTY; for details type 'show w'.\n"
     	"This is free software, and you are welcome to redistribute it\n"

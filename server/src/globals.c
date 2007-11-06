@@ -192,6 +192,7 @@ static const struct option mc_options[] =
   { "debug"          	, no_argument       	, NULL	, OPT_DEBUG		} ,
   { "foreground"     	, no_argument       	, NULL	, OPT_FOREGROUND   	} ,
   { "stderr"	     	, no_argument       	, NULL	, OPT_STDERR       	} ,
+  { "version"		, no_argument		, NULL	, OPT_VERSION		} ,
   { "help"	     	, no_argument       	, NULL	, OPT_HELP         	} ,
   { NULL	     	, 0		 	, NULL	, 0 			}
 };
@@ -308,6 +309,7 @@ static void dump_defaults(void)
   	"\t--debug\t\t\t\t(%n)\n"
   	"\t--foreground\t\t\t(%o)\n"
   	"\t--stderr\t\t\t(%p)\n"
+  	"\t--version\t\t\t(" PROG_VERSION ")\n"
   	"\t--help\n"
   	"\t\t* not implemented\n",
   	c_whitefile,
@@ -437,6 +439,9 @@ static void parse_cmdline(int argc,char *argv[])
       case OPT_STDERR:
            cv_report = report_stderr;
            break;
+      case OPT_VERSION:
+           LineS(StdoutStream,"Version: " PROG_VERSION "\n");
+	   exit(EXIT_FAILURE);
       case OPT_HELP:
       default:
            LineSFormat(StderrStream,"$","usage: %a [options]\n",argv[0]);
@@ -485,36 +490,6 @@ static void daemon_init(void)
 }
 
 /**********************************************************************/
-
-#if 0
-static size_t read_size(char *arg)
-{
-  size_t  value;
-  char   *p;
-  
-  ddt(arg != NULL);
-  
-  value = strtoul(arg,&p,10);
-  if (value == 0)
-  {
-    LineSFormat(StderrStream,"$","bad size specified: %a\n",arg);
-    exit(EXIT_FAILURE);
-  }
-  
-  switch(*p)
-  {
-    case 'k': value *= 1024uL; break;
-    case 'm': value *= (1024uL * 1024uL); break;
-    case 'g': value *= (1024uL * 1024uL * 1024uL); break;
-    case 'b':
-    default:
-         break;
-  }
-  return(value);
-}
-#endif
-
-/********************************************************************/
 
 static void my_exit(void)
 {

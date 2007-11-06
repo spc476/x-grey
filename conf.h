@@ -176,7 +176,7 @@
 	
 #define POSTFIX_LOG_FACILITY	LOG_LOCAL5
 #define POSTFIX_LOG_LEVEL	LOG_INFO
-#define POSTFIX_LOG_ID		"pfc"
+#define POSTFIX_LOG_ID		"gld-pfc"
 
 /***********************************************************************
 *
@@ -220,7 +220,7 @@
 
 #define SENDMAIL_LOG_FACILITY	LOG_LOCAL5
 #define SENDMAIL_LOG_LEVEL	LOG_INFO
-#define SENDMAIL_LOG_ID		"smc"
+#define SENDMAIL_LOG_ID		"gld-smc"
 
 /************************************************************************
 *
@@ -240,3 +240,4 @@
 #define SECRETSIZE	8
 
 #endif
+

@@ -55,11 +55,11 @@ static void		 dump_defaults	(void);
 
 /****************************************************************/
 
-char                *c_host        = POSTFIX_HOST;
-int                  c_port        = 0;
-char                *c_timeformat  = "%c";
-char                *c_rhost       = SERVER_HOST;
-int                  c_rport       = SERVER_PORT;
+char                *c_host         = POSTFIX_HOST;
+int                  c_port         = 0;
+char                *c_timeformat   = "%c";
+char                *c_rhost        = SERVER_HOST;
+int                  c_rport        = SERVER_PORT;
 struct sockaddr_in   c_raddr;
 socklen_t            c_raddrsize    = sizeof(struct sockaddr_in);
 int                  c_timeout      = POSTFIX_TIMEOUT;
@@ -85,6 +85,7 @@ static const struct option mc_options[] =
   { "log-id"		, required_argument	, NULL	, OPT_LOG_ID		} ,
   { "secret"		, required_argument	, NULL	, OPT_SECRET		} ,
   { "debug"		, no_argument		, NULL	, OPT_DEBUG		} ,
+  { "version"		, no_argument		, NULL	, OPT_VERSION		} ,
   { "help"		, no_argument		, NULL	, OPT_HELP		} ,
   { NULL		, 0			, NULL	, 0			} 
 };
@@ -177,6 +178,9 @@ static void parse_cmdline(int argc,char *argv[])
       case OPT_DEBUG:
            cf_debug = 1;
            break;
+      case OPT_VERSION:
+           LineS(StdoutStream,"Version: " PROG_VERSION "\n");
+           exit(EXIT_FAILURE);
       case OPT_HELP:
       default:
            fprintf(stderr,"usage: %s [options]\n",argv[0]);
@@ -201,6 +205,7 @@ static void dump_defaults(void)
     "\t--log-level <level>       (%s)\n"
     "\t--log-id <id>             (%s)\n"
     "\t--debug                   (%s)\n"
+    "\t--version                 (" PROG_VERSION ")\n"
     "\t--help\n",
     tout,
     ci_map_chars(c_log_facility,c_facilities,C_FACILITIES),

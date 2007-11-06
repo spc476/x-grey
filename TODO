@@ -1,7 +1,14 @@
+2007-11-06
+
+	* make sure usage output reports the actual options.
+
 2007-11-05
 
 	* MCP:  Detect if the pager is available, and if not, use the
 	  built-in pager.
+
+	* SMC: set stack limit to 1M.
+		DONE 2007-11-06
 
 2007-11-03T14:22-05:00
 

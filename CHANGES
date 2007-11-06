@@ -2,7 +2,11 @@
 
 	* Fixed some segfaults in the handling of commands in the MCP.
 
-	* Changed a return to _exit(0) in cmd_mcp_report().
+	* Changed a "return;" to "_exit(0);" in cmd_mcp_report().
+
+	* Set default stack in SMC to 1M.
+
+	* Added version information to each program.
 
 1.0.1	2007-11-03
 
