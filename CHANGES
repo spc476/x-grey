@@ -14,6 +14,8 @@
 	* MCP:  if it can't find the pager program in interactive mode, uses
 	  the internal pager.
 
+	* Some more documenation written.
+
 1.0.1	2007-11-03
 
 	* Fixed datatypes relating to the network protocol on 64b systems.
