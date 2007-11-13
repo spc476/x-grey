@@ -26,7 +26,13 @@
 #include <time.h>
 #include <limits.h>
 
-#define PROG_VERSION	"1.0.2"
+	/*------------------------------------------------
+	; PROG_VERSION defines the actual program version.
+	; VERSION is the protocol version.  The names are
+	; this way for hysterical reasons.
+	;------------------------------------------------*/
+
+#define PROG_VERSION	"1.0.3"
 #define VERSION		0x0100
 
 /********************************************************************/
