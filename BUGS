@@ -1,3 +1,15 @@
+2007-11-11
+
+	* PFC segfaults on a blank line (found by Mark Grosberg)
+
+	* INSTALL file has 'postfix-install' and 'server-install' instead of
+	  the correct 'install-server' and 'install-postfix' (Kelly Fallon)
+		FIXED	2007-11-12
+
+	* INSTALL file does not mention changes needed to postfix/mail.cf
+	  (Mark Grosbert)
+		FIXED	2007-11-12
+
 2007-11-05
 
 	* too many threads in smc caused it to quit?  Is that part of

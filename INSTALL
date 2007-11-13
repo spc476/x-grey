@@ -46,12 +46,12 @@ Compilation:
 	If you are using Postfix:
 
 		make postfix
-		make postfix-install
+		make install-install
 
 	If you are using Sendmail:
 
 		make sendmail
-		make sendmail-install
+		make install-sendmail
 
 	If you are using Qmail:
 
@@ -102,7 +102,12 @@ Installation and starting the various programs:
 
 		---[ end of line ]------------------
 
-		and restart Postfix.   
+		You will also need to add 
+
+			check_policy_service unix:private/policy
+
+		to the smtpd_recipient_restrictions line in
+		'/etc/postfix/main.cf'.  Then restart Postfix.
 
 	Sendmail:
 
