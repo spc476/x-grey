@@ -1,14 +1,15 @@
 2007-11-11
 
 	* PFC segfaults on a blank line (found by Mark Grosberg)
+		FIXED	2007-11-13
 
 	* INSTALL file has 'postfix-install' and 'server-install' instead of
 	  the correct 'install-server' and 'install-postfix' (Kelly Fallon)
-		FIXED	2007-11-12
+		FIXED	2007-11-13
 
 	* INSTALL file does not mention changes needed to postfix/mail.cf
 	  (Mark Grosbert)
-		FIXED	2007-11-12
+		FIXED	2007-11-13
 
 2007-11-05
 

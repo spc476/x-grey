@@ -1,3 +1,11 @@
+1.0.3	2007-11-13
+
+	* Fixed an inconsistency in the INSTALL file.
+
+	* Added an omitted step when installing the Postfix client.
+
+	* Fixed a segfault in PFC.
+
 1.0.2	2007-11-06
 
 	* Fixed some segfaults in the handling of commands in the MCP.
