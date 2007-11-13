@@ -53,7 +53,7 @@ clean:
 	/bin/rm -f bin/*
 
 tarball:
-	(cd .. ; tar czvf /tmp/graylist.tar.gz -X graylist/.exclude graylist/ )
+	(cd .. ; tar czvf /tmp/x-grey.tar.gz -X x-grey/.exclude x-grey/ )
 
 install:
 	echo "make (install-server | install-postfix | install-sendmail)"
