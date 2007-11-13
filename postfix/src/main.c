@@ -31,13 +31,13 @@
 #include <signal.h>
 #include <netdb.h>
 #include <netinet/in.h>
-/*#include <arpa/inet.h>*/
 #include <unistd.h>
 
 #include <cgilib/memory.h>
 #include <cgilib/types.h>
 #include <cgilib/ddt.h>
 #include <cgilib/stream.h>
+#include <cgilib/util.h>
 
 #include "../../common/src/graylist.h"
 #include "../../common/src/util.h"
@@ -90,10 +90,10 @@ static int process_request(int sock)
   static int     refill    = 1;
   char   *p;
   char   *v;
-  char   *request = NULL;
-  char   *from    = NULL;
-  char   *to      = NULL;
-  char   *ip      = NULL;
+  char   *request;
+  char   *from;
+  char   *to;
+  char   *ip;
   size_t  amount;
   ssize_t rrc;
   
@@ -111,6 +111,21 @@ static int process_request(int sock)
   ; it works, and it works fast.
   ;--------------------------------------------------*/
   
+  /*------------------------------------------------
+  ; Natively trying to use this program (that is, from
+  ; the command line, and not under control of Postfix)
+  ; can cause a segfault with certain bogus input.  This
+  ; is to fix that problem, but it bloats the code up a
+  ; bit down below (otherwise we have a memory leak).
+  ;
+  ; Khaaaaaaaaaaaaaaaaaaaaaaaaaaaaan!
+  ;-------------------------------------------------*/
+  
+  request = dup_string("");
+  from    = dup_string("");
+  to      = dup_string("");
+  ip      = dup_string("");
+
   while(1)
   {
     if (refill)
@@ -191,13 +206,25 @@ static int process_request(int sock)
     syslog(LOG_DEBUG,"request: %s = %s",buffer,v);
 
     if (strcmp(buffer,"request") == 0)
+    {
+      MemFree(request);
       request = strdup(v);
+    }
     else if (strcmp(buffer,"sender") == 0)
+    {
+      MemFree(from);
       from = strdup(v);
+    }
     else if (strcmp(buffer,"recipient") == 0)
+    {
+      MemFree(to);
       to = strdup(v);
+    }
     else if (strcmp(buffer,"client_address") == 0)
+    {
+      MemFree(ip);
       ip = strdup(v);
+    }
     
     amount = bufsiz - (size_t)(p - buffer);
     memmove(buffer,p,amount);
