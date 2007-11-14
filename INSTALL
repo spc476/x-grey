@@ -36,7 +36,7 @@ Compilation:
 	To compile and install the server portion:
 
 		make server
-		make server-install
+		make install-server
 
 	This will make the server and the Master Control Program, and
 	install them (default: /usr/local/bin).  It will also install some
