@@ -1,3 +1,17 @@
+
+
+Perhaps an option to just store the CRC of the tuple, instead of the full
+thing.  Might let a few more tuples through, but would be that much faster
+and store a metric buttload order of magnitude of tuples.
+
+Idea from http://slett.net/spam-filtering-for-mx/exim-greylisting.html
+
+
+----
+
+
+
+
 http://greylisting.org/forums/showthread.php?tid=3
 http://cvs.puremagic.com/viewcvs/*checkout*/greylisting/schema/whitelist_ip.txt
 http://www.cymru.com/Documents/bogon-bn-nonagg.txt

@@ -1,3 +1,8 @@
+2007-11-14
+
+	* tried doing 'to reject blah@example.com' and GLD just stopped
+	  responding.  Hmmm?  This after running for a week.
+
 2007-11-11
 
 	* PFC segfaults on a blank line (found by Mark Grosberg)

@@ -2,7 +2,8 @@
 big.tuple.list
 tuple.list
 *.o
-graylist/bin/*
-graylist/test/build/mktuples
-graylist/test/build/sendtuples
+x-grey/bin/*
+x-grey/test/build/mktuples
+x-grey/test/build/sendtuples
+notes
 
