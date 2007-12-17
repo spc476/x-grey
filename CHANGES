@@ -1,3 +1,8 @@
+1.0.4
+
+	* Fixed removed a spurious space in the lines added to 
+	  sendmail.mc
+
 1.0.3	2007-11-13
 
 	* Fixed an inconsistency in the INSTALL file.
