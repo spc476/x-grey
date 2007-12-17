@@ -125,7 +125,7 @@ Installation and starting the various programs:
 
 		---[ line to add ]---------------------------------
 
-		define (`_FFR_MILTER', `1')dnl.
+		define(`_FFR_MILTER', `1')dnl.
 		INPUT_MAIL_FILTER(`filter', `S=unix:/var/state/gld/milter')
 
 		---[ end of line ]---------------------------------

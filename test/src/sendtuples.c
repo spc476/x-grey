@@ -137,7 +137,7 @@ int main(int argc,char *argv[])
   packet = vba;
   sock   = create_socket(c_host,c_port,SOCK_DGRAM);
 
-#if 1
+#if 0
   child = fork();
   if (child == (pid_t)-1)
   {
@@ -173,7 +173,7 @@ int main(int argc,char *argv[])
       size -= (sizeof(size_t) + *pps);
       count++;
 
-#if 0
+#if 1
       {
         byte inpacket[1500];
         struct sockaddr_in sip;
@@ -217,7 +217,7 @@ int main(int argc,char *argv[])
     _exit(EXIT_SUCCESS);
   }  
 
-#if 1
+#if 0
   /*sleep(1);*/
   kill(child,SIGTERM);
 #endif
