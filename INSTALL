@@ -46,7 +46,7 @@ Compilation:
 	If you are using Postfix:
 
 		make postfix
-		make install-install
+		make install-postfix
 
 	If you are using Sendmail:
 

@@ -1,3 +1,9 @@
+1.0.5
+	* Fixed a typo in the INSTALL file.
+
+	* Fixed a bug in SMC where if the user authenticated, they would
+	  still get greylisted.
+
 1.0.4
 
 	* Fixed removed a spurious space in the lines added to 

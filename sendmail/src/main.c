@@ -138,14 +138,30 @@ static sfsistat mf_mail_from(SMFICTX *ctx,char **argv)
 {
   struct mfprivate *data;
   size_t            size;
+  char             *tauth;
   
   ddt(ctx  != NULL);
   ddt(argv != NULL);
+
+  /*---------------------------------------------------
+  ; check to see if the user has authenticated, if so
+  ; return OK and skip the rest of the processing (we
+  ; hope)
+  ;---------------------------------------------------*/
+
+  tauth = smfi_getsymval(ctx,"{auth_authen}");
+  if (!emptynull_string(tauth))
+    return(SMFIS_ACCEPT);
   
-  data         = smfi_getpriv(ctx);
+  /*-------------------------------------------------
+  ; continue saving information for later ... 
+  ;--------------------------------------------------*/
+
+  data = smfi_getpriv(ctx);
   size = min(sizeof(data->sender) - 1,strlen(argv[0]));
   memcpy(data->sender,argv[0],size);
   remove_char(data->sender,isbracket);
+
   return(SMFIS_CONTINUE);
 }
 
