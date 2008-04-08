@@ -1,4 +1,4 @@
-1.0.5
+1.0.5	2008-03-24
 	* Fixed a typo in the INSTALL file.
 
 	* Fixed a bug in SMC where if the user authenticated, they would
