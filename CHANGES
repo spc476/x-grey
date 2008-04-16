@@ -6,7 +6,7 @@
 	  take affect (effect?) by exec() itself after the call;
 	  apparently, the pthread initialization may take place
 	  before main() is called, and thus limiting the stack size
-	  post-hoc won't do any good.
+	  afterwards won't do any good.
 
 1.0.5	2008-03-24
 
