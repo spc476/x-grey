@@ -1,3 +1,12 @@
+2008-04-16
+
+	* SMC: set stack limit, then exec() self to force it to take
+		effect
+
+	* reset counters to 0 when reloading
+
+	* make configuration changes (max-tuples, etc) from GLD
+
 2007-11-06
 
 	* make sure usage output reports the actual options.

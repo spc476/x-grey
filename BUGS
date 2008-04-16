@@ -22,6 +22,8 @@
 	  sendmail's general policy of shutting down when the system
 	  load gets too high?
 
+		REOPENED - 2008-04-16
+
 		FIXED - 2007-11-06
 	
 		libmilter creates a ton of threads, each thread using a ton
