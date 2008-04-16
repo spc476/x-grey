@@ -81,7 +81,7 @@ size_t               c_secretsize    = SECRETSIZE;
 char                *c_filterchannel = SENDMAIL_FILTERCHANNEL;
 int                  cf_foreground   = 0;
 int                  cf_debug        = 0;
-size_t               c_maxstack      = (1024uL * 1024uL);
+size_t               c_maxstack      = (64uL * 1024uL);
 void               (*cv_report)(int,char *,char *,...) = report_syslog;
 
 int                  gl_sock;
@@ -128,21 +128,50 @@ int (GlobalsInit)(int argc,char *argv[])
   ; of memory in the greylist daemon!).  This will set the 
   ; default stack size to something a bit more reasonable.
   ;----------------------------------------------------------*/
-  
+
   rc = getrlimit(RLIMIT_STACK,&limit);
-  if (rc != 0)
-    (*cv_report)(LOG_WARNING,"$","getrlimit(RLIMIT_STACK) = %a, can't modify stack size, program may crash",strerror(errno));
-  else
-  {
-    if (limit.rlim_cur > c_maxstack)
-      limit.rlim_cur = c_maxstack;
   
+  if (rc != 0)
+    (*cv_report)(LOG_WARNING,"$","getrlimit(RLIMIT_STACK) = %a, can't modify stack size",strerror(errno));
+  else 
+  {
+    (*cv_report)(
+    	LOG_DEBUG,
+    	"L L",
+    	"stack current: %a max: %b",
+    	(unsigned long)limit.rlim_cur,
+    	(unsigned long)limit.rlim_max
+    );
+
     if (limit.rlim_max > c_maxstack)
+    {
+      limit.rlim_cur = c_maxstack;
       limit.rlim_max = c_maxstack;
-    
-    rc = setrlimit(RLIMIT_STACK,&limit);
-    if (rc != 0)
-      (*cv_report)(LOG_WARNING,"$","setrlimit(RLIMIT_STACK) = %a , can't modify stack size, program may crash",strerror(errno));
+  
+      rc = setrlimit(RLIMIT_STACK,&limit);
+  
+      if (rc != 0)
+        (*cv_report)(LOG_WARNING,"$","setrlimit(RLIMIT_STACK) = %a, can't modify stack size",strerror(errno));
+      else
+      {
+        extern char **environ;
+      
+        /*--------------------------------------------
+        ; the pthreads library apparently gets control
+        ; before main() is called, and thus the limits
+        ; we set aren't enforced.  So we restart the
+        ; program with a restricted stacksize.  Cool
+        ; all the crap we have to do in order to run
+        ; correctly, huh?
+        ;
+        ; We dont' check to see if exec() works,
+        ; because what's the point?  
+        ;-------------------------------------------*/
+      
+        (*cv_report)(LOG_DEBUG,"","running with a smaller stack");
+        execve(argv[0],argv,environ);
+      }
+    }
   }
   
   remote = gethostbyname(c_rhost);
@@ -261,6 +290,13 @@ static void dump_defaults(void)
   
   fprintf(
     stderr,
+    "\t--host <host>             (%s)\n"
+    "\t--port <port>             (%d)\n"
+    "\t--server <host>           (%s)\n"
+    "\t--server-port <port>      (%d)\n"
+    "\t--foreground              (%s)\n"
+    "\t--max-stack <size>        (%lu)\n"
+    "\t--secret <string>         (%s)\n"
     "\t--timeout <time>          (%s)\n"
     "\t--log-facility <facility> (%s)\n"
     "\t--log-level <level>       (%s)\n"
@@ -269,6 +305,13 @@ static void dump_defaults(void)
     "\t--debug                   (%s)\n"
     "\t--version                 (" PROG_VERSION ")\n"
     "\t--help\n",
+    c_host,
+    c_port,
+    c_rhost,
+    c_rport,
+    (cf_foreground) ? "true" : "false",
+    (unsigned long)c_maxstack,
+    c_secret,
     tout,
     ci_map_chars(c_log_facility,c_facilities,C_FACILITIES),
     ci_map_chars(c_log_level,   c_levels,    C_LEVELS),
