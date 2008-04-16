@@ -1,7 +1,8 @@
 2008-04-16
 
 	* SMC: set stack limit, then exec() self to force it to take
-		effect
+	  effect
+		DONE 2008-04-16
 
 	* reset counters to 0 when reloading
 
