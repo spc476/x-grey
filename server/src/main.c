@@ -37,6 +37,7 @@
 #include <cgilib/types.h>
 
 #include "../../common/src/graylist.h"
+#include "../../common/src/globals.h"
 #include "../../common/src/util.h"
 #include "../../common/src/crc32.h"
 
@@ -57,6 +58,7 @@ static void	 send_packet		(struct request *,void *,size_t);
 static void	 cmd_mcp_report		(struct request *,int (*)(Stream),int);
 static void	 cmd_mcp_tofrom		(struct request *,int,int);
 static int	 graylist_sanitize_req	(struct tuple *,struct request *);
+static void	 log_tuple		(struct tuple *,int,int);
 
 /********************************************************************/
 
@@ -300,6 +302,7 @@ void type_tuple_remove(struct request *req)
   if (stored != NULL)
     stored->f |= F_REMOVE;
 
+  log_tuple(&tuple,IFT_REMOVE,REASON_GRAYLIST);
   send_reply(req,CMD_TUPLE_REMOVE_RESP,0,REASON_GRAYLIST);
 }
 
@@ -332,6 +335,7 @@ void type_graylist(struct request *req,int response)
   
   if (rc != IFT_GRAYLIST)
   {
+    log_tuple(&tuple,rc,REASON_IP);
     send_reply(req,response,rc,REASON_IP);
     return;
   }
@@ -353,6 +357,7 @@ void type_graylist(struct request *req,int response)
       goto type_graylist_check_to;
     else
     {
+      log_tuple(&tuple,edvalue->cmd,REASON_FROM);
       send_reply(req,response,edvalue->cmd,REASON_FROM);
       return;
     }
@@ -363,6 +368,7 @@ void type_graylist(struct request *req,int response)
     g_from_cmdcnt[g_deffrom]++;
     if (g_deffrom != IFT_GRAYLIST)
     {
+      log_tuple(&tuple,g_deffrom,REASON_FROM);
       send_reply(req,response,g_deffrom,REASON_FROM);
       return;
     }
@@ -382,6 +388,7 @@ void type_graylist(struct request *req,int response)
 
       if (edvalue->cmd != IFT_GRAYLIST)
       {
+        log_tuple(&tuple,edvalue->cmd,REASON_FROM_DOMAIN);
         send_reply(req,response,edvalue->cmd,REASON_FROM_DOMAIN);
 	return;
       }
@@ -392,6 +399,7 @@ void type_graylist(struct request *req,int response)
       g_fromd_cmdcnt[g_deffromdomain]++;
       if (g_deffromdomain != IFT_GRAYLIST)
       {
+        log_tuple(&tuple,g_deffromdomain,REASON_FROM_DOMAIN);
         send_reply(req,response,g_deffromdomain,REASON_FROM_DOMAIN);
 	return;
       }
@@ -417,6 +425,7 @@ type_graylist_check_to:
       goto type_graylist_check_tuple;
     else
     {
+      log_tuple(&tuple,edvalue->cmd,REASON_TO);
       send_reply(req,response,edvalue->cmd,REASON_TO);
       return;
     }
@@ -427,6 +436,7 @@ type_graylist_check_to:
     g_to_cmdcnt[g_defto]++;
     if (g_defto != IFT_GRAYLIST)
     {
+      log_tuple(&tuple,g_defto,REASON_TO);
       send_reply(req,response,g_defto,REASON_TO);
       return;
     }
@@ -446,6 +456,7 @@ type_graylist_check_to:
       
       if (edvalue->cmd != IFT_GRAYLIST)
       {
+        log_tuple(&tuple,edvalue->cmd,REASON_TO_DOMAIN);
         send_reply(req,response,edvalue->cmd,REASON_TO_DOMAIN);
 	return;
       }
@@ -457,6 +468,7 @@ type_graylist_check_to:
 
       if (g_deftodomain != IFT_GRAYLIST)
       {
+        log_tuple(&tuple,g_deftodomain,REASON_TO_DOMAIN);
         send_reply(req,response,g_deftodomain,REASON_TO_DOMAIN);
 	return;
       }
@@ -483,11 +495,15 @@ type_graylist_check_tuple:
     {
       stored->f |= F_WHITELIST;
       g_whitelisted++;
+      log_tuple(&tuple,IFT_ACCEPT,REASON_WHITELIST);
       send_reply(req,response,IFT_ACCEPT,REASON_WHITELIST);
     }
     else
+    {
+      log_tuple(&tuple,IFT_GRAYLIST,REASON_GRAYLIST);
       send_reply(req,response,IFT_GRAYLIST,REASON_GRAYLIST);
-
+    }
+    
     return;
   }
   
@@ -504,12 +520,14 @@ type_graylist_check_tuple:
   
   if ((stored->f & F_WHITELIST))
   {
+    log_tuple(&tuple,IFT_ACCEPT,REASON_WHITELIST);
     send_reply(req,response,IFT_ACCEPT,REASON_WHITELIST);
     return;
   }
 
   if (difftime(req->now,stored->ctime) < c_timeout_embargo)
   {
+    log_tuple(&tuple,IFT_GRAYLIST,REASON_GRAYLIST);
     send_reply(req,response,IFT_GRAYLIST,REASON_GRAYLIST);
     return;
   }
@@ -519,7 +537,8 @@ type_graylist_check_tuple:
     stored->f |= F_WHITELIST;
     g_whitelisted++;
   }
-    
+  
+  log_tuple(&tuple,IFT_ACCEPT,REASON_WHITELIST);
   send_reply(req,response,IFT_ACCEPT,REASON_WHITELIST);
 }
 
@@ -578,17 +597,6 @@ static int graylist_sanitize_req(struct tuple *tuple,struct request *req)
   if (tuple->tosize   <  glr->tosize)   tuple->f |= F_TRUNCTO;
   if (glr->ipsize    == 16)             tuple->f |= F_IPv6;
 
-  (*cv_report)(
-  	LOG_INFO,
-  	"$ $ $ $ $",
-  	"tuple: [%a , %b , %c]%d%e",
-  	ipv4(tuple->ip),
-  	tuple->from,
-  	tuple->to,
-  	(tuple->f & F_TRUNCFROM) ? " Tf" : "",
-  	(tuple->f & F_TRUNCTO)   ? " Tt" : ""
-  );
-  
   return(ERR_OKAY);
 }
 
@@ -900,3 +908,22 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
 
 /*************************************************************************/
 
+static void log_tuple(struct tuple *tuple,int rc,int why)
+{
+  (*cv_report)(
+  	LOG_INFO,
+  	"$ $ $ $ $ $ $",
+  	"tuple: [%a , %b, %c]%d%e %f %g",
+  	ipv4(tuple->ip),
+  	tuple->from,
+  	tuple->to,
+  	(tuple->f & F_TRUNCFROM) ? " Tf" : "",
+  	(tuple->f & F_TRUNCTO)   ? " Tt" : "",
+  	ci_map_chars(rc, c_ift,   C_IFT),
+  	ci_map_chars(why,c_reason,C_REASONS)
+  );
+}
+
+/************************************************************************/
+
+  	

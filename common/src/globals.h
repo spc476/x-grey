@@ -28,10 +28,12 @@
 #define C_FACILITIES	20
 #define C_LEVELS	 7
 #define C_IFT		 5
+#define C_REASONS	 8
 
 extern const struct chars_int c_facilities[C_FACILITIES];
 extern const struct chars_int c_levels    [C_LEVELS];
 extern const struct chars_int c_ift       [C_IFT];
+extern const struct chars_int c_reason	  [C_REASONS];
 
 #endif
 

@@ -71,3 +71,14 @@ const struct chars_int c_ift[5] =
   { "REMOVE"			, IFT_REMOVE	} ,
 };  
 
+const struct chars_int c_reason[8] =
+{
+  { "NONE"			, REASON_NONE		} ,
+  { "IP"			, REASON_IP		} ,
+  { "FROM"			, REASON_FROM		} ,
+  { "FROM-DOMAIN"		, REASON_FROM_DOMAIN	} ,
+  { "TO"			, REASON_TO		} ,
+  { "TO-DOMAIN"			, REASON_TO_DOMAIN	} ,
+  { "GREYLIST"			, REASON_GRAYLIST	} ,
+  { "WHITELIST"			, REASON_WHITELIST	}
+};
