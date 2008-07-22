@@ -926,4 +926,3 @@ static void log_tuple(struct tuple *tuple,int rc,int why)
 
 /************************************************************************/
 
-  	
