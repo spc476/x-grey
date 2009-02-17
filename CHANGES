@@ -1,3 +1,9 @@
+1.0.7	2009-02-17
+
+	* GLD: I used to ignore EINTR when calling accept() for
+	  a bulk data transfer.  This was *not* the thing to do.  I
+	  also limit the time for the accept() to 10 seconds.
+
 1.0.6	2008-04-16
 
 	* SMC: Set default stack to 64k

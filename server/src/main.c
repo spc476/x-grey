@@ -698,21 +698,24 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
   }
 
   listen(tcp,5);
+  alarm(10);
 
-  do
-  {
-    rsize = sizeof(struct sockaddr);
-    conn  = accept(tcp,&remote,&rsize);
-    if (conn == -1)
-    {
-      if (errno != EINTR)
-      {
-        (*cv_report)(LOG_ERR,"$","accept() = %a",strerror(errno));
-        _exit(0);
-      }
-    }
-  } while (conn == -1);
+  rsize = sizeof(struct sockaddr);
+  conn  = accept(tcp,&remote,&rsize);
   
+  /*-----------------------------------------------------
+  ; used to loop around on EINTR.  No longer, as if we're
+  ; interrupted, it's probably because we want to kill the
+  ; process, or the accept() is taking too darned long.
+  ;------------------------------------------------------*/
+
+  if (conn == -1)
+  {
+    (*cv_report)(LOG_ERR,"$","accept() = %a",strerror(errno));
+    _exit(0);
+  }
+  
+  alarm(0);
   close(tcp);
   out = FHStreamWrite(conn);
   if (out == NULL)
