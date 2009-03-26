@@ -35,7 +35,7 @@ build/pcrc.o : src/pcrc.c
 	$(CC) $(CFLAGS) -c -o $@ src/pcrc.c
 
 clean:
-	/bin/rm -f build/mktuple
+	/bin/rm -f build/mktuples
 	/bin/rm -f build/sendtuples
 	/bin/rm -f build/pcrc
 	/bin/rm -f build/*.o

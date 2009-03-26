@@ -48,6 +48,7 @@ clean:
 	(cd postfix ; make clean)
 	(cd server ; make clean)
 	(cd control ; make clean)
+	(cd sendmail ; make clean)
 	(cd test ; make clean)
 	/bin/rm -f *~
 	/bin/rm -f bin/*
