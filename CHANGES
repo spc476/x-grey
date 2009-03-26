@@ -1,3 +1,10 @@
+1.0.8	2009-03-26
+
+	* Changed nearly all occurances of 'gray' (regardless of case) to
+	  'grey' (yes, I'm anal like that).
+
+	* Fixed the clean targer in a few make files.
+
 1.0.7	2009-02-17
 
 	* GLD: I used to ignore EINTR when calling accept() for
