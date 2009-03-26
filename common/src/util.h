@@ -29,7 +29,7 @@
 
 #include <cgilib/stream.h>
 
-#include "graylist.h"
+#include "greylist.h"
 
 #define SECSMIN		(60.0)
 #define SECSHOUR	(60.0 * 60.0)

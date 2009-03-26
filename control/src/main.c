@@ -41,7 +41,7 @@
 #include <cgilib/util.h>
 #include <cgilib/types.h>
 
-#include "../../common/src/graylist.h"
+#include "../../common/src/greylist.h"
 #include "../../common/src/globals.h"
 #include "../../common/src/util.h"
 #include "../../common/src/crc32.h"
@@ -351,7 +351,7 @@ static void show_stats(void)
 {
   struct glmcp_request              request;
   struct glmcp_response_show_stats *gss;
-  union graylist_all_packets        data;
+  union greylist_all_packets        data;
   int                               rc;
   char                             *t;
 
@@ -391,12 +391,12 @@ static void show_stats(void)
   	StdoutStream,
   	"L10 L10 L10 L10",
   	"IP-Entries:             %a\n"
-  	"IP-Graylisted:          %b\n"
+  	"IP-Greylisted:          %b\n"
   	"IP-Accepted:            %c\n"
   	"IP-Rejected:            %d\n"
 	"\n",
   	(unsigned long)ntohl(gss->ips),
-  	(unsigned long)ntohl(gss->ip_graylist),
+  	(unsigned long)ntohl(gss->ip_greylist),
   	(unsigned long)ntohl(gss->ip_accept),
   	(unsigned long)ntohl(gss->ip_reject)
   );
@@ -405,12 +405,12 @@ static void show_stats(void)
   	StdoutStream,
   	"L10 L10 L10 L10",
   	"From-Entries:           %a\n"
-  	"From-Graylisted:        %b\n"
+  	"From-Greylisted:        %b\n"
   	"From-Accepted:          %c\n"
   	"From-Rejected:          %d\n"
 	"\n",
   	(unsigned long)ntohl(gss->from),
-  	(unsigned long)ntohl(gss->from_graylist),
+  	(unsigned long)ntohl(gss->from_greylist),
   	(unsigned long)ntohl(gss->from_accept),
   	(unsigned long)ntohl(gss->from_reject)
   );
@@ -419,12 +419,12 @@ static void show_stats(void)
   	StdoutStream,
   	"L10 L10 L10 L10",
   	"From-Domain-Entries:    %a\n"
-  	"From-Domain-Graylisted: %b\n"
+  	"From-Domain-Greylisted: %b\n"
   	"From-Domain-Accepted:   %c\n"
   	"From-Domain-Rejected:   %d\n"
 	"\n",
   	(unsigned long)ntohl(gss->fromd),
-  	(unsigned long)ntohl(gss->fromd_graylist),
+  	(unsigned long)ntohl(gss->fromd_greylist),
   	(unsigned long)ntohl(gss->fromd_accept),
   	(unsigned long)ntohl(gss->fromd_reject)
   );
@@ -433,12 +433,12 @@ static void show_stats(void)
   	StdoutStream,
   	"L10 L10 L10 L10",
   	"To-Entries:             %a\n"
-  	"To-Graylisted:          %b\n"
+  	"To-Greylisted:          %b\n"
   	"To-Accepted:            %c\n"
   	"To-Rejected:            %d\n"
 	"\n",
   	(unsigned long)ntohl(gss->to),
-  	(unsigned long)ntohl(gss->to_graylist),
+  	(unsigned long)ntohl(gss->to_greylist),
   	(unsigned long)ntohl(gss->to_accept),
   	(unsigned long)ntohl(gss->to_reject)
   );
@@ -447,12 +447,12 @@ static void show_stats(void)
   	StdoutStream,
   	"L10 L10 L10 L10",
   	"To-Domain-Entries:      %a\n"
-  	"To-Domain-Graylisted:   %b\n"
+  	"To-Domain-Greylisted:   %b\n"
   	"To-Domain-Accepted:     %c\n"
   	"To-Domain-Rejected:     %d\n"
 	"\n",
   	(unsigned long)ntohl(gss->tod),
-  	(unsigned long)ntohl(gss->tod_graylist),
+  	(unsigned long)ntohl(gss->tod_greylist),
   	(unsigned long)ntohl(gss->tod_accept),
   	(unsigned long)ntohl(gss->tod_reject)
   );
@@ -461,13 +461,13 @@ static void show_stats(void)
   	StdoutStream,
   	"L10 L10 L10 L10 L10",
   	"Tuples:                 %a\n"
-  	"Graylisted:             %b\n"
-  	"Graylisted-Expired:     %c\n"
+  	"Greylisted:             %b\n"
+  	"Greylisted-Expired:     %c\n"
   	"Whitelisted:            %d\n"
   	"Whitelisted-Expired:    %e\n",
   	(unsigned long)ntohl(gss->tuples),
-  	(unsigned long)ntohl(gss->graylisted),
-  	(unsigned long)ntohl(gss->graylist_expired),
+  	(unsigned long)ntohl(gss->greylisted),
+  	(unsigned long)ntohl(gss->greylist_expired),
   	(unsigned long)ntohl(gss->whitelisted),
   	(unsigned long)ntohl(gss->whitelist_expired)
   );
@@ -481,11 +481,11 @@ static void show_config(void)
 {
   struct glmcp_request               request;
   struct glmcp_response_show_config *gsc;
-  union graylist_all_packets         data;
+  union greylist_all_packets         data;
   int                                rc;
   char                              *cleanup;
   char                              *embargo;
-  char                              *graylist;
+  char                              *greylist;
   char                              *whitelist;
   
   gsc             = &data.mcp_show_config;
@@ -504,7 +504,7 @@ static void show_config(void)
   
   cleanup   = report_delta(ntohl(gsc->timeout_cleanup));
   embargo   = report_delta(ntohl(gsc->timeout_embargo));
-  graylist  = report_delta(ntohl(gsc->timeout_gray));
+  greylist  = report_delta(ntohl(gsc->timeout_grey));
   whitelist = report_delta(ntohl(gsc->timeout_white));
   
   LineSFormat(
@@ -513,17 +513,17 @@ static void show_config(void)
   	"Max-Tuples:        %a\n"
   	"Timeout-Cleanup:   %b\n"
   	"Timeout-Embargo:   %c\n"
-  	"Timeout-Graylist:  %d\n"
+  	"Timeout-Greylist:  %d\n"
   	"Timeout-Whitelist: %e\n",
   	(unsigned long)ntohl(gsc->max_tuples),
   	cleanup,
   	embargo,
-  	graylist,
+  	greylist,
   	whitelist
     );
 
   MemFree(whitelist);
-  MemFree(graylist);
+  MemFree(greylist);
   MemFree(embargo);
   MemFree(cleanup);
 }
@@ -535,7 +535,7 @@ static void show_report(int req,int resp)
   struct glmcp_request        request;
   struct glmcp_response      *gr;
   int                         conn;
-  union graylist_all_packets  data;
+  union greylist_all_packets  data;
   int                         rc;
 
   gr              = &data.mcp_res;  
@@ -633,7 +633,7 @@ void pager_interactive(int fh)
 static void iplist(String *cmdline,size_t cmds)
 {
   struct glmcp_request_iplist  ipr;
-  union graylist_all_packets   data;
+  union greylist_all_packets   data;
   size_t                       octet;
   char                        *p;
   int                          rc;
@@ -699,7 +699,7 @@ static void iplist_file(char *fname)
 {
   Stream                       in;
   struct glmcp_request_iplist  ipr;
-  union graylist_all_packets   data;
+  union greylist_all_packets   data;
   int                          linecnt;
 
   ddt(fname != NULL);
@@ -781,7 +781,7 @@ static void iplist_file_relaydelay(char *fname)
 {
   struct glmcp_request_iplist  ipr;
   Stream                       in;
-  union graylist_all_packets   data;
+  union greylist_all_packets   data;
   size_t                       octet;
   int                          rc;
   int                          linecnt;
@@ -837,7 +837,7 @@ static void iplist_file_bogonspace(char *fname)
 {
   struct glmcp_request_iplist  ipr;
   Stream                       in;
-  union graylist_all_packets   data;
+  union greylist_all_packets   data;
   size_t                       octet;
   int                          rc;
   int                          linecnt;
@@ -893,8 +893,8 @@ static void iplist_file_bogonspace(char *fname)
 
 static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
 {
-  union graylist_all_packets   packet;
-  union graylist_all_packets   data;
+  union greylist_all_packets   packet;
+  union greylist_all_packets   data;
   struct glmcp_request_tofrom *ptfr;
   size_t                       addrsize;
   int                          rc;
@@ -978,8 +978,8 @@ static void show_redistribute(void)
 
 static const struct chars_int m_tuple_cmd[4] =
 {
-  { "GRAYLIST"	, CMD_GRAYLIST		} ,
-  { "GREYLIST"	, CMD_GRAYLIST		} ,
+  { "GRAYLIST"	, CMD_GREYLIST		} ,
+  { "GREYLIST"	, CMD_GREYLIST		} ,
   { "WHITELIST" , CMD_WHITELIST		} ,
   { "REMOVE"	, CMD_TUPLE_REMOVE	}
 };
@@ -992,16 +992,16 @@ static const struct chars_int m_reason[8] =
   { "To-Domain"		, REASON_TO_DOMAIN	} ,
   { "From"		, REASON_FROM		} ,
   { "From-Domain"	, REASON_FROM_DOMAIN	} ,
-  { "Greylist"		, REASON_GRAYLIST	} ,
+  { "Greylist"		, REASON_GREYLIST	} ,
   { "Whitelist"		, REASON_WHITELIST	} 
 };
   
 static void tuple(String *cmdline,size_t cmds)
 {
-  union graylist_all_packets  outpacket;
-  union graylist_all_packets  inpacket;
-  struct graylist_request    *glq;
-  struct graylist_response   *glr;
+  union greylist_all_packets  outpacket;
+  union greylist_all_packets  inpacket;
+  struct greylist_request    *glq;
+  struct greylist_response   *glr;
   int                         cmd;
   int                         mask;
   size_t                      packetsize;
@@ -1062,11 +1062,11 @@ static void tuple(String *cmdline,size_t cmds)
   if (rc != ERR_OKAY)
     LineS(StdoutStream,"bad response\n");   
     
-  glr           = (struct graylist_response *)&inpacket;
+  glr           = (struct greylist_response *)&inpacket;
   glr->response = ntohs(glr->response);
   glr->why      = ntohs(glr->why);
   
-  if (!((glr->why == REASON_GRAYLIST) || (glr->why == REASON_WHITELIST)))
+  if (!((glr->why == REASON_GREYLIST) || (glr->why == REASON_WHITELIST)))
   {
     LineSFormat(
     	StdoutStream,

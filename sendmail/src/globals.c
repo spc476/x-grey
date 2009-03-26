@@ -42,7 +42,7 @@
 #include <cgilib/util.h>
 #include <cgilib/ddt.h>
 
-#include "../../common/src/graylist.h"
+#include "../../common/src/greylist.h"
 #include "../../common/src/globals.h"
 #include "../../common/src/util.h"
 #include "../../conf.h"

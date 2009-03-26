@@ -36,7 +36,7 @@
 #include <cgilib/util.h>
 #include <cgilib/types.h>
 
-#include "../../common/src/graylist.h"
+#include "../../common/src/greylist.h"
 #include "../../common/src/globals.h"
 #include "../../common/src/util.h"
 #include "../../common/src/crc32.h"
@@ -50,14 +50,14 @@
 
 /********************************************************************/
 
-void 		 type_graylist		(struct request *,int);
+void 		 type_greylist		(struct request *,int);
 void		 type_tuple_remove	(struct request *);
 static void	 mainloop		(int);
 static void	 send_reply		(struct request *,int,int,int);
 static void	 send_packet		(struct request *,void *,size_t);
 static void	 cmd_mcp_report		(struct request *,int (*)(Stream),int);
 static void	 cmd_mcp_tofrom		(struct request *,int,int);
-static int	 graylist_sanitize_req	(struct tuple *,struct request *);
+static int	 greylist_sanitize_req	(struct tuple *,struct request *);
 static void	 log_tuple		(struct tuple *,int,int);
 
 /********************************************************************/
@@ -144,11 +144,11 @@ static void mainloop(int sock)
       case CMD_NONE:
            send_reply(&req,CMD_NONE_RESP,GLERR_OKAY,REASON_NONE);
            break;
-      case CMD_GRAYLIST:
-           type_graylist(&req,CMD_GRAYLIST_RESP);
+      case CMD_GREYLIST:
+           type_greylist(&req,CMD_GREYLIST_RESP);
            break;
       case CMD_WHITELIST:
-           type_graylist(&req,CMD_WHITELIST_RESP);
+           type_greylist(&req,CMD_WHITELIST_RESP);
 	   break;
       case CMD_TUPLE_REMOVE:
            type_tuple_remove(&req);
@@ -172,31 +172,31 @@ static void mainloop(int sock)
              stats.nowtime           = htonl(req.now);
              stats.tuples            = htonl(g_poolnum);
 	     stats.ips               = htonl(g_ipcnt);
-	     stats.ip_graylist       = htonl(g_ip_cmdcnt[IFT_GRAYLIST]);
+	     stats.ip_greylist       = htonl(g_ip_cmdcnt[IFT_GREYLIST]);
 	     stats.ip_accept         = htonl(g_ip_cmdcnt[IFT_ACCEPT]);
 	     stats.ip_reject         = htonl(g_ip_cmdcnt[IFT_REJECT]);
-             stats.graylisted        = htonl(g_graylisted);
+             stats.greylisted        = htonl(g_greylisted);
              stats.whitelisted       = htonl(g_whitelisted);
-             stats.graylist_expired  = htonl(g_graylist_expired);
+             stats.greylist_expired  = htonl(g_greylist_expired);
              stats.whitelist_expired = htonl(g_whitelist_expired);
              stats.requests          = htonl(g_requests);
              stats.requests_cu       = htonl(g_req_cu);
 	     stats.requests_cu_max   = htonl(g_req_cumax);
 	     stats.requests_cu_ave   = htonl(ave);
 	     stats.from              = htonl(g_sfrom  + 1);
-	     stats.from_graylist     = htonl(g_from_cmdcnt[IFT_GRAYLIST]);
+	     stats.from_greylist     = htonl(g_from_cmdcnt[IFT_GREYLIST]);
 	     stats.from_accept       = htonl(g_from_cmdcnt[IFT_ACCEPT]);
 	     stats.from_reject       = htonl(g_from_cmdcnt[IFT_REJECT]);
 	     stats.fromd             = htonl(g_sfromd + 1);
-	     stats.fromd_graylist    = htonl(g_fromd_cmdcnt[IFT_GRAYLIST]);
+	     stats.fromd_greylist    = htonl(g_fromd_cmdcnt[IFT_GREYLIST]);
 	     stats.fromd_accept      = htonl(g_fromd_cmdcnt[IFT_ACCEPT]);
 	     stats.fromd_reject      = htonl(g_fromd_cmdcnt[IFT_REJECT]);
 	     stats.to                = htonl(g_sto    + 1);
-	     stats.to_graylist       = htonl(g_to_cmdcnt[IFT_GRAYLIST]);
+	     stats.to_greylist       = htonl(g_to_cmdcnt[IFT_GREYLIST]);
 	     stats.to_accept         = htonl(g_to_cmdcnt[IFT_ACCEPT]);
 	     stats.to_reject         = htonl(g_to_cmdcnt[IFT_REJECT]);
 	     stats.tod               = htonl(g_stod   + 1);
-	     stats.tod_graylist      = htonl(g_tod_cmdcnt[IFT_GRAYLIST]);
+	     stats.tod_greylist      = htonl(g_tod_cmdcnt[IFT_GREYLIST]);
 	     stats.tod_accept        = htonl(g_tod_cmdcnt[IFT_ACCEPT]);
 	     stats.tod_reject        = htonl(g_tod_cmdcnt[IFT_REJECT]);
              
@@ -214,7 +214,7 @@ static void mainloop(int sock)
              config.max_tuples       = htonl(c_poolmax);
              config.timeout_cleanup  = htonl(c_time_cleanup);
              config.timeout_embargo  = htonl(c_timeout_embargo);
-             config.timeout_gray     = htonl(c_timeout_gray);
+             config.timeout_grey     = htonl(c_timeout_grey);
              config.timeout_white    = htonl(c_timeout_white);
              
              send_packet(&req,&config,sizeof(config));
@@ -294,7 +294,7 @@ void type_tuple_remove(struct request *req)
   
   ddt(req != NULL);
   
-  rc = graylist_sanitize_req(&tuple,req);
+  rc = greylist_sanitize_req(&tuple,req);
   if (rc != ERR_OKAY) return;
 
   stored = tuple_search(&tuple,&idx);
@@ -302,13 +302,13 @@ void type_tuple_remove(struct request *req)
   if (stored != NULL)
     stored->f |= F_REMOVE;
 
-  log_tuple(&tuple,IFT_REMOVE,REASON_GRAYLIST);
-  send_reply(req,CMD_TUPLE_REMOVE_RESP,0,REASON_GRAYLIST);
+  log_tuple(&tuple,IFT_REMOVE,REASON_GREYLIST);
+  send_reply(req,CMD_TUPLE_REMOVE_RESP,0,REASON_GREYLIST);
 }
 
 /********************************************************************/
 
-void type_graylist(struct request *req,int response)
+void type_greylist(struct request *req,int response)
 {
   struct tuple             tuple;
   struct emaildomain       edkey;
@@ -320,7 +320,7 @@ void type_graylist(struct request *req,int response)
 
   ddt(req != NULL);
 
-  rc = graylist_sanitize_req(&tuple,req);
+  rc = greylist_sanitize_req(&tuple,req);
   if (rc != ERR_OKAY) return;
   
   g_requests++;
@@ -333,7 +333,7 @@ void type_graylist(struct request *req,int response)
   rc = ip_match(tuple.ip,4);
   g_ip_cmdcnt[rc]++;
   
-  if (rc != IFT_GRAYLIST)
+  if (rc != IFT_GREYLIST)
   {
     log_tuple(&tuple,rc,REASON_IP);
     send_reply(req,response,rc,REASON_IP);
@@ -353,8 +353,8 @@ void type_graylist(struct request *req,int response)
     edvalue->count++;
     g_from_cmdcnt[edvalue->cmd]++;
 
-    if (edvalue->cmd == IFT_GRAYLIST)
-      goto type_graylist_check_to;
+    if (edvalue->cmd == IFT_GREYLIST)
+      goto type_greylist_check_to;
     else
     {
       log_tuple(&tuple,edvalue->cmd,REASON_FROM);
@@ -366,7 +366,7 @@ void type_graylist(struct request *req,int response)
   {
     g_fromc++;
     g_from_cmdcnt[g_deffrom]++;
-    if (g_deffrom != IFT_GRAYLIST)
+    if (g_deffrom != IFT_GREYLIST)
     {
       log_tuple(&tuple,g_deffrom,REASON_FROM);
       send_reply(req,response,g_deffrom,REASON_FROM);
@@ -386,7 +386,7 @@ void type_graylist(struct request *req,int response)
       edvalue->count++;
       g_fromd_cmdcnt[edvalue->cmd]++; 
 
-      if (edvalue->cmd != IFT_GRAYLIST)
+      if (edvalue->cmd != IFT_GREYLIST)
       {
         log_tuple(&tuple,edvalue->cmd,REASON_FROM_DOMAIN);
         send_reply(req,response,edvalue->cmd,REASON_FROM_DOMAIN);
@@ -397,7 +397,7 @@ void type_graylist(struct request *req,int response)
     {
       g_fromdomainc++;
       g_fromd_cmdcnt[g_deffromdomain]++;
-      if (g_deffromdomain != IFT_GRAYLIST)
+      if (g_deffromdomain != IFT_GREYLIST)
       {
         log_tuple(&tuple,g_deffromdomain,REASON_FROM_DOMAIN);
         send_reply(req,response,g_deffromdomain,REASON_FROM_DOMAIN);
@@ -410,7 +410,7 @@ void type_graylist(struct request *req,int response)
   ; check the to and todomain lists.
   ;-----------------------------------------------------*/
 
-type_graylist_check_to:
+type_greylist_check_to:
 
   edkey.text  = tuple.to;
   edkey.tsize = tuple.tosize;
@@ -421,8 +421,8 @@ type_graylist_check_to:
     edvalue->count++;
     g_to_cmdcnt[edvalue->cmd]++;
 
-    if (edvalue->cmd == IFT_GRAYLIST)
-      goto type_graylist_check_tuple;
+    if (edvalue->cmd == IFT_GREYLIST)
+      goto type_greylist_check_tuple;
     else
     {
       log_tuple(&tuple,edvalue->cmd,REASON_TO);
@@ -434,7 +434,7 @@ type_graylist_check_to:
   {
     g_toc++;
     g_to_cmdcnt[g_defto]++;
-    if (g_defto != IFT_GRAYLIST)
+    if (g_defto != IFT_GREYLIST)
     {
       log_tuple(&tuple,g_defto,REASON_TO);
       send_reply(req,response,g_defto,REASON_TO);
@@ -454,7 +454,7 @@ type_graylist_check_to:
       edvalue->count++;
       g_tod_cmdcnt[edvalue->cmd]++;
       
-      if (edvalue->cmd != IFT_GRAYLIST)
+      if (edvalue->cmd != IFT_GREYLIST)
       {
         log_tuple(&tuple,edvalue->cmd,REASON_TO_DOMAIN);
         send_reply(req,response,edvalue->cmd,REASON_TO_DOMAIN);
@@ -466,7 +466,7 @@ type_graylist_check_to:
       g_todomainc++;
       g_tod_cmdcnt[g_deftodomain]++;
 
-      if (g_deftodomain != IFT_GRAYLIST)
+      if (g_deftodomain != IFT_GREYLIST)
       {
         log_tuple(&tuple,g_deftodomain,REASON_TO_DOMAIN);
         send_reply(req,response,g_deftodomain,REASON_TO_DOMAIN);
@@ -480,7 +480,7 @@ type_graylist_check_to:
   ; and if less than the embargo period, return LATER, else accept.
   ;---------------------------------------------------------*/
 
-type_graylist_check_tuple:
+type_greylist_check_tuple:
 
   stored = tuple_search(&tuple,&idx);
   
@@ -489,7 +489,7 @@ type_graylist_check_tuple:
     stored  = tuple_allocate();
     memcpy(stored,&tuple,sizeof(struct tuple));
     tuple_add(stored,idx);
-    g_graylisted++;
+    g_greylisted++;
     
     if (req->glr->type == CMD_WHITELIST)
     {
@@ -500,8 +500,8 @@ type_graylist_check_tuple:
     }
     else
     {
-      log_tuple(&tuple,IFT_GRAYLIST,REASON_GRAYLIST);
-      send_reply(req,response,IFT_GRAYLIST,REASON_GRAYLIST);
+      log_tuple(&tuple,IFT_GREYLIST,REASON_GREYLIST);
+      send_reply(req,response,IFT_GREYLIST,REASON_GREYLIST);
     }
     
     return;
@@ -527,8 +527,8 @@ type_graylist_check_tuple:
 
   if (difftime(req->now,stored->ctime) < c_timeout_embargo)
   {
-    log_tuple(&tuple,IFT_GRAYLIST,REASON_GRAYLIST);
-    send_reply(req,response,IFT_GRAYLIST,REASON_GRAYLIST);
+    log_tuple(&tuple,IFT_GREYLIST,REASON_GREYLIST);
+    send_reply(req,response,IFT_GREYLIST,REASON_GREYLIST);
     return;
   }
   
@@ -544,9 +544,9 @@ type_graylist_check_tuple:
 
 /*********************************************************************/
 
-static int graylist_sanitize_req(struct tuple *tuple,struct request *req)
+static int greylist_sanitize_req(struct tuple *tuple,struct request *req)
 {
-  struct graylist_request *glr;
+  struct greylist_request *glr;
   byte                    *p;
   size_t                   rsize;
   
@@ -569,7 +569,7 @@ static int graylist_sanitize_req(struct tuple *tuple,struct request *req)
   rsize = glr->ipsize 
         + glr->fromsize 
 	+ glr->tosize 
-	+ sizeof(struct graylist_request) 
+	+ sizeof(struct greylist_request) 
 	- 4;	/* empiracally found --- this is bad XXX */
 
   if (rsize > req->size)
@@ -604,7 +604,7 @@ static int graylist_sanitize_req(struct tuple *tuple,struct request *req)
 
 static void send_reply(struct request *req,int type,int response,int why)
 {
-  struct graylist_response resp;
+  struct greylist_response resp;
   
   ddt(req      != NULL);
   ddt(type     >= 0);
@@ -617,14 +617,14 @@ static void send_reply(struct request *req,int type,int response,int why)
   resp.response = htons(response);
   resp.why      = htons(why);
   
-  send_packet(req,&resp,sizeof(struct graylist_response));
+  send_packet(req,&resp,sizeof(struct greylist_response));
 }
 
 /********************************************************************/
 
 static void send_packet(struct request *req,void *packet,size_t size)
 {
-  struct graylist_response *glr = packet;
+  struct greylist_response *glr = packet;
   ssize_t                   rrc;
   CRC32                     crc;
   

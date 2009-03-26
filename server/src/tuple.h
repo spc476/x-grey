@@ -19,12 +19,12 @@
 *
 *************************************************************************/
 
-#ifndef GRAYLIST_H
-#define GRAYLIST_H
+#ifndef GREYLIST_H
+#define GREYLIST_H
 
 #include <time.h>
 #include <cgilib/stream.h>
-#include "../../common/src/graylist.h"
+#include "../../common/src/greylist.h"
 #include "server.h"
 
 /**********************************************************/

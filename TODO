@@ -148,7 +148,7 @@
 		DONE
 
 	* Keep track of unique IP addresses.  If an address has only
-	  graylisted addresses and no whitelisted addresses, add it to the
+	  greylisted addresses and no whitelisted addresses, add it to the
 	  IP reject list.  But let me think about this.
 
 	* Make the dump.txt and whitelist.txt have the same format.  Modify

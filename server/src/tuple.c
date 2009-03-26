@@ -30,7 +30,7 @@
 #include <cgilib/memory.h>
 #include <cgilib/ddt.h>
 
-#include "../../common/src/graylist.h"
+#include "../../common/src/greylist.h"
 #include "../../common/src/util.h"
 #include "tuple.h"
 #include "globals.h"
@@ -245,7 +245,7 @@ void tuple_expire(time_t Tao)
         g_whitelist_expired++;
       }
       else
-        g_graylist_expired++;
+        g_greylist_expired++;
       continue;
     }
 
@@ -266,7 +266,7 @@ void tuple_expire(time_t Tao)
       continue;
     }
     
-    if (difftime(Tao,g_pool[i].atime) < c_timeout_gray)
+    if (difftime(Tao,g_pool[i].atime) < c_timeout_grey)
     {
       if (i != j)
         g_pool[j++] = g_pool[i];	/* VVV memcpy() overlap */
@@ -275,7 +275,7 @@ void tuple_expire(time_t Tao)
       continue;
     }
     
-    g_graylist_expired++;
+    g_greylist_expired++;
   }
   
   g_poolnum = j;

@@ -18,7 +18,7 @@ http://www.cymru.com/Documents/bogon-bn-nonagg.txt
 http://www.completewhois.com/bogons/data/bogons-cidr-all.txt
 
 http://www.openbsd.org/cgi-bin/man.cgi?query=spamd&apropos=0&sektion=8&manpath=OpenBSD+Current&arch=i386&format=html
-	graylisting on spamd on OpenBSD?
+	greylisting on spamd on OpenBSD?
 
 
 http://judy.sourceforge.net/doc/10minutes.htm
@@ -71,7 +71,7 @@ On the postfix side:
 	}
 
 	// package it up in a UDP packet
-	// fire it off to the graylist daemon host
+	// fire it off to the greylist daemon host
 	// wait up to 10 seconds for the response
 
 	if (okay)
@@ -93,11 +93,11 @@ On the daemon side:
 
 The packet:
 
-struct graylist_request
+struct greylist_request
 {
   uint16 version;
   uint16 MTA;
-  uint16 type;			/* 0 - graylist query */
+  uint16 type;			/* 0 - greylist query */
   uint16 ipsize;
   uint16 fromsize;
   uint16 tosize;
@@ -109,17 +109,17 @@ struct graylist_request
 
 the return packet
 
-struct graylist_reply
+struct greylist_reply
 {
   uint16 version;
   uint16 MTA;
-  uint16 type;		/* 1 - graylist response */
-  uint16 response;	/* 0 - whitelist, >0 - graylist */
+  uint16 type;		/* 1 - greylist response */
+  uint16 response;	/* 0 - whitelist, >0 - greylist */
 };
 
 future revisions?
 
-struct graylist_banip
+struct greylist_banip
 {
   uint16 version;
   uint16 MTA;
@@ -128,7 +128,7 @@ struct graylist_banip
   uint8  ip[ipsize];
 };
 
-struct graylist_banfrom
+struct greylist_banfrom
 {
   uint16 version;
   uint16 MTA;

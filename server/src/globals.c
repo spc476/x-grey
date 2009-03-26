@@ -43,7 +43,7 @@
 #include <cgilib/types.h>
 #include <cgilib/ddt.h>
 
-#include "../../common/src/graylist.h"
+#include "../../common/src/greylist.h"
 #include "../../common/src/globals.h"
 #include "../../common/src/util.h"
 #include "../../conf.h"
@@ -56,12 +56,12 @@
 enum
 {
   OPT_LIST_WHITE = OPT_USER,
-  OPT_LIST_GRAY,
+  OPT_LIST_GREY,
   OPT_MAX_TUPLES,
   OPT_TIME_CLEANUP,
   OPT_TIME_SAVESTATE,
   OPT_TIMEOUT_EMBARGO,
-  OPT_TIMEOUT_GRAY,
+  OPT_TIMEOUT_GREY,
   OPT_TIMEOUT_WHITE,
   OPT_FILE_IPLIST,
   OPT_REPORT_FORMAT,
@@ -94,7 +94,7 @@ int            cf_debug          = 0;
 void         (*cv_report)(int,char *,char *, ...) = report_syslog;
 
 char          *c_whitefile       = SERVER_STATEDIR "/whitelist.txt";
-char          *c_grayfile        = SERVER_STATEDIR "/grayfile.txt";	
+char          *c_greyfile        = SERVER_STATEDIR "/greyfile.txt";	
 char          *c_dumpfile        = SERVER_STATEDIR "/dump.txt";
 char          *c_iplistfile      = SERVER_STATEDIR "/iplist.txt";
 char          *c_tofile          = SERVER_STATEDIR "/to.txt";
@@ -106,7 +106,7 @@ size_t         c_poolmax         = SERVER_MAX_TUPLES;
 unsigned int   c_time_cleanup    = SERVER_CLEANUP;
 double         c_time_savestate  = SERVER_SAVESTATE;
 double	       c_timeout_embargo = SERVER_TIMEOUT_EMBARGO;
-double         c_timeout_gray    = SERVER_TIMEOUT_GREYLIST;
+double         c_timeout_grey    = SERVER_TIMEOUT_GREYLIST;
 double	       c_timeout_white   = SERVER_TIMEOUT_WHITELIST;
 time_t         c_starttime       = 0;
 int            cf_foreground     = 0;
@@ -124,10 +124,10 @@ size_t               g_req_cu;
 size_t               g_req_cucurrent;
 size_t               g_req_cumax;
 size_t               g_cleanup_count;
-size_t               g_graylisted;
+size_t               g_greylisted;
 size_t               g_whitelisted;
 size_t               g_whitelist_expired;
-size_t               g_graylist_expired;
+size_t               g_greylist_expired;
 
 struct ipnode       *g_tree;
 size_t               g_ipcnt = 1;
@@ -155,10 +155,10 @@ size_t               g_tod_cmdcnt[3];
 
 time_t               g_time_savestate;
 
-int		     g_defto         = IFT_GRAYLIST;
-int                  g_deftodomain   = IFT_GRAYLIST;
-int		     g_deffrom       = IFT_GRAYLIST;
-int                  g_deffromdomain = IFT_GRAYLIST;
+int		     g_defto         = IFT_GREYLIST;
+int                  g_deftodomain   = IFT_GREYLIST;
+int		     g_deffrom       = IFT_GREYLIST;
+int                  g_deffromdomain = IFT_GREYLIST;
 size_t               g_toc;
 size_t               g_todomainc;
 size_t               g_fromc;
@@ -171,16 +171,16 @@ volatile int m_debug = 1;
 static const struct option mc_options[] =
 {
   { "whitelist"      	, required_argument	, NULL	, OPT_LIST_WHITE	},
-  { "graylist"		, required_argument	, NULL	, OPT_LIST_GRAY 	} ,
-  { "greylist"		, required_argument	, NULL	, OPT_LIST_GRAY		} ,
+  { "graylist"		, required_argument	, NULL	, OPT_LIST_GREY 	} ,
+  { "greylist"		, required_argument	, NULL	, OPT_LIST_GREY		} ,
   { "host"		, required_argument	, NULL	, OPT_HOST		} ,
   { "port"		, required_argument	, NULL	, OPT_PORT		} ,
   { "max-tuples"	, required_argument	, NULL	, OPT_MAX_TUPLES	} ,
   { "time-cleanup" 	, required_argument	, NULL	, OPT_TIME_CLEANUP	} ,
   { "time-checkpoint"	, required_argument	, NULL	, OPT_TIME_SAVESTATE	} ,
   { "timeout-embargo"	, required_argument	, NULL	, OPT_TIMEOUT_EMBARGO	} ,
-  { "timeout-gray"	, required_argument	, NULL	, OPT_TIMEOUT_GRAY	} ,
-  { "timeout-grey"	, required_argument	, NULL	, OPT_TIMEOUT_GRAY	} ,
+  { "timeout-grey"	, required_argument	, NULL	, OPT_TIMEOUT_GREY	} ,
+  { "timeout-grey"	, required_argument	, NULL	, OPT_TIMEOUT_GREY	} ,
   { "timeout-white"	, required_argument	, NULL	, OPT_TIMEOUT_WHITE	} ,
   { "iplist"		, required_argument	, NULL	, OPT_FILE_IPLIST	} ,
   { "time-format"     	, required_argument 	, NULL	, OPT_TIME_FORMAT    	} ,
@@ -229,7 +229,7 @@ int (GlobalsInit)(int argc,char *argv[])
   g_tree->zero   = NULL;
   g_tree->one    = NULL;
   g_tree->count  = 0;
-  g_tree->match  = IFT_GRAYLIST;
+  g_tree->match  = IFT_GREYLIST;
   
   if (cf_debug)
     dump_defaults();
@@ -281,11 +281,11 @@ int (GlobalsDeinit)(void)
 
 static void dump_defaults(void)
 {
-  char *togray;
+  char *togrey;
   char *towhite;
   char *toclean;
 
-  togray  = report_delta(c_timeout_gray);
+  togrey  = report_delta(c_timeout_grey);
   towhite = report_delta(c_timeout_white);
   toclean = report_delta(c_time_cleanup);
   
@@ -293,12 +293,12 @@ static void dump_defaults(void)
   	StderrStream,
   	"$ $ $ i i L $ $ $ $ $ $ $ $ $ $ $ $",
   	"\t--whitelist <file>\t\t(%a)\n"
-  	"\t--graylist  <file>\t\t(%b)\n"
+  	"\t--greylist  <file>\t\t(%b)\n"
   	"\t--host <hostname>\t\t(%c)\n"
   	"\t--port <num>\t\t\t(%d)\n"
   	"\t--max-tuples <num>\t\t(%f)\n"
   	"\t--time-cleanup <num>\t\t(%q)\n"
-  	"\t--timeout-gray <timespec>\t(%g)\n"
+  	"\t--timeout-grey <timespec>\t(%g)\n"
   	"\t--timeout-white <timespec>\t(%h)\n"
   	"\t--iplist <file>\t\t\t(%r)\n"
   	"\t--time-format <strftime>\t(%i)\n"
@@ -313,12 +313,12 @@ static void dump_defaults(void)
   	"\t--help\n"
   	"\t\t* not implemented\n",
   	c_whitefile,
-  	c_grayfile,
+  	c_greyfile,
   	c_host,
   	c_port,
   	0,
   	(unsigned long)c_poolmax,
-  	togray,
+  	togrey,
   	towhite,
   	c_timeformat,
   	(cv_report == report_stderr) ? "stderr" : "syslog",
@@ -334,7 +334,7 @@ static void dump_defaults(void)
 
   MemFree(toclean);
   MemFree(towhite);
-  MemFree(togray);
+  MemFree(togrey);
 }
 
 /********************************************************************/ 
@@ -358,8 +358,8 @@ static void parse_cmdline(int argc,char *argv[])
       case OPT_LIST_WHITE:
            c_whitefile = dup_string(optarg);
            break;
-      case OPT_LIST_GRAY:
-           c_grayfile = dup_string(optarg);
+      case OPT_LIST_GREY:
+           c_greyfile = dup_string(optarg);
            break;
       case OPT_HOST:
            c_host = dup_string(optarg);
@@ -379,8 +379,8 @@ static void parse_cmdline(int argc,char *argv[])
       case OPT_TIMEOUT_EMBARGO:
            c_timeout_embargo = read_dtime(optarg);
            break;
-      case OPT_TIMEOUT_GRAY:
-           c_timeout_gray = read_dtime(optarg);
+      case OPT_TIMEOUT_GREY:
+           c_timeout_grey = read_dtime(optarg);
            break;
       case OPT_TIMEOUT_WHITE:
            c_timeout_white = read_dtime(optarg);

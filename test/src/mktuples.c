@@ -16,7 +16,7 @@
 #include <cgilib/stream.h>
 #include <cgilib/util.h>
 
-#include "../../common/src/graylist.h"
+#include "../../common/src/greylist.h"
 #include "../../common/src/crc32.h"
 
 #define min(a,b)	((a) < (b)) ? (a) : (b)
@@ -61,7 +61,7 @@ int main(int argc,char *argv[])
   int                      filecount = 1;
   size_t                   count;
   byte                     outpacket[1500];
-  struct graylist_request *glq;
+  struct greylist_request *glq;
   
   MemInit();
   DdtInit();
@@ -105,12 +105,12 @@ int main(int argc,char *argv[])
     line = LineSRead(input);
     if (empty_string(line)) { MemFree(line); continue; }
     
-    glq = (struct graylist_request *)outpacket;
+    glq = (struct greylist_request *)outpacket;
     p   = glq->data;
     
     glq->version = htons(VERSION);
     glq->MTA     = htons(MTA_POSTFIX);
-    glq->type    = htons(CMD_GRAYLIST);
+    glq->type    = htons(CMD_GREYLIST);
     glq->ipsize  = htons(4);
     
     *p++ = strtoul(line,&from,10); from++;

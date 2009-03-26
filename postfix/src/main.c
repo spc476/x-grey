@@ -39,7 +39,7 @@
 #include <cgilib/stream.h>
 #include <cgilib/util.h>
 
-#include "../../common/src/graylist.h"
+#include "../../common/src/greylist.h"
 #include "../../common/src/util.h"
 #include "../../common/src/crc32.h"
 #include "../../common/src/globals.h"
@@ -47,7 +47,7 @@
 
 /***********************************************************/
 
-int		check_graylist	(int,char *,char *,char *);	
+int		check_greylist	(int,char *,char *,char *);	
 static int	process_request	(int);
 static void	handler_sigalrm	(int);
 
@@ -161,7 +161,7 @@ static int process_request(int sock)
       int response;
       
       syslog(LOG_INFO,"tuple: [%s , %s , %s]",ip,from,to);
-      response = check_graylist(sock,ip,from,to);
+      response = check_greylist(sock,ip,from,to);
       
       switch(response)
       {
@@ -175,7 +175,7 @@ static int process_request(int sock)
 	     rrc = write(STDOUT_FILENO,m_reject,sizeof(m_reject) - 1);
 	     ddt(rrc == sizeof(m_reject) - 1);
 	     break;
-	case IFT_GRAYLIST:
+	case IFT_GREYLIST:
 	     rrc = write(STDOUT_FILENO,m_defer,sizeof(m_defer) - 1);
 	     ddt(rrc == sizeof(m_defer) - 1);
 	     break;
@@ -234,12 +234,12 @@ static int process_request(int sock)
 
 /********************************************************/
 
-int check_graylist(int sock,char *ip,char *from,char *to)
+int check_greylist(int sock,char *ip,char *from,char *to)
 {
-  union graylist_all_packets  outpacket;
-  union graylist_all_packets  inpacket;
-  struct graylist_request    *glq;
-  struct graylist_response   *glr;
+  union greylist_all_packets  outpacket;
+  union greylist_all_packets  inpacket;
+  struct greylist_request    *glq;
+  struct greylist_response   *glr;
   struct sockaddr_in          sip;
   socklen_t                   sipsize;
   size_t                      sfrom;
@@ -261,7 +261,7 @@ int check_graylist(int sock,char *ip,char *from,char *to)
   glq->crc      = htons(0);
   glq->version  = htons(VERSION);
   glq->MTA      = htons(MTA_POSTFIX);
-  glq->type     = htons(CMD_GRAYLIST);
+  glq->type     = htons(CMD_GREYLIST);
   glq->ipsize   = htons(4);
   glq->fromsize = htons(sfrom);
   glq->tosize   = htons(sto);
@@ -349,7 +349,7 @@ int check_graylist(int sock,char *ip,char *from,char *to)
     return(IFT_ACCEPT);
   }
   
-  if (ntohs(glr->type) != CMD_GRAYLIST_RESP)
+  if (ntohs(glr->type) != CMD_GREYLIST_RESP)
   {
     (*cv_report)(LOG_ERR,"i","received error %a",ntohs(glr->response));
     return(IFT_ACCEPT);

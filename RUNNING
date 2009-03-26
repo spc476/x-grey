@@ -28,15 +28,15 @@ rule for each filter is to 'GREYLIST' (which means the tuple continues
 through the system).
 
 	gld-mcp>show iplist
-	         0 GRAYLIST 0.0.0.0         0.0.0.0        
+	         0 GREYLIST 0.0.0.0         0.0.0.0        
 	gld-mcp>show from
-	         0 GRAYLIST DEFAULT
+	         0 GREYLIST DEFAULT
 	gld-mcp>show from-domain
-	         0 GRAYLIST DEFAULT
+	         0 GREYLIST DEFAULT
 	gld-mcp>show to
-	         0 GRAYLIST DEFAULT
+	         0 GREYLIST DEFAULT
 	gld-mcp>show to-domain
-	         0 GRAYLIST DEFAULT
+	         0 GREYLIST DEFAULT
 	gld-mcp>
 
 The initial 0 is the number of requests that matched that rule.  In this
@@ -49,9 +49,9 @@ Installing rules is quite simple.  For example:
 	gld-mcp>iplist greylist 10.10.10/24
 	gld-mcp>iplist accept 10.10.10.10
 	gld-mcp>show iplist
-	         0 GRAYLIST 0.0.0.0         0.0.0.0        
-		 0 GRAYLIST 10.10.10.10	    255.255.255.255
-	         0 GRAYLIST 10.10.10.0      255.255.255.0  
+	         0 GREYLIST 0.0.0.0         0.0.0.0        
+		 0 GREYLIST 10.10.10.10	    255.255.255.255
+	         0 GREYLIST 10.10.10.0      255.255.255.0  
 	         0 REJECT   10.10.0.0       255.255.0.0    
 	         0 ACCEPT   10.0.0.0        255.0.0.0      
 	gld-mcp>
@@ -72,17 +72,17 @@ just as easy:
 	gld-mcp>to-domain reject example.com
 	gld-mcp>show from
 	         0 ACCEPT   bob@example.net
-	         0 GRAYLIST DEFAULT
+	         0 GREYLIST DEFAULT
 	gld-mcp>show from-domain
 	         0 REJECT   example.net
-	         0 GRAYLIST DEFAULT
+	         0 GREYLIST DEFAULT
 	gld-mcp>show to
-	         0 GRAYLIST info@example.com
-	         0 GRAYLIST postmaster@example.com
-	         0 GRAYLIST DEFAULT
+	         0 GREYLIST info@example.com
+	         0 GREYLIST postmaster@example.com
+	         0 GREYLIST DEFAULT
 	gld-mcp>show to-domain
 	         0 REJECT   example.com
-	         0 GRAYLIST DEFAULT
+	         0 GREYLIST DEFAULT
 	gld-mcp>
 
 So here, mail from 'bob@example.net' will be accepted (by the rule in the
@@ -101,12 +101,12 @@ Removing items from these lists is easy:
 
 	gld-mcp>to remove info@example.com
 	gld-mcp>show to
-	         0 GRAYLIST postmaster@example.com
-	         0 GRAYLIST DEFAULT
+	         0 GREYLIST postmaster@example.com
+	         0 GREYLIST DEFAULT
 	gld-mcp>iplist remove 10.10.10.10
 	gld-mcp>show iplist
-	         0 GRAYLIST 0.0.0.0         0.0.0.0        
-	         0 GRAYLIST 10.10.10.0      255.255.255.0  
+	         0 GREYLIST 0.0.0.0         0.0.0.0        
+	         0 GREYLIST 10.10.10.0      255.255.255.0  
 	         0 REJECT   10.10.0.0       255.255.0.0    
 	         0 ACCEPT   10.0.0.0        255.0.0.0    
 	gld-mcp>
@@ -155,33 +155,33 @@ And finally, to see some stats from the server:
 	Requests-Cu-Ave:                15
 	
 	IP-Entries:                    121
-	IP-Graylisted:               11887
+	IP-Greylisted:               11887
 	IP-Accepted:                   279
 	IP-Rejected:                     0
 	
 	From-Entries:                    1
-	From-Graylisted:             11887
+	From-Greylisted:             11887
 	From-Accepted:                   0
 	From-Rejected:                   0
 	
 	From-Domain-Entries:             1
-	From-Domain-Graylisted:      11851
+	From-Domain-Greylisted:      11851
 	From-Domain-Accepted:            0
 	From-Domain-Rejected:            0
 
 	To-Entries:                      1
-	To-Graylisted:               11887
+	To-Greylisted:               11887
 	To-Accepted:                     0
 	To-Rejected:                     0
 	
 	To-Domain-Entries:               3
-	To-Domain-Graylisted:        10917
+	To-Domain-Greylisted:        10917
 	To-Domain-Accepted:              0
 	To-Domain-Rejected:            970
 	
 	Tuples:                       1624
-	Graylisted:                  10700
-	Graylisted-Expired:           9171
+	Greylisted:                  10700
+	Greylisted-Expired:           9171
 	Whitelisted:                   116
 	Whitelisted-Expired:             7
 	gld-mcp>

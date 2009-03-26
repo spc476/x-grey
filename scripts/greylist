@@ -6,7 +6,7 @@
 # chkconfig: 2345 75 25 
 # description: greylist is an anti-spam method program.
 # processname: gld
-# pidfile: /var/run/graylist.pid
+# pidfile: /var/run/greylist.pid
 
 # Source function library.
 . /etc/rc.d/init.d/functions

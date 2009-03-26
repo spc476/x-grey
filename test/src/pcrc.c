@@ -18,7 +18,7 @@
 #include <cgilib/stream.h>
 #include <cgilib/util.h>
 
-#include "../../common/src/graylist.h"
+#include "../../common/src/greylist.h"
 #include "../../common/src/crc32.h"
 #include "../../common/src/util.h"
 #include "../../conf.h"
@@ -56,7 +56,7 @@ int main(int argc,char *argv[])
   void                    *vba;
   size_t                  *pps;
   char                    *packet;
-  struct graylist_request *preq;
+  struct greylist_request *preq;
   int                      rc;
   
   MemInit();
@@ -98,7 +98,7 @@ int main(int argc,char *argv[])
   {
     pps = (size_t *)packet;
     packet += sizeof(size_t);
-    preq = (struct graylist_request *)packet;
+    preq = (struct greylist_request *)packet;
     packet += *pps;
     status.st_size -= (sizeof(size_t) + *pps);
     LineSFormat(StdoutStream,"x10.10L0","%a\n",(unsigned long)ntohl(preq->crc));

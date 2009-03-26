@@ -1,5 +1,5 @@
 
-I just deleted a tuple (whitelist or graylist), yet I'm still getting emails
+I just deleted a tuple (whitelist or greylist), yet I'm still getting emails
 through.  What's up with that?
 
 	The entry is only marked for deletion.  It won't actually be deleted
@@ -7,14 +7,14 @@ through.  What's up with that?
 	in the tuple list, but only the MCP "show tuples all" command will
 	show them.
 
-Why is the value of From-Domain-Graylisted significantly lower than
-From-Graylisted?  
+Why is the value of From-Domain-Greylisted significantly lower than
+From-Greylisted?  
 
 	That's because the sender address might not neccessarily contain a
 	domain.  Local delivery for one thing.  Another are bounce messages
 	that come from an address of "<>", which is legal.
 
-Why is the value of To-Domain-Graylisted lower than To-Graylisted?
+Why is the value of To-Domain-Greylisted lower than To-Greylisted?
 
 	Similarly to the above question, the recipient address might not
 	neccessarily contain a domain.

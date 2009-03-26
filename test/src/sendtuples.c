@@ -18,7 +18,7 @@
 #include <cgilib/stream.h>
 #include <cgilib/util.h>
 
-#include "../../common/src/graylist.h"
+#include "../../common/src/greylist.h"
 #include "../../common/src/crc32.h"
 #include "../../common/src/util.h"
 #include "../../conf.h"

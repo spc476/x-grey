@@ -30,7 +30,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "../../common/src/graylist.h"
+#include "../../common/src/greylist.h"
 
 /************************************************************/
 
@@ -61,8 +61,8 @@ struct request
   time_t                      now;
   struct sockaddr             remote;
   socklen_t                   rsize;
-  union graylist_all_packets  packet;
-  struct graylist_request    *glr;
+  union greylist_all_packets  packet;
+  struct greylist_request    *glr;
   size_t                      size;
 };
 

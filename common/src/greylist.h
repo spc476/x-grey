@@ -20,8 +20,8 @@
 *
 *************************************************************************/
 
-#ifndef GRAYLIST_COMMON_H
-#define GRAYLIST_COMMON_H
+#ifndef GREYLIST_COMMON_H
+#define GREYLIST_COMMON_H
 
 #include <time.h>
 #include <limits.h>
@@ -110,8 +110,8 @@ enum
   
   CMD_NONE,
   CMD_NONE_RESP,
-  CMD_GRAYLIST,
-  CMD_GRAYLIST_RESP,
+  CMD_GREYLIST,
+  CMD_GREYLIST_RESP,
   CMD_WHITELIST,
   CMD_WHITELIST_RESP,
   CMD_TUPLE_REMOVE,
@@ -180,20 +180,20 @@ enum
   REASON_FROM_DOMAIN,
   REASON_TO,
   REASON_TO_DOMAIN,
-  REASON_GRAYLIST,
+  REASON_GREYLIST,
   REASON_WHITELIST
 };
 
 enum
 {
-  IFT_GRAYLIST,
+  IFT_GREYLIST,
   IFT_ACCEPT,
   IFT_REJECT,
   IFT_REMOVE,
   IFT_NONE
 };
 
-struct graylist_response
+struct greylist_response
 {
   unet32 crc;
   unet16 version;
@@ -203,7 +203,7 @@ struct graylist_response
   unet16 why;
 };
 
-struct graylist_request
+struct greylist_request
 {
   unet32 crc;
   unet16 version;
@@ -242,31 +242,31 @@ struct glmcp_response_show_stats
   unet32 nowtime;
   unet32 tuples;
   unet32 ips;
-  unet32 ip_graylist;
+  unet32 ip_greylist;
   unet32 ip_accept;
   unet32 ip_reject;
-  unet32 graylisted;
+  unet32 greylisted;
   unet32 whitelisted;
-  unet32 graylist_expired;
+  unet32 greylist_expired;
   unet32 whitelist_expired;
   unet32 requests;
   unet32 requests_cu;
   unet32 requests_cu_max;
   unet32 requests_cu_ave;
   unet32 from;
-  unet32 from_graylist;
+  unet32 from_greylist;
   unet32 from_accept;
   unet32 from_reject;
   unet32 fromd;
-  unet32 fromd_graylist;
+  unet32 fromd_greylist;
   unet32 fromd_accept;
   unet32 fromd_reject;
   unet32 to;
-  unet32 to_graylist;
+  unet32 to_greylist;
   unet32 to_accept;
   unet32 to_reject;
   unet32 tod;
-  unet32 tod_graylist;
+  unet32 tod_greylist;
   unet32 tod_accept;
   unet32 tod_reject;
 };
@@ -281,7 +281,7 @@ struct glmcp_response_show_config
   unet32 max_tuples;
   unet32 timeout_cleanup;
   unet32 timeout_embargo;
-  unet32 timeout_gray;
+  unet32 timeout_grey;
   unet32 timeout_white;
 };
 
@@ -308,10 +308,10 @@ struct glmcp_request_tofrom
   byte   data[1];
 };
 
-union graylist_all_packets
+union greylist_all_packets
 {
-  struct graylist_request           req;
-  struct graylist_response          res;
+  struct greylist_request           req;
+  struct greylist_response          res;
   struct glmcp_request              mcp_req;
   struct glmcp_response             mcp_res;
   struct glmcp_response_show_stats  mcp_show_stats;

@@ -357,9 +357,9 @@ static void handle_sighup(void)
   t = report_time(c_starttime,time(NULL));
   (*cv_report)(LOG_INFO,"$","%a",t);
   (*cv_report)(LOG_INFO,"L10","tuples:            %a",(unsigned long)g_poolnum);
-  (*cv_report)(LOG_INFO,"L10","graylisted:        %a",(unsigned long)g_graylisted);
+  (*cv_report)(LOG_INFO,"L10","greylisted:        %a",(unsigned long)g_greylisted);
   (*cv_report)(LOG_INFO,"L10","whitelisted:       %a",(unsigned long)g_whitelisted);
-  (*cv_report)(LOG_INFO,"L10","graylist expired:  %a",(unsigned long)g_graylist_expired);
+  (*cv_report)(LOG_INFO,"L10","greylist expired:  %a",(unsigned long)g_greylist_expired);
   (*cv_report)(LOG_INFO,"L10","whitelist expired: %a",(unsigned long)g_whitelist_expired);
   MemFree(t);
 }

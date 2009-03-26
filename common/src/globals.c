@@ -22,7 +22,7 @@
 
 #include <syslog.h>
 
-#include "graylist.h"
+#include "greylist.h"
 #include "util.h"
 
 /******************************************************************/
@@ -64,8 +64,8 @@ const struct chars_int c_levels[7] =
 
 const struct chars_int c_ift[5] =
 {
-  { "GRAYLIST"			, IFT_GRAYLIST	} ,
-  { "GREYLIST"			, IFT_GRAYLIST	} ,
+  { "GREYLIST"			, IFT_GREYLIST	} ,
+  { "GREYLIST"			, IFT_GREYLIST	} ,
   { "ACCEPT"			, IFT_ACCEPT	} ,
   { "REJECT"			, IFT_REJECT	} ,
   { "REMOVE"			, IFT_REMOVE	} ,
@@ -79,6 +79,6 @@ const struct chars_int c_reason[8] =
   { "FROM-DOMAIN"		, REASON_FROM_DOMAIN	} ,
   { "TO"			, REASON_TO		} ,
   { "TO-DOMAIN"			, REASON_TO_DOMAIN	} ,
-  { "GREYLIST"			, REASON_GRAYLIST	} ,
+  { "GREYLIST"			, REASON_GREYLIST	} ,
   { "WHITELIST"			, REASON_WHITELIST	}
 };

@@ -1,6 +1,6 @@
 
-#ifndef GRAYLIST_CONF
-#define GRAYLIST_CONF
+#ifndef GREYLIST_CONF
+#define GREYLIST_CONF
 
 /********************************************************************
 * 

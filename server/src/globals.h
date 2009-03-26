@@ -30,7 +30,7 @@
 
 extern const char *const    c_pidfile;	
 extern const char *const    c_whitefile;
-extern const char *const    c_grayfile;
+extern const char *const    c_greyfile;
 extern const char *const    c_dumpfile;
 extern const char *const    c_tofile;
 extern const char *const    c_todfile;
@@ -44,7 +44,7 @@ extern const size_t         c_poolmax;
 extern const unsigned int   c_time_cleanup;
 extern const double         c_time_savestate;
 extern const double         c_timeout_embargo;
-extern const double         c_timeout_gray;
+extern const double         c_timeout_grey;
 extern const double         c_timeout_white;
 extern const int            c_facility;
 extern const int            c_level;
@@ -68,10 +68,10 @@ extern size_t              g_req_cu;
 extern size_t              g_req_cucurrent;
 extern size_t		   g_req_cumax;
 extern size_t		   g_cleanup_count;
-extern size_t	           g_graylisted;
+extern size_t	           g_greylisted;
 extern size_t	           g_whitelisted;
 extern size_t	           g_whitelist_expired;
-extern size_t	           g_graylist_expired;
+extern size_t	           g_greylist_expired;
 
 extern struct ipnode      *g_tree;
 extern size_t              g_ipcnt;
