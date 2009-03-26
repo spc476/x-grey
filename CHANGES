@@ -3,7 +3,7 @@
 	* Changed nearly all occurances of 'gray' (regardless of case) to
 	  'grey' (yes, I'm anal like that).
 
-	* Fixed the clean targer in a few make files.
+	* Fixed the clean target in a few make files.
 
 1.0.7	2009-02-17
 
