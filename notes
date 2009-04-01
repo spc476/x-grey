@@ -161,11 +161,7 @@ and store a metric buttload order of magnitude of tuples.
 
 Idea from http://slett.net/spam-filtering-for-mx/exim-greylisting.html
 
-
 ----
-
-
-
 
 http://greylisting.org/forums/showthread.php?tid=3
 http://cvs.puremagic.com/viewcvs/*checkout*/greylisting/schema/whitelist_ip.txt
@@ -203,11 +199,6 @@ HELO response
 MAIL FROM
 RCPT TO
 DATA
-
-
-
-
-
 
 Okay, the way Postfix does things, it screws the pooch.  So, reorg time.
 
