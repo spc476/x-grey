@@ -1,3 +1,62 @@
+getaddrinfo
+see ~/source/ipv6 for samples.
+---
+
+gld-secret:			decafbad
+gld-timeformat:			%c
+
+server-host:			localhost
+server-bind:			localhost
+server-port:			9990
+server-pid:			/var/run/gld.pid
+server-statedir:		/var/state/gld
+server-log-id:			gld
+server-log-facility:		local6
+server-log-level:		info
+server-max-tuples:		65536
+server-timeout-save:		1h
+server-timeout-cleanup:		5m
+server-timeout-embargo:		25m
+server-timeout-greylist:	6h
+server-timeout-whitelist:	36d
+
+mcp-helpdir:			/usr/local/share/gld
+mcp-pager:			/bin/more
+mcp-host:			0.0.0.0
+mcp-port:			9990
+mcp-server-host:		localhost
+mcp-server-port:		9990
+mcp-timeout:			5s
+mcp-log-id:			gld-mcp
+mcp-log-facility:		local5
+mcp-log-level:			err
+
+postfix-host:			0.0.0.0
+postfix-port:			0
+postfix-server-host:		localhost
+postfix-server-port:		9990
+postfix-timeout:		5s
+postfix-log-id:			gld-pfc
+postfix-log-facility:		local5
+postfix-log-level:		info
+
+sendmail-pid:			/var/run/smc.pid
+semdmail-host:			0.0.0.0
+sendmail-port:			0
+sendmail-server-host:		localhost
+sendmail-server-port:		9990
+sendmail-filterchannel:		unix:/var/state/gld/milter
+sendmail-host:			0.0.0.0
+sendmail-timeout:		5s
+sendmail-log-id:		gld-smc
+sendmail-log-facility:		local5
+sendmail-log-level:		info
+sendmail-max-stack:		64k
+
+
+
+
+
 
 
 Perhaps an option to just store the CRC of the tuple, instead of the full
