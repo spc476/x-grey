@@ -133,7 +133,7 @@ EDomain edomain_search(EDomain key,size_t *pidx,EDomain array,size_t asize)
     ddt(high <  asize);
     
     delta = high - low;
-    mid   = (low + high) / 2;
+    mid   = low + (delta / 2);
     q     = edomain_cmp(key,&array[mid]);
     
     if (q < 0)

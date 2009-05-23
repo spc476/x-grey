@@ -137,7 +137,7 @@ Tuple tuple_search(Tuple key,size_t *pidx)
     ddt(high <  g_poolnum);
     
     delta = high - low;
-    mid   = (low + high) / 2;
+    mid   = low + (delta / 2);
     q     = tuple_cmp_ift(key,g_tuplespace[mid]);
     
     if (q < 0)

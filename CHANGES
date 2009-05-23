@@ -1,3 +1,9 @@
+1.0.9	2009-05-23
+
+	* Fixed a potential bug in the binary search routines. See
+	  http://googleresearch.blogspot.com/2006/06/extra-extra-read-all-about-it-nearly.html
+	  for more information.
+
 1.0.8	2009-03-26
 
 	* Changed nearly all occurances of 'gray' (regardless of case) to
