@@ -32,7 +32,7 @@
 	; this way for hysterical reasons.
 	;------------------------------------------------*/
 
-#define PROG_VERSION	"1.0.9"
+#define PROG_VERSION	"1.0.10"
 #define VERSION		0x0100
 
 /********************************************************************/
