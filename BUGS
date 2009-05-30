@@ -1,3 +1,7 @@
+2009-05-29
+
+	* when removing tuples, the counts might not be adjusted properly
+
 2007-11-14
 
 	* tried doing 'to reject blah@example.com' and GLD just stopped
