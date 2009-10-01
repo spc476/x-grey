@@ -3,7 +3,7 @@
 #LINCL=-L /usr/local/lib
 
 CC=gcc  $(CINCL)
-CFLAGS=-Wall -pedantic -g
+CFLAGS=-Wall -pedantic -g -ansi -Wextra
 LFLAGS=$(LINCL) -lcgi5
 
 all : build/mktuples build/sendtuples build/pcrc

@@ -20,6 +20,10 @@
 *
 *************************************************************************/
 
+#ifndef __GNUC__
+#  define __attribute__(x)
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -340,7 +344,7 @@ static int send_request(
 
 /*********************************************************************/
 
-static void handler_sigalrm(int sig)
+static void handler_sigalrm(int sig __attribute__((unused)))
 {
   mf_sigalrm = 1;
 }

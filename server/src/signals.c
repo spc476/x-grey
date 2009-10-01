@@ -19,6 +19,20 @@
 *
 *************************************************************************/
 
+/********************************************************************
+*
+* _POSIX_SOURCE gets us sigset_t
+* _BSD_SOURCE gets us sys_siglist
+*
+********************************************************************/
+
+#define _POSIX_SOURCE
+#define _BSD_SOURCE
+
+#ifndef __GNUC__
+#  define __attribute__(x)
+#endif
+
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
@@ -125,7 +139,7 @@ void sighandler_critical(int sig)
 
 /******************************************************************/
 
-void sighandler_critical_child(int sig)
+void sighandler_critical_child(int sig __attribute((unused)))
 {
   /*----------------------------------------------
   ; just exit, no logging for now

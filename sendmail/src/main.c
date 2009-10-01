@@ -20,6 +20,10 @@
 *
 *************************************************************************/
 
+#ifndef __GNUC__
+#  define __attribute__(x)
+#endif
+
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -110,7 +114,7 @@ int main(int argc,char *argv[])
 
 /*****************************************************/
 
-static sfsistat mf_connect(SMFICTX *ctx,char *hostname,_SOCK_ADDR *addr)
+static sfsistat mf_connect(SMFICTX *ctx,char *hostname __attribute__((unused)),_SOCK_ADDR *addr)
 {
   struct mfprivate   *data;
   struct sockaddr_in *ip = (struct sockaddr_in *)addr;
@@ -338,7 +342,7 @@ static int check_greylist(int sock,byte *ip,char *from,char *to)
 
 /*******************************************************************/
 
-static void handler_sigalrm(int sig)
+static void handler_sigalrm(int sig __attribute__((unused)))
 {
   mf_sigalrm = 1;
 }

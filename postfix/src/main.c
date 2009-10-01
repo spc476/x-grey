@@ -20,6 +20,18 @@
 *
 *************************************************************************/
 
+/**********************************************************************
+*
+* _SVID_SOURCE gets us strdup()
+*
+**********************************************************************/
+
+#define _SVID_SOURCE
+
+#ifndef __GNUC__
+#  define __attribute__(x)
+#endif
+
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -367,7 +379,7 @@ int check_greylist(int sock,char *ip,char *from,char *to)
 
 /*******************************************************************/
 
-static void handler_sigalrm(int sig)
+static void handler_sigalrm(int sig __attribute__((unused)))
 {
   mf_sigalrm = 1;
 }

@@ -20,6 +20,14 @@
 *
 *************************************************************************/
 
+/*********************************************************************
+*
+* _POSIX_SOURCE gets us struct sigaction
+*
+**********************************************************************/
+
+#define _POSIX_SOURCE
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -106,7 +114,7 @@ int create_socket(const char *host,int port,int type)
 
 int ci_map_int(const char *name,const struct chars_int list[],size_t size)
 {
-  int i;
+  size_t i;
 
   ddt(name != NULL);
   ddt(list != NULL);
@@ -124,7 +132,7 @@ int ci_map_int(const char *name,const struct chars_int list[],size_t size)
 
 const char *ci_map_chars(int value,const struct chars_int list[],size_t size)
 {
-  int i;
+  size_t i;
 
   ddt(list != NULL);
   ddt(size >  0);

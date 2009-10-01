@@ -3,7 +3,7 @@
 
 #CC=gcc -g -pg
 CC=gcc $(CINCL)
-CFLAGS=-Wall -pedantic -g
+CFLAGS=-Wall -pedantic -g -ansi -Wextra
 LFLAGS=$(LINCL) -lcgi5 -lreadline -lcurses
 
 ../bin/gld-mcp : build/main.o	\

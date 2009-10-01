@@ -4,7 +4,7 @@
 #CC=gcc -pg
 CC=gcc $(CINCL)
 #CC=gcc -fomit-frame-pointer -O3
-CFLAGS=-Wall -pedantic -g
+CFLAGS=-Wall -pedantic -g -ansi -Wextra
 LFLAGS=$(LINCL) -lcgi5
 
 all : build/globals.o		\

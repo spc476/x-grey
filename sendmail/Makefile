@@ -3,7 +3,7 @@
 #LINCL=-L /usr/local/lib
 
 CC=gcc  $(CINCL)
-CFLAGS=-Wall -pedantic -g
+CFLAGS=-Wall -pedantic -g -ansi -Wextra
 LFLAGS=-lmilter -lpthread $(LINCL) -lcgi5
 
 ../bin/smc : build/main.o	\

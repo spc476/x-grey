@@ -236,7 +236,7 @@ int iplist_dump_stream(Stream out)
 
 /*************************************************************/
 
-int ip_match(byte *ip,size_t size)
+int ip_match(byte *ip,size_t size __attribute__((unused)))
 {
   struct ipnode *match = g_tree;
   struct ipnode *p     = g_tree;
@@ -276,7 +276,7 @@ int ip_match(byte *ip,size_t size)
 
 /******************************************************************/
 
-int ip_add_sm(byte *ip,size_t size,int mask,int cmd)
+int ip_add_sm(byte *ip,size_t size __attribute__((unused)),int mask,int cmd)
 {
   struct ipnode *new;
   struct ipnode *p     = g_tree;
