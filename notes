@@ -53,11 +53,93 @@ sendmail-log-facility:		local5
 sendmail-log-level:		info
 sendmail-max-stack:		64k
 
+Lua maybe?
 
+************************************************************************
 
+gld =
+{
+  defaults = 
+  {
+    secret     = "decafbad",
+    timeformat = "%c",
+    timeout    = "5s",
+    host       = ANYHOST,
+    port       = ANYPORT,
 
+    server = 
+    {
+      host = "localhost",
+      port = 9990
+    },
 
+    syslog = 
+    {
+      id = "changeme",
+      facility = "local5",
+      level    = "info"
+    }
+  },
 
+  -- *****************************************************
+
+  server = 
+  {
+    host      = "localhost",
+    port      = 9990,
+    pidfile   = "/var/run/gld.pid",
+    statedir  = "/var/state/gld",
+    maxtuples = 65536,
+
+    syslog =
+    {
+      id       = "gld",
+      facility = "local6",
+      level    = "info"
+    },
+
+    timeout = 
+    {
+      save      = "1h",
+      cleanup   = "5m",
+      embargo   = "25m",
+      greylist  = "6h",
+      whitelist = "36d"
+    },
+  },
+
+  -- ****************************************************
+
+  mcp =
+  {
+    helpdir = "/usr/local/share/gld",
+    pager   = "/bin/more",
+    syslog  = 
+    {
+      id       = "gld-mcp",
+      level    = "err"
+    },
+  },
+
+  -- ****************************************************
+
+  postfix = 
+  {
+    syslog = { id = "gld-pfc" }
+  },
+
+  -- ****************************************************
+
+  sendmail = 
+  {
+    pidfile       = "/var/run/smc.pid",
+    filterchannel = "unix:/var/state/gld/milter",
+    maxstack      = "64k",
+    syslog        = { id = "gld-smc" }
+  }
+}
+
+*************************************************************************
 
 Perhaps an option to just store the CRC of the tuple, instead of the full
 thing.  Might let a few more tuples through, but would be that much faster
