@@ -21,7 +21,7 @@
 *************************************************************************/
 
 #ifndef __GNUC__
-#  define __attribute__(x)
+#  define __attribute(x)
 #endif
 
 #include <stdlib.h>
@@ -344,7 +344,7 @@ static int send_request(
 
 /*********************************************************************/
 
-static void handler_sigalrm(int sig __attribute__((unused)))
+static void handler_sigalrm(int sig __attribute((unused)))
 {
   mf_sigalrm = 1;
 }
