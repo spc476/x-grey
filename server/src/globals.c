@@ -68,6 +68,7 @@ enum
   OPT_TIME_FORMAT,  
   OPT_FOREGROUND,
   OPT_STDERR,
+  OPT_OLDCOUNTS,
   OPT_MAX
 };
 
@@ -110,6 +111,7 @@ double         c_timeout_grey    = SERVER_TIMEOUT_GREYLIST;
 double	       c_timeout_white   = SERVER_TIMEOUT_WHITELIST;
 time_t         c_starttime       = 0;
 int            cf_foreground     = 0;
+int            cf_oldcounts      = 0;
 
 	/*---------------------------------------------------*/
 
@@ -191,6 +193,7 @@ static const struct option mc_options[] =
   { "secret"		, required_argument	, NULL	, OPT_SECRET		} ,
   { "debug"          	, no_argument       	, NULL	, OPT_DEBUG		} ,
   { "foreground"     	, no_argument       	, NULL	, OPT_FOREGROUND   	} ,
+  { "old-counts"	, no_argument		, NULL	, OPT_OLDCOUNTS		} ,
   { "stderr"	     	, no_argument       	, NULL	, OPT_STDERR       	} ,
   { "version"		, no_argument		, NULL	, OPT_VERSION		} ,
   { "help"	     	, no_argument       	, NULL	, OPT_HELP         	} ,
@@ -291,7 +294,7 @@ static void dump_defaults(void)
   
   LineSFormat(
   	StderrStream,
-  	"$ $ $ i i L $ $ $ $ $ $ $ $ $ $ $ $",
+  	"$ $ $ i i L $ $ $ $ $ $ $ $ $ $ $ $ $",
   	"\t--whitelist <file>\t\t(%a)\n"
   	"\t--greylist  <file>\t\t(%b)\n"
   	"\t--host <hostname>\t\t(%c)\n"
@@ -308,6 +311,7 @@ static void dump_defaults(void)
   	"\t--log-sysid <string>\t\t(%m)\n"
   	"\t--debug\t\t\t\t(%n)\n"
   	"\t--foreground\t\t\t(%o)\n"
+  	"\t--old-counts\t\t\t(%s)\n"
   	"\t--stderr\t\t\t(%p)\n"
   	"\t--version\t\t\t(" PROG_VERSION ")\n"
   	"\t--help\n"
@@ -329,7 +333,8 @@ static void dump_defaults(void)
   	(cf_foreground) ? "true" : "false",
   	(cv_report == report_stderr) ? "true" : "false",
   	toclean,
-  	c_iplistfile
+  	c_iplistfile,
+  	(cf_oldcounts) ? "true" : "false"
   );
 
   MemFree(toclean);
@@ -435,6 +440,9 @@ static void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_FOREGROUND:
            cf_foreground = 1;
+           break;
+      case OPT_OLDCOUNTS:
+           cf_oldcounts = 1;
            break;
       case OPT_STDERR:
            cv_report = report_stderr;

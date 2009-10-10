@@ -623,7 +623,10 @@ static void tofrom_read_stream(
 
     ed.text  = (char *)fields[2].d;
     ed.tsize = fields[2].s;
-    ed.count = strtoul(fields[0].d,NULL,10);
+    if (cf_oldcounts)
+      ed.count = strtoul(fields[0].d,NULL,10);
+    else
+      ed.count = 0;
     ed.cmd   = ci_map_int(fields[1].d,c_ift,C_IFT);
     
     (*cv_report)(LOG_DEBUG,"$ i","adding %a as %b",ed.text,ed.cmd);

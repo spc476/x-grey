@@ -54,6 +54,7 @@ extern const char *const    c_secret;
 extern const size_t         c_secretsize;
 extern const int            cf_debug;
 extern const int            cf_foreground;
+extern const int            cf_oldcounts;
 extern void               (*cv_report)(int,char *,char *, ... );
 
 	/*---------------------------------------------*/
