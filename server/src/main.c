@@ -916,7 +916,7 @@ static void log_tuple(struct tuple *tuple,int rc,int why)
   (*cv_report)(
   	LOG_INFO,
   	"$ $ $ $ $ $ $",
-  	"tuple: [%a , %b, %c]%d%e %f %g",
+  	"tuple: [%a , %b , %c]%d%e %f %g",
   	ipv4(tuple->ip),
   	tuple->from,
   	tuple->to,
