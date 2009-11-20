@@ -54,10 +54,9 @@
 #define SERVER_STATEDIR "/var/state/gld"
 
 	/*-----------------------------------------------
-	; Information used when logging to syslog.  The
-	; SERVER_LOG_LEVEL may seem redundant, but it's 
-	; used when the server is instructed to send the 
-	; logging information to STDOUT.  
+	; Information used when logging to syslog.  Any messages
+	; at a lower priority than SERVER_LOG_LEVEL are not
+	; logged at all.
 	;-------------------------------------------------*/
 	
 #define SERVER_LOG_ID		"gld"

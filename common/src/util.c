@@ -158,12 +158,15 @@ void report_syslog(int level,char *format,char *msg, ... )
   ddt(msg    != NULL);
   
   va_start(arg,msg);
-  out = StringStreamWrite();
-  LineSFormatv(out,format,msg,arg);
-  txt = StringFromStream(out);
-  syslog(level,"%s",txt);
-  MemFree(txt);
-  StreamFree(out);
+  if (level <= c_log_level)
+  {
+    out = StringStreamWrite();
+    LineSFormatv(out,format,msg,arg);
+    txt = StringFromStream(out);
+    syslog(level,"%s",txt);
+    MemFree(txt);
+    StreamFree(out);
+  }
   va_end(arg);
 }
 

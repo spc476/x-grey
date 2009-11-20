@@ -112,6 +112,7 @@ int (GlobalsInit)(int argc,char *argv[])
   c_raddr.sin_port   = htons(c_rport);
 
   openlog(c_log_id,0,c_log_facility);
+  setlogmask(c_log_level);
   return(EXIT_SUCCESS);
 }
 
