@@ -60,7 +60,7 @@
 	;-------------------------------------------------*/
 	
 #define SERVER_LOG_ID		"gld"
-#define SERVER_LOG_FACILITY	LOG_LOCAL6
+#define SERVER_LOG_FACILITY	LOG_MAIL
 #define SERVER_LOG_LEVEL	LOG_INFO
 
 	/*----------------------------------------------
@@ -140,7 +140,7 @@
 	; for more information)
 	;---------------------------------------------------------*/
 
-#define MCP_LOG_FACILITY	LOG_LOCAL5
+#define MCP_LOG_FACILITY	LOG_MAIL
 #define MCP_LOG_LEVEL		LOG_ERR
 #define MCP_LOG_ID		"gld-mcp"
 
@@ -173,7 +173,7 @@
 	; for more information)
 	;---------------------------------------------------------*/
 	
-#define POSTFIX_LOG_FACILITY	LOG_LOCAL5
+#define POSTFIX_LOG_FACILITY	LOG_MAIL
 #define POSTFIX_LOG_LEVEL	LOG_INFO
 #define POSTFIX_LOG_ID		"gld-pfc"
 
@@ -217,7 +217,7 @@
 	; for more information)
 	;---------------------------------------------------------*/
 
-#define SENDMAIL_LOG_FACILITY	LOG_LOCAL5
+#define SENDMAIL_LOG_FACILITY	LOG_MAIL
 #define SENDMAIL_LOG_LEVEL	LOG_INFO
 #define SENDMAIL_LOG_ID		"gld-smc"
 
