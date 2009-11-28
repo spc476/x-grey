@@ -205,7 +205,7 @@ void log_address(struct sockaddr *pin)
   pi = (struct sockaddr_in *)pin;
   
   (*cv_report)(
-  	LOG_INFO,
+  	LOG_DEBUG,
   	"$ S",
   	"Address: %a:%b",
   	ipv4((const byte *)&pi->sin_addr.s_addr),
