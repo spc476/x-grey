@@ -617,7 +617,10 @@ static void tofrom_read_stream(
        )
     {
       *pdef   = ci_map_int(fields[1].d,c_ift,C_IFT);
-      *pcount = strtoul(fields[0].d,NULL,10);
+      if (cf_oldcounts)
+        *pcount = strtoul(fields[0].d,NULL,10);
+      else
+        *pcount = 0;
       continue;
     }
 
