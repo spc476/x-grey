@@ -1,3 +1,23 @@
+1.0.10	2009-12-01
+
+	* GLD: Changed startup behavior—it now clears all counts from the
+	  saved state when starting up; use the --old-counts option to
+	  retain old behavior.
+
+	* PFC: Added an extra space in logging output.
+
+	* PFC: Changed some logging from level info to debug.
+
+	* Make sure that we only log messages at or below our current
+	  logging level (set via the --log-level option).
+
+	* Changed default system logging facility from local5 and local6 to
+	  mail; use the --log-facility option if you want to retain old
+	  facilities.
+
+	* Added -Wextra and -ansi compiler options, and cleaning up code to
+	  remove warnings.
+
 1.0.9	2009-05-23
 
 	* Fixed a potential bug in the binary search routines. See

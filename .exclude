@@ -1,6 +1,7 @@
 .git
 big.tuple.list
 tuple.list
+bogon-bn-nonagg.txt
 *.o
 x-grey/bin/*
 x-grey/test/build/mktuples
