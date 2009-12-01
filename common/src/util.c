@@ -75,7 +75,7 @@ int create_socket(const char *host,int port,int type)
     if (localhost == NULL)
     {
       (*cv_report)(LOG_ERR,"$ $","gethostbyname(%a) = %b",c_host,strerror(errno));
-      exit(EXIT_FAILURE);
+      return -1;
     }
     memcpy(&sin.sin_addr.s_addr,localhost->h_addr,localhost->h_length);
   }
@@ -89,20 +89,20 @@ int create_socket(const char *host,int port,int type)
   if (s < -1)
   {
     (*cv_report)(LOG_ERR,"$","socket() = %a",strerror(errno));
-    exit(EXIT_FAILURE);
+    return -1;
   }
   
   rc = setsockopt(s,SOL_SOCKET,SO_REUSEADDR,&reuse,sizeof(reuse));
   if (rc == -1)
   {
     (*cv_report)(LOG_ERR,"$","setsockopt(SO_REUSEADDR) = %a",strerror(errno));
-    exit(EXIT_FAILURE);
+    return -1;
   }
   
   if (bind(s,(struct sockaddr *)&sin,sizeof(sin)))
   {
     (*cv_report)(LOG_ERR,"$","bind() = %a",strerror(errno));
-    exit(EXIT_FAILURE);
+    return -1;
   }
   
   log_address((struct sockaddr *)&sin);

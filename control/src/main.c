@@ -105,6 +105,9 @@ int main(int argc,char *argv[])
 
   set_signal(SIGALRM,handler_sigalrm);
   m_sock = create_socket(c_host,c_port,SOCK_DGRAM);
+
+  if (m_sock == -1)
+    exit(EXIT_FAILURE);
     
   if (cmd < argc)
   {

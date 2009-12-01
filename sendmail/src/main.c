@@ -109,6 +109,9 @@ int main(int argc,char *argv[])
   rc      = smfi_register(m_smfilter);
   gl_sock = create_socket(c_host,c_port,SOCK_DGRAM);
 
+  if (gl_sock == -1)
+    return EXIT_FAILURE;
+
   return (smfi_main());
 }
 

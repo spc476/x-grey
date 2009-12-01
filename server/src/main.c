@@ -73,7 +73,9 @@ int main(int argc,char *argv[])
   GlobalsInit(argc,argv);
 
   sock = create_socket(c_host,c_port,SOCK_DGRAM);
-  
+  if (sock == -1)
+    exit(EXIT_FAILURE); 
+    
   {
     char *t = timetoa(c_starttime);
     (*cv_report)(LOG_INFO,"$","start time: %a",t);

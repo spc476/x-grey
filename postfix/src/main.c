@@ -86,6 +86,8 @@ int main(int argc,char *argv[])
   set_signal(SIGALRM,handler_sigalrm);
   
   sock = create_socket(c_host,c_port,SOCK_DGRAM);
+  if (sock == -1)
+    exit(EXIT_FAILURE);
   
   while(process_request(sock))
     ;
