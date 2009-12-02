@@ -5,6 +5,11 @@
 2009-05-29
 
 	* when removing tuples, the counts might not be adjusted properly
+		CLOSED	2009-12-02
+
+		Upon reviewing the code, the counts are adjusted during the
+		periodic sweep, not when actually removed.  I don't remember
+		why this was even put in as a bug.
 
 2007-11-14
 
