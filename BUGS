@@ -1,3 +1,7 @@
+2009-12-01
+
+	* Under OpenBSD, bulk transfers (via TCP) sometimes fail.
+
 2009-05-29
 
 	* when removing tuples, the counts might not be adjusted properly
@@ -6,6 +10,7 @@
 
 	* tried doing 'to reject blah@example.com' and GLD just stopped
 	  responding.  Hmmm?  This after running for a week.
+		FIXED	2009-02-17	(v1.0.7 fixes this)
 
 2007-11-11
 
