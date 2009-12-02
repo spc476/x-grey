@@ -233,7 +233,7 @@ static void parse_cmdline(int argc,char *argv[])
            c_rport = strtoul(optarg,NULL,10);
            break;
       case OPT_TIMEOUT:
-           c_timeout = read_dtime(optarg);
+           c_timeout = read_dtime(optarg,c_timeout);
            break;
       case OPT_CHANNEL:
            c_filterchannel = dup_string(optarg);

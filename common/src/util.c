@@ -227,7 +227,7 @@ char *ipv4(const byte *ip)
 
 /***********************************************************************/
 
-void set_signal(int sig,void (*handler)(int))
+int set_signal(int sig,void (*handler)(int))
 {
   struct sigaction act;
   struct sigaction oact;
@@ -248,15 +248,14 @@ void set_signal(int sig,void (*handler)(int))
   
   rc = sigaction(sig,&act,&oact);
   if (rc == -1)
-  {
     (*cv_report)(LOG_ERR,"$","sigaction() returned %a",strerror(errno));
-    exit(EXIT_FAILURE);
-  }
+  
+  return rc;
 }
 
 /**********************************************************************/
 
-double read_dtime(char *arg)
+double read_dtime(char *arg,double defaultval)
 {
   double time = 0.0;
   double val;
@@ -293,10 +292,10 @@ double read_dtime(char *arg)
            LineSFormat(
                 StderrStream,
                 "$",
-                "Bad time specifier '%a'\n",
+                "Bad time specifier '%a'---using default\n",
                 arg
            );
-           exit(EXIT_FAILURE);
+           return defaultval;
     }
     time += val;
   } while (*p);

@@ -249,6 +249,14 @@ int (GlobalsInit)(int argc,char *argv[])
 
   atexit(my_exit);	/* used to be above daemon_init(), race condition */
 
+  /*-------------------------------------------------------------
+  ; yes, I don't bother checking the return code for thes calls.
+  ; Why?  Because the underlying system call, sigaction(), only 
+  ; returns type 1 errors (see http://boston.conman.org/2009/12/01.2
+  ; for more information) which indicate bad code, not a real
+  ; error condition.
+  ;---------------------------------------------------------------*/
+  
   set_signal(SIGCHLD, sighandler_sigs);
   set_signal(SIGINT,  sighandler_sigs);
   set_signal(SIGQUIT, sighandler_sigs);
@@ -376,19 +384,19 @@ static void parse_cmdline(int argc,char *argv[])
            c_poolmax = strtoul(optarg,NULL,10);
            break;
       case OPT_TIME_CLEANUP:
-           c_time_cleanup = (int)read_dtime(optarg);
+           c_time_cleanup = (int)read_dtime(optarg,c_time_cleanup);
            break;
       case OPT_TIME_SAVESTATE:
-           c_time_savestate = read_dtime(optarg);
+           c_time_savestate = read_dtime(optarg,c_time_savestate);
            break;
       case OPT_TIMEOUT_EMBARGO:
-           c_timeout_embargo = read_dtime(optarg);
+           c_timeout_embargo = read_dtime(optarg,c_timeout_embargo);
            break;
       case OPT_TIMEOUT_GREY:
-           c_timeout_grey = read_dtime(optarg);
+           c_timeout_grey = read_dtime(optarg,c_timeout_grey);
            break;
       case OPT_TIMEOUT_WHITE:
-           c_timeout_white = read_dtime(optarg);
+           c_timeout_white = read_dtime(optarg,c_timeout_white);
            break;
       case OPT_FILE_IPLIST:
            c_iplistfile = dup_string(optarg);

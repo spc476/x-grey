@@ -60,8 +60,8 @@ void	    report_syslog		(int,char *,char *, ... );
 void	    report_stderr		(int,char *,char *, ... );
 void	    log_address			(struct sockaddr *);
 char	   *ipv4			(const byte *);
-void	    set_signal			(int,void (*)(int));
-double	    read_dtime			(char *);
+int	    set_signal			(int,void (*)(int));
+double	    read_dtime			(char *,double);
 size_t	    read_size			(char *);
 
 char       *iptoa			(IP);
