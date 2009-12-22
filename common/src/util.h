@@ -34,7 +34,7 @@
 #define SECSMIN		(60.0)
 #define SECSHOUR	(60.0 * 60.0)
 #define SECSDAY		(60.0 * 60.0 * 24.0)
-#define SECSYEAR	(60.0 * 60.0 * 24.0 * 365.2422)
+#define SECSYEAR	(60.0 * 60.0 * 24.0 * 365.242199)
 
 #define min(a,b)	((a) < (b)) ? (a) : (b)
 #define max(a,b)	((a) > (b)) ? (a) : (b)
