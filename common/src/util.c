@@ -52,6 +52,8 @@
 #include "eglobals.h"
 #include "util.h"
 
+static unsigned long m_logseq;
+
 /*****************************************************************/
 
 int create_socket(const char *host,int port,int type)
@@ -163,7 +165,7 @@ void report_syslog(int level,char *format,char *msg, ... )
     out = StringStreamWrite();
     LineSFormatv(out,format,msg,arg);
     txt = StringFromStream(out);
-    syslog(level,"%s",txt);
+    syslog(level,"[%lu] %s",++m_logseq,txt);
     MemFree(txt);
     StreamFree(out);
   }
@@ -183,6 +185,7 @@ void report_stderr(int level,char *format,char *msg, ... )
   va_start(arg,msg);
   if (level <= c_log_level)
   {
+    LineSFormat(StderrStream,"L","[%a] ",++m_logseq);
     LineSFormatv(StderrStream,format,msg,arg);
     StreamWrite(StderrStream,'\n');
     StreamFlush(StderrStream);
