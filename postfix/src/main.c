@@ -146,14 +146,14 @@ static int process_request(int sock)
     {
       if (bufsiz == BUFSIZ)
       {
-        syslog(LOG_ERR,"buffer overflow-aborting");
+        (*cv_report)(LOG_ERR,"","buffer overflow-aborting");
         return(0);
       }
       
       rrc = read(STDIN_FILENO,&buffer[bufsiz],BUFSIZ - bufsiz);
       if (rrc == -1)
       {
-        syslog(LOG_DEBUG,"read() = %s",strerror(errno));
+        (*cv_report)(LOG_DEBUG,"$","read() = %a",strerror(errno));
 	return(0);
       }
       if (rrc ==  0) return(0);
@@ -174,7 +174,7 @@ static int process_request(int sock)
     {
       int response;
       
-      syslog(LOG_INFO,"tuple: [%s , %s , %s]",ip,from,to);
+      (*cv_report)(LOG_INFO,"$ $ $","tuple: [%a %b %c]",ip,from,to);
       response = check_greylist(sock,ip,from,to);
       
       switch(response)
@@ -210,14 +210,14 @@ static int process_request(int sock)
 
     if (v == NULL)
     {
-      syslog(LOG_ERR,"bad input format");
+      (*cv_report)(LOG_ERR,"","bad input format");
       return(0);
     }
 
     *p++ = '\0';
     *v++ = '\0';
 
-    syslog(LOG_DEBUG,"request: %s = %s",buffer,v);
+    (*cv_report)(LOG_DEBUG,"$ $","request: %a = %b",buffer,v);
 
     if (strcmp(buffer,"request") == 0)
     {
@@ -338,7 +338,7 @@ int check_greylist(int sock,char *ip,char *from,char *to)
     if (errno != EINTR)
       (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
     else
-      (*cv_report)(LOG_DEBUG,"","timeout");
+      (*cv_report)(LOG_WARNING,"","timeout");
     return(IFT_ACCEPT);
   }
   
