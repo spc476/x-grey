@@ -679,6 +679,7 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
 
   if (tcp == -1)
   {
+    send_reply(req,CMD_NONE_RESP,GLERR_CANT_GENERATE_REPORT,REASON_NONE);
     (*cv_report)(LOG_ERR,"","could not create socket for report");
     return;
   }
