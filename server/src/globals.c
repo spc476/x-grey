@@ -204,6 +204,8 @@ static const struct option mc_options[] =
 
 int (GlobalsInit)(int argc,char *argv[])
 {
+  size_t i;
+  
   ddt(argc >  0);
   ddt(argv != NULL);
 
@@ -225,7 +227,8 @@ int (GlobalsInit)(int argc,char *argv[])
   g_tuplespace = MemAlloc(c_poolmax * sizeof(Tuple));
 
   memset(g_pool,      0,c_poolmax * sizeof(struct tuple));
-  memset(g_tuplespace,0,c_poolmax * sizeof(Tuple));
+  for (i = 0 ; i < c_poolmax ; i++)
+    g_tuplespace[i] = &g_pool[i];
 
   g_tree         = MemAlloc(sizeof(struct ipnode));
   g_tree->parent = NULL;

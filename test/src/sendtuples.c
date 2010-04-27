@@ -173,7 +173,7 @@ int main(int argc,char *argv[])
       size -= (sizeof(size_t) + *pps);
       count++;
 
-#if 0
+#if 1
       {
         byte inpacket[1500];
         struct sockaddr_in sip;

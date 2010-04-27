@@ -198,13 +198,17 @@ Tuple tuple_allocate(void)
     tuple_expire(time(NULL));
     if (g_poolnum == c_poolmax)
     {
+      size_t i;
+      
       (*cv_report)(LOG_ERR,"","too many requests-cleaning house failed-starting over");
       g_poolnum = 0;
+      
+      for (i = 0 ; i < c_poolmax ; i++)
+        g_tuplespace[i] = &g_pool[i];
     }
   }
   
-  D(g_pool[g_poolnum].pad = 0xDECAFBAD;)
-  return(&g_pool[g_poolnum]);
+  return g_tuplespace[g_poolnum];  
 }
 
 /*****************************************************************/
@@ -235,55 +239,46 @@ void tuple_expire(time_t Tao)
   size_t i;
   size_t j;
 
+  for (i = 0 ; i < g_poolnum ; i++)
+  {
+    if (g_tuplespace[i]->f & F_WHITELIST)
+    {
+      if (difftime(Tao,g_tuplespace[i]->atime) < c_timeout_white)
+        g_tuplespace[i]->f |= F_REMOVE;
+    }
+    else
+    {
+      if (difftime(Tao,g_tuplespace[i]->atime) < c_timeout_grey)
+        g_tuplespace[i]->f |= F_REMOVE;
+    }
+  }
+  
   for (i = j = 0 ; i < g_poolnum ; i++)
   {
-    if ((g_pool[i].f & F_REMOVE))
+    if (g_tuplespace[i]->f & F_REMOVE)
     {
-      if (g_pool[i].f & F_WHITELIST)
+      if (g_tuplespace[i]->f & F_WHITELIST)
       {
         g_whitelisted--;
         g_whitelist_expired++;
       }
       else
         g_greylist_expired++;
-      continue;
     }
-
-    if ((g_pool[i].f & F_WHITELIST))
-    {
-      if (difftime(Tao,g_pool[i].atime) < c_timeout_white)
-      {
-        if (i != j)
-          g_pool[j++] = g_pool[i];	/* VVV memcpy overlap */
-        else
-	  j++;
-      }
-      else
-      {
-        g_whitelisted--;
-        g_whitelist_expired++;
-      }
-      continue;
-    }
-    
-    if (difftime(Tao,g_pool[i].atime) < c_timeout_grey)
-    {
-      if (i != j)
-        g_pool[j++] = g_pool[i];	/* VVV memcpy() overlap */
-      else
-        j++;
-      continue;
-    }
-    
-    g_greylist_expired++;
+    else
+      g_tuplespace[j++] = g_tuplespace[i];
   }
   
   g_poolnum = j;
   
-  for (i = 0 ; i < g_poolnum ; i++)
-    g_tuplespace[i] = &g_pool[i];
-  
-  qsort(g_tuplespace,g_poolnum,sizeof(Tuple *),tuple_qsort_cmp);
+  for (i = 0 ; i < c_poolmax ; i++)
+  {
+    if (g_tuplespace[i]->f & F_REMOVE)
+    {
+      g_tuplespace[j++] = &g_pool[i];
+      ddt(j < c_poolmax);
+    }
+  } 
 }
 
 /**********************************************************************/
