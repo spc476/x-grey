@@ -2,8 +2,8 @@
 #CINCL=-I /usr/local/include
 #LINCL=-L /usr/local/lib
 #CC=gcc -pg
-CC=gcc $(CINCL)
-#CC=gcc -fomit-frame-pointer -O3
+#CC=gcc $(CINCL)
+CC=gcc -fomit-frame-pointer -O3 -DNDEBUG
 CFLAGS=-Wall -pedantic -g -ansi -Wextra
 LFLAGS=$(LINCL) -lcgi5
 
