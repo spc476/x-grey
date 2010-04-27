@@ -1,6 +1,12 @@
-2009-12-01
+2009-12-01	(update 2010-04-26)
 
 	* Under OpenBSD, bulk transfers (via TCP) sometimes fail.
+
+		I suspect what's happening is that I assume that TCP port
+		9990 (or whatever is used) is available for use and just
+		try to bind to it, when it isn't actually available.  I
+		think I may just bind to any available port and send that
+		port along with the UDP response.
 
 2009-05-29
 
