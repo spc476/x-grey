@@ -1,3 +1,7 @@
+1.0.11	2009-12-10
+
+	* Removed calls to exit() that should not have been there.
+
 1.0.10	2009-12-01
 
 	* GLD: Changed startup behavior—it now clears all counts from the
