@@ -1,3 +1,15 @@
+1.0.12	2010-xx-xx
+
+	* GLD: Forgot to send back an error condition to the MCP in
+	  one case.
+
+	* PFC: Fixed an issue that filtered out logging messages.
+
+	* ALL: Added sequence numbers to all logged messages.
+
+	* ALL: Added a more pedantic value for the number of seconds in a
+	  year.
+
 1.0.11	2009-12-10
 
 	* Removed calls to exit() that should not have been there.
