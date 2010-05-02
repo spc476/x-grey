@@ -1,3 +1,9 @@
+2010-05-02
+
+	* GLD: keep track of high-water mark of tuples
+
+	* MCP: support said metric.
+
 2008-04-16
 
 	* SMC: set stack limit, then exec() self to force it to take
