@@ -1,4 +1,9 @@
 
+Generate the internal version number from a git hook
+
+
+----
+
 Multicore use---have a tuple array per core (thread).  Sure, a reference
 might go to core1 the first time, and core2 the second, and coren the nth
 time, but eventually it'll get through.  And evidence has shown that even an
