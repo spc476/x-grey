@@ -1,5 +1,9 @@
 2010-05-10
 
+	* Create interface for Exim.
+
+	* GLD: keep track of tuples explicitely manipulated via the MCP
+
 	* GLD: keep track of tuple reads and tuple writes
 
 	* GLD: keep track of low-water mark of tuples
