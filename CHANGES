@@ -1,5 +1,7 @@
 1.0.12	2010-xx-xx
 
+	* ALL: Version number is now pulled from source control.  Yea!
+
 	* GLD: fixed a segfault when it received so many requests it filled
 	  up the tuple array (not that I didn't check for that---I did, it's
 	  just that I reset the master index to 0 and forgot to check for
