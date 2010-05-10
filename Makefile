@@ -16,7 +16,7 @@ HELPDIR=/usr/local/share/gld
 #----------------------------------------------------
 
 all:
-	echo "make (server | postfix | sendmail | test)"
+	@echo "make (server | postfix | sendmail | test)"
 
 server:	bin/gld bin/gld-mcp
 
@@ -57,8 +57,11 @@ tarball:
 	(cd .. ; tar czvf /tmp/x-grey.tar.gz -X x-grey/.exclude x-grey/ )
 
 install:
-	echo "make (install-server | install-postfix | install-sendmail)"
+	@echo "make (install-server | install-postfix | install-sendmail)"
 	
+remove:
+	@echo "make (remove-server | remove-postfix | remove-sendmail)"
+
 install-server:
 	install -d $(PIDDIR)
 	install -d $(BINDIR)
@@ -69,12 +72,26 @@ install-server:
 	install COMMANDS $(HELPDIR)
 	install LICENSE  $(HELPDIR)
 
+remove-server:
+	/bin/rm -rf $(BINDIR)/gld
+	/bin/rm -rf $(BINDIR)/gld-mcp
+	/bin/rm -rf $(HELPDIR)/COMMANDS
+	/bin/rm -rf $(HELPDIR)/LICENSE
+	@echo "You may also want to remove $(STATEDIR) and $(HELPDIR)"
+	
 install-postfix:
 	install -d $(BINDIR)
 	install bin/pfc $(BINDIR)
+
+remove-postfix:
+	/bin/rm -rf $(BINDIR)/pfc
 
 install-sendmail:
 	install -d $(BINDIR)
 	install -d $(STATEDIR)
 	install bin/smc $(BINDIR)
+	
+remove-sendmail:
+	/bin/rm -rf $(BINDIR)/smc
+	@echo "You may also want to remove $(STATEDIR)"
 	
