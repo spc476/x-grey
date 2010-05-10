@@ -1,3 +1,11 @@
+2010-05-10
+
+	* GLD: keep track of tuple reads and tuple writes
+
+	* GLD: keep track of low-water mark of tuples
+
+	* MCP: support said metrics.
+
 2010-05-02
 
 	* GLD: keep track of high-water mark of tuples
