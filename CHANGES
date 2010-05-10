@@ -1,5 +1,7 @@
 1.0.12	2010-xx-xx
 
+	* Now you can uninstall the program!
+
 	* ALL: Version number is now pulled from source control.  Yea!
 
 	* GLD: fixed a segfault when it received so many requests it filled
