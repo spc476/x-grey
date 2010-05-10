@@ -1,7 +1,6 @@
 /***************************************************************************
 *
-* Copyright 2007 by Sean Conner.
-*
+* Copyright 2010 by Sean Conner.
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
