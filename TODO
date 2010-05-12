@@ -5,16 +5,21 @@
 	* GLD: keep track of tuples explicitely manipulated via the MCP
 
 	* GLD: keep track of tuple reads and tuple writes
+		DONE 2010-05-12
 
 	* GLD: keep track of low-water mark of tuples
+		DONE 2010-05-12
 
 	* MCP: support said metrics.
+		DONE 2010-05-12
 
 2010-05-02
 
 	* GLD: keep track of high-water mark of tuples
+		DONE 2010-05-12
 
 	* MCP: support said metric.
+		DONE 2010-05-12
 
 2008-04-16
 
@@ -23,6 +28,7 @@
 		DONE 2008-04-16
 
 	* reset counters to 0 when reloading
+		DONE
 
 	* make configuration changes (max-tuples, etc) from GLD
 
