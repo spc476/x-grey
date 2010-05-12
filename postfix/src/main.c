@@ -1,7 +1,6 @@
 /***************************************************************************
 *
-* Copyright 2007 by Sean Conner.
-*
+* Copyright 2010 by Sean Conner.
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -9,7 +8,7 @@
 * (at your option) any later version.
 *
 * This program is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
 *

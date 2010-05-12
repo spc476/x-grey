@@ -1,3 +1,17 @@
+
+Generate the internal version number from a git hook
+seems to be working.  Cool!  Okay, oe more change.
+
+----
+
+Multicore use---have a tuple array per core (thread).  Sure, a reference
+might go to core1 the first time, and core2 the second, and coren the nth
+time, but eventually it'll get through.  And evidence has shown that even an
+initial delay is good enough for 90+% of the spam.  This does, however, have
+an interesting side effect---we can go faster but slow mail down even more.
+
+----
+
 getaddrinfo
 see ~/source/ipv6 for samples.
 ---

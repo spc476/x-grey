@@ -1,6 +1,6 @@
 /***************************************************************************
 *
-* Copyright 2007 by Sean Conner.
+* Copyright 2010 by Sean Conner.
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -489,6 +489,19 @@ type_greylist_check_tuple:
   if (stored == NULL)
   {
     stored  = tuple_allocate();
+    
+    /*--------------------------------------------------------------------
+    ; quick bug fix here---if we've gotten too many requests, we simple
+    ; reset the pool to 0.  But the rest of the code doesn't know that
+    ; (until now).  So a quick hack to fix that problem.  Basically, if
+    ; g_poolnum is 0, then idx *has* to be 0.  That only happens in two
+    ; cases---when the program first start ups, and when the program has
+    ; received too many requests in a short period of time and just gives
+    ; up and resets back to 0.
+    ;--------------------------------------------------------------------*/
+    
+    if (g_poolnum == 0) idx = 0;
+    
     memcpy(stored,&tuple,sizeof(struct tuple));
     tuple_add(stored,idx);
     g_greylisted++;

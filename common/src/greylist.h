@@ -1,7 +1,6 @@
 /***************************************************************************
 *
-* Copyright 2007 by Sean Conner.
-*
+* Copyright 2010 by Sean Conner.
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -26,13 +25,14 @@
 #include <time.h>
 #include <limits.h>
 
-	/*------------------------------------------------
-	; PROG_VERSION defines the actual program version.
-	; VERSION is the protocol version.  The names are
-	; this way for hysterical reasons.
-	;------------------------------------------------*/
+#include "../../version.h"
 
-#define PROG_VERSION	"1.0.12"
+	/*----------------------------------------------------------------
+	; PROG_VERSION (in version.h) defines the actual program version. 
+	; VERSION is the protocol version.  The names are this way for
+	; hysterical reasons.
+	;----------------------------------------------------------------*/
+
 #define VERSION		0x0100
 
 /********************************************************************/
