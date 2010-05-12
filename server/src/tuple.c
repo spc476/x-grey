@@ -37,35 +37,6 @@
 
 /**********************************************************************/
 
-int tuple_cmp_ft(const void *left,const void *right)
-{
-  const struct tuple *l = left;
-  const struct tuple *r = right;
-  int                 rc;
-  
-  ddt(left   != NULL);
-  ddt(right  != NULL);
-  ddt(l->pad == 0xDECAFBAD);
-  ddt(r->pad == 0xDECAFBAD);
-
-  if (l->fromsize < r->fromsize)
-    return(-1);
-  else if (l->fromsize > r->fromsize)
-    return(1);
-  
-  if ((rc = memcmp(l->from,r->from,l->fromsize)) != 0) return(rc);
-  
-  if (l->tosize < r->tosize)
-    return(-1);
-  else if (l->tosize > r->tosize)
-    return(1);
-  
-  rc = memcmp(l->to,r->to,l->tosize);
-  return(rc);
-}
-
-/*********************************************************************/
-  
 int tuple_cmp_ift(const void *left,const void *right)
 {
   const struct tuple *l = left;
@@ -93,19 +64,6 @@ int tuple_cmp_ift(const void *left,const void *right)
   
   rc = memcmp(l->to,r->to,l->tosize);
   return(rc);
-}
-
-/*************************************************************************/
-
-int tuple_qsort_cmp(const void *left, const void *right)
-{
-  const Tuple *l = left;
-  const Tuple *r = right;
-  
-  ddt(left  != NULL);
-  ddt(right != NULL);
-  
-  return(tuple_cmp_ift(*l,*r));
 }
 
 /**************************************************************************/
