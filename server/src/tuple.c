@@ -214,7 +214,7 @@ void tuple_expire(time_t Tao)
     
     if (g_tuplespace[i]->f & F_WHITELIST)
     {
-      if (difftime(Tao,g_tuplespace[i]->atime) < c_timeout_white)
+      if (difftime(Tao,g_tuplespace[i]->atime) > c_timeout_white)
         g_tuplespace[i]->f |= F_REMOVE;
     }
     
@@ -224,7 +224,7 @@ void tuple_expire(time_t Tao)
     
     else
     {
-      if (difftime(Tao,g_tuplespace[i]->atime) < c_timeout_grey)
+      if (difftime(Tao,g_tuplespace[i]->atime) > c_timeout_grey)
         g_tuplespace[i]->f |= F_REMOVE;
     }
     
