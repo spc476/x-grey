@@ -303,12 +303,22 @@ static void handle_sigalrm(void)
 
   mf_sigalrm      = 0;
   now             = time(NULL);
+  g_cleanup_count++;
+  
   g_req_cu        = g_req_cucurrent;
   g_req_cucurrent = 0;
-  g_cleanup_count++;
-
   if (g_req_cu > g_req_cumax)
     g_req_cumax = g_req_cu;
+    
+  g_tuples_read_cu        = g_tuples_read_cucurrent;
+  g_tuples_read_cucurrent = 0;
+  if (g_tuples_read_cu > g_tuples_read_cumax)
+    g_tuples_read_cumax = g_tuples_read_cu;
+    
+  g_tuples_write_cu        = g_tuples_write_cucurrent;
+  g_tuples_write_cucurrent = 0;
+  if (g_tuples_write_cu > g_tuples_write_cumax)
+    g_tuples_write_cumax = g_tuples_write_cu;
 
   (*cv_report)(LOG_INFO,"L","cu-expire: %a",(unsigned long)g_req_cu);
 

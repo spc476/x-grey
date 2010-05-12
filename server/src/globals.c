@@ -130,6 +130,14 @@ size_t               g_greylisted;
 size_t               g_whitelisted;
 size_t               g_whitelist_expired;
 size_t               g_greylist_expired;
+size_t		     g_tuples_read;
+size_t               g_tuples_read_cu;
+size_t               g_tuples_read_cucurrent;
+size_t               g_tuples_read_cumax;
+size_t               g_tuples_write;
+size_t               g_tuples_write_cu;
+size_t               g_tuples_write_cucurrent;
+size_t               g_tuples_write_cumax;
 
 struct ipnode       *g_tree;
 size_t               g_ipcnt = 1;

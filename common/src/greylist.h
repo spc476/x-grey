@@ -269,6 +269,20 @@ struct glmcp_response_show_stats
   unet32 tod_greylist;
   unet32 tod_accept;
   unet32 tod_reject;
+  
+  /*-------------------------------------------------
+  ; new data for protocol v1.1
+  ;-------------------------------------------------*/
+
+  unet32 tuples_read;
+  unet32 tuples_read_cu;
+  unet32 tuples_read_cu_max;
+  unet32 tuples_read_cu_ave;
+  unet32 tuples_write;
+  unet32 tuples_write_cu;
+  unet32 tuples_write_cu_max;
+  unet32 tuples_write_cu_ave;
+
 };
 
 struct glmcp_response_show_config

@@ -6,5 +6,6 @@ bogon-bn-nonagg.txt
 x-grey/bin/*
 x-grey/test/build/mktuples
 x-grey/test/build/sendtuples
+x-grey/test/build/precanned*
 notes
 

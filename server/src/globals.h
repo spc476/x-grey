@@ -73,6 +73,14 @@ extern size_t	           g_greylisted;
 extern size_t	           g_whitelisted;
 extern size_t	           g_whitelist_expired;
 extern size_t	           g_greylist_expired;
+extern size_t		   g_tuples_read;
+extern size_t              g_tuples_read_cu;
+extern size_t              g_tuples_read_cucurrent;
+extern size_t              g_tuples_read_cumax;
+extern size_t		   g_tuples_write;
+extern size_t              g_tuples_write_cu;
+extern size_t		   g_tuples_write_cucurrent;
+extern size_t              g_tuples_write_cumax;
 
 extern struct ipnode      *g_tree;
 extern size_t              g_ipcnt;

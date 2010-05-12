@@ -80,6 +80,9 @@ Tuple tuple_search(Tuple key,size_t *pidx)
   ddt(pidx     != NULL);
   ddt(key->pad == 0xDECAFBAD);
   
+  g_tuples_read++;
+  g_tuples_read_cucurrent++;
+  
   if (g_poolnum == 0)
   {
     *pidx = 0;
@@ -180,6 +183,9 @@ void tuple_add(Tuple rec,size_t index)
   ddt(rec       <= &g_pool[c_poolmax - 1]);
   ddt(rec->pad  == 0xDECAFBAD);
   
+  g_tuples_write++;
+  g_tuples_write_cucurrent++;
+  
   memmove(
   	&g_tuplespace[index + 1],
   	&g_tuplespace[index],
@@ -197,6 +203,9 @@ void tuple_expire(time_t Tao)
   size_t i;
   size_t j;
 
+  g_tuples_write++;
+  g_tuples_write_cucurrent++;
+  
   for (i = j = 0 ; i < g_poolnum ; i++)
   {
     /*----------------------------------------------
