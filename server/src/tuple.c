@@ -239,22 +239,33 @@ void tuple_expire(time_t Tao)
   size_t i;
   size_t j;
 
-  for (i = 0 ; i < g_poolnum ; i++)
+  for (i = j = 0 ; i < g_poolnum ; i++)
   {
+    /*----------------------------------------------
+    ; check for expired whitelist entries
+    ;----------------------------------------------*/
+    
     if (g_tuplespace[i]->f & F_WHITELIST)
     {
       if (difftime(Tao,g_tuplespace[i]->atime) < c_timeout_white)
         g_tuplespace[i]->f |= F_REMOVE;
     }
+    
+    /*----------------------------------------
+    ; check for expired greylist entries
+    ;--------------------------------------*/
+    
     else
     {
       if (difftime(Tao,g_tuplespace[i]->atime) < c_timeout_grey)
         g_tuplespace[i]->f |= F_REMOVE;
     }
-  }
-  
-  for (i = j = 0 ; i < g_poolnum ; i++)
-  {
+    
+    /*-------------------------------------------------
+    ; now checked for entries that are being removed,
+    ; update metrics accordingly.
+    ;-------------------------------------------------*/
+    
     if (g_tuplespace[i]->f & F_REMOVE)
     {
       if (g_tuplespace[i]->f & F_WHITELIST)
@@ -270,6 +281,10 @@ void tuple_expire(time_t Tao)
   }
   
   g_poolnum = j;
+
+  /*------------------------------------------
+  ; moved expired entries to the free pool
+  ;-------------------------------------------*/
   
   for (i = 0 ; i < c_poolmax ; i++)
   {
