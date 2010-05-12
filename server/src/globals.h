@@ -81,6 +81,8 @@ extern size_t		   g_tuples_write;
 extern size_t              g_tuples_write_cu;
 extern size_t		   g_tuples_write_cucurrent;
 extern size_t              g_tuples_write_cumax;
+extern size_t              g_tuples_low;
+extern size_t              g_tuples_high;
 
 extern struct ipnode      *g_tree;
 extern size_t              g_ipcnt;

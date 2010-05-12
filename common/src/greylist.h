@@ -282,7 +282,8 @@ struct glmcp_response_show_stats
   unet32 tuples_write_cu;
   unet32 tuples_write_cu_max;
   unet32 tuples_write_cu_ave;
-
+  unet32 tuples_low;
+  unet32 tuples_high;
 };
 
 struct glmcp_response_show_config

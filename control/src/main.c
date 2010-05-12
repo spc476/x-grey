@@ -395,16 +395,20 @@ static void show_stats(void)
   
   LineSFormat(
   	StdoutStream,
-  	"L10 L10 L10 L10 L10 L10 L10 L10",
-  	"Tuples-Read:            %a\n"
-  	"Tuples-Read-Cu:         %b\n"
-  	"Tuples-Read-Cu-Max:     %c\n"
-  	"Tuples-Read-Cu-Ave:     %d\n"
-  	"Tuples-Write:           %e\n"
-  	"Tuples-Write-Cu:        %f\n"
-  	"Tuples-Write-Cu-Max:    %g\n"
-  	"Tuples-Write-Cu-Ave:    %h\n"
+  	"L10 L10 L10 L10 L10 L10 L10 L10 L10 L10",
+  	"Tuples-Low:             %a\n"
+  	"Tuples-High:            %b\n"
+  	"Tuples-Read:            %c\n"
+  	"Tuples-Read-Cu:         %d\n"
+  	"Tuples-Read-Cu-Max:     %e\n"
+  	"Tuples-Read-Cu-Ave:     %f\n"
+  	"Tuples-Write:           %g\n"
+  	"Tuples-Write-Cu:        %h\n"
+  	"Tuples-Write-Cu-Max:    %i\n"
+  	"Tuples-Write-Cu-Ave:    %j\n"
   	"\n",
+  	(unsigned long)ntohl(gss->tuples_low),
+  	(unsigned long)ntohl(gss->tuples_high),
   	(unsigned long)ntohl(gss->tuples_read),
   	(unsigned long)htonl(gss->tuples_read_cu),
   	(unsigned long)htonl(gss->tuples_read_cu_max),

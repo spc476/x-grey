@@ -138,6 +138,8 @@ size_t               g_tuples_write;
 size_t               g_tuples_write_cu;
 size_t               g_tuples_write_cucurrent;
 size_t               g_tuples_write_cumax;
+size_t               g_tuples_low;
+size_t               g_tuples_high;
 
 struct ipnode       *g_tree;
 size_t               g_ipcnt = 1;

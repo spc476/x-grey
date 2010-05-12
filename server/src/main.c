@@ -193,6 +193,8 @@ static void mainloop(int sock)
 	     stats.tuples_write_cu     = htonl(g_tuples_write_cu);
 	     stats.tuples_write_cu_max = htonl(g_tuples_write_cumax);
 	     stats.tuples_write_cu_ave = htonl(0);
+	     stats.tuples_low          = htonl(g_tuples_low);
+	     stats.tuples_high         = htonl(g_tuples_high);
 	     stats.from                = htonl(g_sfrom  + 1);
 	     stats.from_greylist       = htonl(g_from_cmdcnt[IFT_GREYLIST]);
 	     stats.from_accept         = htonl(g_from_cmdcnt[IFT_ACCEPT]);
