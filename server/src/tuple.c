@@ -162,7 +162,8 @@ Tuple tuple_allocate(void)
       size_t i;
       
       (*cv_report)(LOG_ERR,"","too many requests-cleaning house failed-starting over");
-      g_poolnum = 0;
+      g_poolnum    = 0;
+      g_tuples_low = 0;	/* reset the low count automatically */
       
       for (i = 0 ; i < c_poolmax ; i++)
         g_tuplespace[i] = &g_pool[i];
@@ -193,7 +194,10 @@ void tuple_add(Tuple rec,size_t index)
     );
 
   g_tuplespace[index] = rec;
-  g_poolnum++;  
+  g_poolnum++;
+  
+  if (g_poolnum > g_tuples_high)
+    g_tuples_high = g_poolnum;
 }
 
 /*******************************************************************/
@@ -260,7 +264,10 @@ void tuple_expire(time_t Tao)
       g_tuplespace[j++] = &g_pool[i];
       ddt(j < c_poolmax);
     }
-  } 
+  }
+  
+  if (g_poolnum < g_tuples_low)  g_tuples_low  = g_poolnum;
+  if (g_poolnum > g_tuples_high) g_tuples_high = g_poolnum;  
 }
 
 /**********************************************************************/
@@ -512,6 +519,15 @@ int whitelist_load(void)
     
     MemFree(line);
   }
+  
+  /*--------------------------------------------------------
+  ; we've started the program, and potentially seeded the
+  ; tuple space.  Set the low and high mark to our current
+  ; values.
+  ;----------------------------------------------------------*/
+  
+  g_tuples_low  = g_poolnum;
+  g_tuples_high = g_poolnum;
   
   StreamFree(in);
   return(ERR_OKAY);

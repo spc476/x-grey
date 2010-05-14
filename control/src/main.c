@@ -395,6 +395,32 @@ static void show_stats(void)
   
   LineSFormat(
   	StdoutStream,
+  	"L10 L10 L10 L10 L10 L10 L10 L10 L10 L10",
+  	"Tuples-Low:             %a\n"
+  	"Tuples-High:            %b\n"
+  	"Tuples-Read:            %c\n"
+  	"Tuples-Read-Cu:         %d\n"
+  	"Tuples-Read-Cu-Max:     %e\n"
+  	"Tuples-Read-Cu-Ave:     %f\n"
+  	"Tuples-Write:           %g\n"
+  	"Tuples-Write-Cu:        %h\n"
+  	"Tuples-Write-Cu-Max:    %i\n"
+  	"Tuples-Write-Cu-Ave:    %j\n"
+  	"\n",
+  	(unsigned long)ntohl(gss->tuples_low),
+  	(unsigned long)ntohl(gss->tuples_high),
+  	(unsigned long)ntohl(gss->tuples_read),
+  	(unsigned long)htonl(gss->tuples_read_cu),
+  	(unsigned long)htonl(gss->tuples_read_cu_max),
+  	(unsigned long)htonl(gss->tuples_read_cu_ave),
+  	(unsigned long)htonl(gss->tuples_write),
+  	(unsigned long)htonl(gss->tuples_write_cu),
+  	(unsigned long)htonl(gss->tuples_write_cu_max),
+  	(unsigned long)htonl(gss->tuples_write_cu_ave)
+  );
+  	
+  LineSFormat(
+  	StdoutStream,
   	"L10 L10 L10 L10",
   	"IP-Entries:             %a\n"
   	"IP-Greylisted:          %b\n"

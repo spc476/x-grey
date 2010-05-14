@@ -166,41 +166,51 @@ static void mainloop(int sock)
 	     else
 	       ave = 0;
              
-	     stats.crc = stats.pad   = htons(0);	/* VVV */
-             stats.version           = htons(VERSION);
-             stats.MTA               = req.glr->MTA;
-             stats.type              = htons(CMD_MCP_SHOW_STATS_RESP);
-             stats.starttime         = htonl(c_starttime);
-             stats.nowtime           = htonl(req.now);
-             stats.tuples            = htonl(g_poolnum);
-	     stats.ips               = htonl(g_ipcnt);
-	     stats.ip_greylist       = htonl(g_ip_cmdcnt[IFT_GREYLIST]);
-	     stats.ip_accept         = htonl(g_ip_cmdcnt[IFT_ACCEPT]);
-	     stats.ip_reject         = htonl(g_ip_cmdcnt[IFT_REJECT]);
-             stats.greylisted        = htonl(g_greylisted);
-             stats.whitelisted       = htonl(g_whitelisted);
-             stats.greylist_expired  = htonl(g_greylist_expired);
-             stats.whitelist_expired = htonl(g_whitelist_expired);
-             stats.requests          = htonl(g_requests);
-             stats.requests_cu       = htonl(g_req_cu);
-	     stats.requests_cu_max   = htonl(g_req_cumax);
-	     stats.requests_cu_ave   = htonl(ave);
-	     stats.from              = htonl(g_sfrom  + 1);
-	     stats.from_greylist     = htonl(g_from_cmdcnt[IFT_GREYLIST]);
-	     stats.from_accept       = htonl(g_from_cmdcnt[IFT_ACCEPT]);
-	     stats.from_reject       = htonl(g_from_cmdcnt[IFT_REJECT]);
-	     stats.fromd             = htonl(g_sfromd + 1);
-	     stats.fromd_greylist    = htonl(g_fromd_cmdcnt[IFT_GREYLIST]);
-	     stats.fromd_accept      = htonl(g_fromd_cmdcnt[IFT_ACCEPT]);
-	     stats.fromd_reject      = htonl(g_fromd_cmdcnt[IFT_REJECT]);
-	     stats.to                = htonl(g_sto    + 1);
-	     stats.to_greylist       = htonl(g_to_cmdcnt[IFT_GREYLIST]);
-	     stats.to_accept         = htonl(g_to_cmdcnt[IFT_ACCEPT]);
-	     stats.to_reject         = htonl(g_to_cmdcnt[IFT_REJECT]);
-	     stats.tod               = htonl(g_stod   + 1);
-	     stats.tod_greylist      = htonl(g_tod_cmdcnt[IFT_GREYLIST]);
-	     stats.tod_accept        = htonl(g_tod_cmdcnt[IFT_ACCEPT]);
-	     stats.tod_reject        = htonl(g_tod_cmdcnt[IFT_REJECT]);
+	     stats.crc = stats.pad     = htons(0);	/* VVV */
+             stats.version             = htons(VERSION);
+             stats.MTA                 = req.glr->MTA;
+             stats.type                = htons(CMD_MCP_SHOW_STATS_RESP);
+             stats.starttime           = htonl(c_starttime);
+             stats.nowtime             = htonl(req.now);
+             stats.tuples              = htonl(g_poolnum);
+	     stats.ips                 = htonl(g_ipcnt);
+	     stats.ip_greylist         = htonl(g_ip_cmdcnt[IFT_GREYLIST]);
+	     stats.ip_accept           = htonl(g_ip_cmdcnt[IFT_ACCEPT]);
+	     stats.ip_reject           = htonl(g_ip_cmdcnt[IFT_REJECT]);
+             stats.greylisted          = htonl(g_greylisted);
+             stats.whitelisted         = htonl(g_whitelisted);
+             stats.greylist_expired    = htonl(g_greylist_expired);
+             stats.whitelist_expired   = htonl(g_whitelist_expired);
+             stats.requests            = htonl(g_requests);
+             stats.requests_cu         = htonl(g_req_cu);
+	     stats.requests_cu_max     = htonl(g_req_cumax);
+	     stats.requests_cu_ave     = htonl(ave);
+	     stats.tuples_read         = htonl(g_tuples_read);
+	     stats.tuples_read_cu      = htonl(g_tuples_read_cu);
+	     stats.tuples_read_cu_max  = htonl(g_tuples_read_cumax);
+	     stats.tuples_read_cu_ave  = htonl(0);
+	     stats.tuples_write        = htonl(g_tuples_write);
+	     stats.tuples_write_cu     = htonl(g_tuples_write_cu);
+	     stats.tuples_write_cu_max = htonl(g_tuples_write_cumax);
+	     stats.tuples_write_cu_ave = htonl(0);
+	     stats.tuples_low          = htonl(g_tuples_low);
+	     stats.tuples_high         = htonl(g_tuples_high);
+	     stats.from                = htonl(g_sfrom  + 1);
+	     stats.from_greylist       = htonl(g_from_cmdcnt[IFT_GREYLIST]);
+	     stats.from_accept         = htonl(g_from_cmdcnt[IFT_ACCEPT]);
+	     stats.from_reject         = htonl(g_from_cmdcnt[IFT_REJECT]);
+	     stats.fromd               = htonl(g_sfromd + 1);
+	     stats.fromd_greylist      = htonl(g_fromd_cmdcnt[IFT_GREYLIST]);
+	     stats.fromd_accept        = htonl(g_fromd_cmdcnt[IFT_ACCEPT]);
+	     stats.fromd_reject        = htonl(g_fromd_cmdcnt[IFT_REJECT]);
+	     stats.to                  = htonl(g_sto    + 1);
+	     stats.to_greylist         = htonl(g_to_cmdcnt[IFT_GREYLIST]);
+	     stats.to_accept           = htonl(g_to_cmdcnt[IFT_ACCEPT]);
+	     stats.to_reject           = htonl(g_to_cmdcnt[IFT_REJECT]);
+	     stats.tod                 = htonl(g_stod   + 1);
+	     stats.tod_greylist        = htonl(g_tod_cmdcnt[IFT_GREYLIST]);
+	     stats.tod_accept          = htonl(g_tod_cmdcnt[IFT_ACCEPT]);
+	     stats.tod_reject          = htonl(g_tod_cmdcnt[IFT_REJECT]);
              
              send_packet(&req,&stats,sizeof(stats)); /* VVV - uninit mem */
            }
