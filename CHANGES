@@ -1,4 +1,15 @@
-1.0.12	2010-xx-xx
+X.Y.Z
+
+	* GLD: new metrics, such as:
+
+		* # times read tuplespace
+		* # times write tuplespace
+		* low tuple mark
+		* high tuple mark
+
+	* GLD: faster cleanup of tuplespace
+
+1.0.12	2010-05-10
 
 	* Now you can uninstall the program!
 
