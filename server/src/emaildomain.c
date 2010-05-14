@@ -104,80 +104,40 @@ EDomain edomain_search_fromd(EDomain key,size_t *pidx)
 
 /*******************************************************************/
 
-EDomain edomain_search(EDomain key,size_t *pidx,EDomain array,size_t asize)
+EDomain edomain_search(EDomain key,size_t *pidx,EDomain array,size_t len)
 {
-  size_t low;
-  size_t high;
-  size_t delta;
-  size_t mid;
+  size_t first;
+  size_t middle;
+  size_t half;
   int    q;
   
-  ddt(key   != NULL);
-  ddt(pidx  != NULL);
+  ddt(key  != NULL);
+  ddt(pidx != NULL);
   
-  if (asize == 0)
+  first = 0;
+  
+  while(len > 0)
   {
-    *pidx = 0;
-    return(NULL);
-  }
-  
-  ddt(array != NULL);
-  ddt(asize >  0);
-
-  low = 0;
-  high = asize - 1;
-  
-  while(1)
-  {
-    ddt(high >= low);
-    ddt(high <  asize);
+    half   = len / 2;
+    middle = first + half;
+    q      = edomain_cmp(key,&array[middle]);
     
-    delta = high - low;
-    mid   = low + (delta / 2);
-    q     = edomain_cmp(key,&array[mid]);
-    
-    if (q < 0)
+    if (q > 0)
     {
-      if (delta == 0)
-      {
-        *pidx = mid;
-        return(NULL);
-      }
-      
-      high = mid - 1;
-      if (high > asize)
-      {
-        *pidx = mid;
-        return(NULL);
-      }
-      
-      if (high < low)
-      {
-        *pidx = mid;
-        return(NULL);
-      }
+      first = middle + 1;
+      len   = len - half - 1;
     }
     else if (q == 0)
     {
-      *pidx = mid;
-      return(&array[mid]);
+      *pidx = middle;
+      return &array[middle];
     }
     else
-    {
-      if (delta == 0)
-      {
-        *pidx = mid + 1;
-        return(NULL);
-      }
-      
-      low = mid + 1;
-      if (low > high)
-      {
-        *pidx = mid;
-        return(NULL);
-      }
-    }
+      len = half;
   }
+  
+  *pidx = first;
+  return NULL;
 }
 
 /*****************************************************************/

@@ -70,10 +70,10 @@ int tuple_cmp_ift(const void *left,const void *right)
 
 Tuple tuple_search(Tuple key,size_t *pidx)
 {
-  size_t low;
-  size_t high;
-  size_t delta;
-  size_t mid;
+  size_t first;
+  size_t len;
+  size_t middle;
+  size_t half;
   int    q;
   
   ddt(key      != NULL);
@@ -83,68 +83,31 @@ Tuple tuple_search(Tuple key,size_t *pidx)
   g_tuples_read++;
   g_tuples_read_cucurrent++;
   
-  if (g_poolnum == 0)
-  {
-    *pidx = 0;
-    return(NULL);
-  }
+  first = 0;
+  len   = g_poolnum;
   
-  low = 0;
-  high = g_poolnum - 1;
-  
-  while(1)
+  while(len > 0)
   {
-    ddt(high >= low);
-    ddt(high <  g_poolnum);
+    half   = len / 2;
+    middle = first + half;
+    q      = tuple_cmp_ift(key,g_tuplespace[middle]);
     
-    delta = high - low;
-    mid   = low + (delta / 2);
-    q     = tuple_cmp_ift(key,g_tuplespace[mid]);
-    
-    if (q < 0)
+    if (q > 0)
     {
-      if (delta == 0)
-      {
-        *pidx = mid;
-        return(NULL);
-      }
-      
-      high = mid - 1;
-      if (high > g_poolnum)
-      {
-        *pidx = mid;
-        return(NULL);
-      }
-      
-      if (high < low)
-      {
-        *pidx = mid;
-        return(NULL);
-      }
+      first = middle + 1;
+      len   = len - half - 1;
     }
     else if (q == 0)
     {
-      *pidx = mid;
-      ddt(g_tuplespace[mid]->pad == 0xDECAFBAD);
-      return(g_tuplespace[mid]);
+      *pidx = middle;
+      return g_tuplespace[middle];
     }
     else
-    {
-      if (delta == 0)
-      {
-        *pidx = mid + 1;
-        return(NULL);
-      }
-      
-      low = mid + 1;
-      
-      if (low > high)
-      {
-        *pidx = mid;
-        return(NULL);
-      }
-    }
+      len = half;
   }
+  
+  *pidx = first;
+  return NULL;  
 }
 
 /******************************************************************/
