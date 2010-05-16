@@ -62,7 +62,8 @@ extern void               (*cv_report)(int,char *,char *, ... );
 extern size_t              g_poolnum;
 extern struct tuple       *g_pool;
 extern Tuple              *g_tuplespace;
-extern int               **g_argv;
+
+extern char              **g_argv;
 
 extern size_t		   g_requests;
 extern size_t              g_req_cu;
