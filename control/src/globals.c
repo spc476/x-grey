@@ -19,8 +19,13 @@
 *
 *************************************************************************/
 
+#define _BSD_SOURCE
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <assert.h>
 
 #include <syslog.h>
 #include <getopt.h>
@@ -30,12 +35,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <cgilib/stream.h>
-#include <cgilib/memory.h>
-#include <cgilib/util.h>
-#include <cgilib/types.h>
-#include <cgilib/errors.h>
-#include <cgilib/ddt.h>
+#include <cgilib6/util.h>
 
 #include "../../common/src/greylist.h"
 #include "../../common/src/util.h"
@@ -65,13 +65,13 @@ socklen_t            c_raddrsize = sizeof(struct sockaddr_in);
 int                  c_log_facility = MCP_LOG_FACILITY;
 int                  c_log_level    = MCP_LOG_LEVEL;
 const char          *c_log_id       = MCP_LOG_ID;
-int                  cf_debug       = FALSE;
+int                  cf_debug       = 0;
 const char          *c_timeformat   = "%c";
 const char          *c_pager        = MCP_PAGER;
 char                *c_secret       = SECRET;
 size_t               c_secretsize   = SECRETSIZE;
-void               (*cv_report)(int,char *,char *, ... ) = report_stderr;
-void               (*cv_pager) (int)                     = pager_interactive;
+void               (*cv_report)(int,const char *, ... ) = report_stderr;
+void               (*cv_pager) (int)                    = pager_interactive;
 
 /**********************************************************/
 
@@ -99,17 +99,17 @@ int (GlobalsInit)(int argc,char *argv[])
   char           *pager;
   int             rc;
   
-  ddt(argc >  0);
-  ddt(argv != NULL);
+  assert(argc >  0);
+  assert(argv != NULL);
 
   pager = getenv("PAGER");
   if (pager)
-    c_pager = dup_string(pager);
+    c_pager = pager;
 
   rc = access(c_pager,X_OK);
   if (rc != 0)
   {
-    (*cv_report)(LOG_DEBUG,"$","pager %a not found-using internal one",c_pager);
+    (*cv_report)(LOG_DEBUG,"pager %s not found-using internal one",c_pager);
     cv_pager = pager_batch;
   }
   
@@ -118,7 +118,7 @@ int (GlobalsInit)(int argc,char *argv[])
   remote = gethostbyname(c_rhost);
   if (remote == NULL)
   {
-    (*cv_report)(LOG_ERR,"$ $","gethostbyname(%a) = %b",c_rhost,strerror(errno));
+    (*cv_report)(LOG_ERR,"gethostbyname(%s) = %s",c_rhost,strerror(errno));
     return(-1);
   }
   
@@ -144,8 +144,8 @@ static int parse_cmdline(int argc,char *argv[])
   char *tmp;
   int   option = 0;
   
-  ddt(argc >  0);
-  ddt(argv != NULL);
+  assert(argc >  0);
+  assert(argv != NULL);
   
   while(1)
   {
@@ -156,45 +156,45 @@ static int parse_cmdline(int argc,char *argv[])
       case OPT_NONE:
            break;
       case OPT_HOST:
-           c_host = dup_string(optarg);
+           c_host = optarg;
            break;
       case OPT_PORT:
            c_port = strtoul(optarg,NULL,10);
            break;
       case OPT_RHOST:
-           c_rhost = dup_string(optarg);
+           c_rhost = optarg;
            break;
       case OPT_RPORT:
            c_rport = strtoul(optarg,NULL,10);
            break;
       case OPT_LOG_FACILITY:
-           tmp = up_string(dup_string(optarg));
+           tmp = up_string(strdup(optarg));
            c_log_facility = ci_map_int(tmp,c_facilities,C_FACILITIES);
-           MemFree(tmp);
+           free(tmp);
            break;
       case OPT_LOG_LEVEL:
-           tmp = up_string(dup_string(optarg));
+           tmp = up_string(strdup(optarg));
            c_log_level = ci_map_int(tmp,c_levels,C_LEVELS);
-           MemFree(tmp);
+           free(tmp);
            break;
       case OPT_LOG_ID:
-           c_log_id = dup_string(optarg);
+           c_log_id = optarg;
            break;
       case OPT_SECRET:
-           c_secret     = dup_string(optarg);
+           c_secret     = optarg;
            c_secretsize = strlen(c_secret);
            break;
       case OPT_DEBUG:
-           cf_debug    = TRUE;
+           cf_debug    = 1;
            c_log_level = LOG_DEBUG;
-           LineSFormat(StderrStream,"","using '--log-facility debug'\n");
+           fputs("using '--log-facility debug'\n",stderr);
            break;
       case OPT_VERSION:
-           LineS(StdoutStream,"Version: " PROG_VERSION "\n");
+           fputs("Version: " PROG_VERSION "\n",stdout);
            exit(EXIT_FAILURE);
       case OPT_HELP:
       default:
-           LineSFormat(StderrStream,"$","usage: %a [options] command [data]\n",argv[0]);
+           fprintf(stderr,"usage: %s [options] command [data]\n",argv[0]);
            dump_defaults();
            exit(EXIT_FAILURE);
     }
@@ -205,36 +205,35 @@ static int parse_cmdline(int argc,char *argv[])
 
 static void dump_defaults(void)
 {
-  LineSFormat(
-  	StderrStream,
-  	"$ i $ $ $ $ $ i",
-  	"\t--addr <hostname>\t\t(%a)\n"
-  	"\t--port <num>\t\t\t(%b)\n"
-  	"\t--server <hostname>\t\t(%g)\n"
-  	"\t--server-port <num>\t\t(%h)\n"
-  	"\t--log-facility <facility>\t(%c)\n"
-  	"\t--log-level <level>\t\t(%d)\n"
-  	"\t--log-id <string>\t\t(%e)\n"
-  	"\t--debug\t\t\t\t(%f)\n"
-  	"\t--version\t\t\t(" PROG_VERSION ")\n"
-  	"\t--help\n",
-  	c_host,
-  	c_port,
-  	ci_map_chars(c_log_facility,c_facilities,C_FACILITIES),
-  	ci_map_chars(c_log_level,   c_levels,    C_LEVELS),
-  	c_log_id,
-  	(cf_debug) ? "true" : "false",
-  	c_rhost,
-  	c_rport
-  );
+  fprintf(
+        stdout,
+        "\t--addr <hostname>\t\t(%s)\n"
+        "\t--port <num>\t\t\t(%d)\n"
+        "\t--server <hostname>\t\t(%s)\n"
+        "\t--server-port <num>\t\t(%d)\n"
+        "\t--log-facility <facility>\t(%s)\n"
+        "\t--log-level <level>\t\t(%s)\n"
+        "\t--log-id <string>\t\t(%s)\n"
+        "\t--debug\t\t\t\t(%s)\n"
+        "\t--version\t\t\t(" PROG_VERSION ")\n"
+        "\t--help\n",
+        c_host,
+        c_port,
+        c_rhost,
+        c_rport,
+        ci_map_chars(c_log_facility,c_facilities,C_FACILITIES),
+        ci_map_chars(c_log_level,   c_levels,    C_LEVELS),
+        c_log_id,
+        (cf_debug) ? "true" : "false"
+    );
 }
 
 /*****************************************************/
 
 static void my_exit(void)
 {
-  StreamFlush(StderrStream);
-  StreamFlush(StdoutStream);
+  fflush(stderr);
+  fflush(stdout);
 }
 
 /*******************************************************/

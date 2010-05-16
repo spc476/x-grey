@@ -19,17 +19,17 @@
 *
 *************************************************************************/
 
+#define _GNU_SOURCE
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <errno.h>
+#include <assert.h>
 
 #include <syslog.h>
 
-#include <cgilib/stream.h>
-#include <cgilib/memory.h>
-#include <cgilib/util.h>
-#include <cgilib/errors.h>
-#include <cgilib/ddt.h>
+#include <cgilib6/util.h>
 
 #include "../../common/src/globals.h"
 #include "../../common/src/util.h"
@@ -54,54 +54,53 @@ static size_t	         ip_collect	(
 
 int iplist_read(const char *fname)
 {
-  byte           ip   [16];
-  Stream         in;
-  char          *line;
-  char          *tline;
-  int            lcount = 0;
-  size_t         octetcount;
-  int            mask;
-  int            cmd;
-  String        *tokens;
-  size_t         numtoks;
+  FILE   *in;
+  byte    ip[16];
+  char   *linebuff;
+  char   *line;
+  char   *tline;
+  String *tokens;
+  size_t  linesize;
+  size_t  lcount;
+  size_t  numtoks;
+  size_t  octetcount;
+  int     mask;
+  int     cmd;
   
-  ddt(fname != NULL);
+  assert(fname != NULL);
   
-  in = FileStreamRead(fname);
+  in = fopen(fname,"r");
   if (in == NULL)
   {
-    (*cv_report)(LOG_ERR,"$","could not open %a",fname);
-    return(ERR_ERR);
+    (*cv_report)(LOG_ERR,"iplist_read(): fopen(%s) = %s",fname,strerror(errno));
+    return ERR_ERR;
   }
   
-  line = dup_string("");
+  linebuff = NULL;
+  linesize = 0;
+  lcount   = 0;
   
-  while(!StreamEOF(in))
+  while(getline(&linebuff,&linesize,in) > 0)
   {
-    MemFree(line);
-    line  = LineSRead(in);    
-    line  = trim_space(line);
+    line = trim_space(linebuff);
     lcount++;
-
-    if (empty_string(line)) 
-      continue;    
-
-    if (line[0] == '#') 
-      continue;	/* comments */
-
+    
+    if (empty_string(line))
+      continue;
+    
     up_string(line);
     
     tokens = split(&numtoks,line);
-    if (!isdigit(tokens[0].d[0]))  
+    if (!isdigit(tokens[0].d[0]))
     {
-      (*cv_report)(LOG_ERR,"$ i","syntax error on %a(%b)-needs to be an IP address",fname,lcount);
-      MemFree(line);
-      StreamFree(in);
-      return(ERR_ERR);
+      (*cv_report)(LOG_ERR,"%s(%lu): syntax error---needs to be an IPv4 address",fname,(unsigned long)lcount);
+      free(tokens);
+      free(linebuff);
+      fclose(in);
+      return ERR_ERR;
     }
-    
-    octetcount  = 0;  
-    tline       = tokens[0].d;
+    octetcount = 0;
+    tline      = tokens[0].d;
     
     do
     {
@@ -110,105 +109,94 @@ int iplist_read(const char *fname)
       if (tline[0] == '/') break;
       if (tline[0] != '.')
       {
-        (*cv_report)(LOG_ERR,"$ i","syntax error on %a(%b)-needs to be an IP address",fname,lcount);
-        MemFree(line);
-        StreamFree(in);
-        return(ERR_ERR);
+        (*cv_report)(LOG_ERR,"%s(%lu): syntax error---needs to be an IPv4 address",fname,(unsigned long)lcount);
+        free(tokens);
+        free(linebuff);
+        fclose(in);
+        return ERR_ERR;
       }
       
-      octetcount ++;
+      octetcount++;
       tline++;
-    } while(octetcount < 4);
+    } while (octetcount < 4);
     
     if (*tline++ == '/')
       mask = strtoul(tline,&tline,10);
-    else 
+    else
       mask = 32;
     
     if (mask > 32)
     {
-      (*cv_report)(LOG_ERR,"$ i i","syntax error on %a(%b)-bad mask value %c",fname,lcount,mask);
-      MemFree(line);
-      StreamFree(in);
-      return(ERR_ERR);
+      (*cv_report)(LOG_ERR,"%s(%lu): syntax error---bad mask value %d",fname,(unsigned long)lcount,mask);
+      free(tokens);
+      free(linebuff);
+      fclose(in);
+      return ERR_ERR;
     }
-
+    
     cmd = ci_map_int(tokens[1].d,c_ift,C_IFT);
-    if (cmd == -1)    
+    if (cmd == -1)
     {
-      (*cv_report)(LOG_ERR,"$ i $","syntax error on %a(%b)-needs to be ACCEPT or REJECT but not %c",fname,lcount,tokens[1].d);
-      MemFree(line);
-      StreamFree(in);
-      return(ERR_ERR);
+      (*cv_report)(LOG_ERR,"%s(%lu): syntax error---needs to be ACCEPT or REJECT but not %s",fname,(unsigned long)lcount,tokens[1].d);
+      free(tokens);
+      free(linebuff);
+      fclose(in);
+      return ERR_ERR;
     }
-
+    
     ip_add_sm(ip,4,mask,cmd);
-    MemFree(tokens);
+    free(tokens);
   }
-
-  MemFree(line);
-  StreamFree(in);
-
+  free(linebuff);
+  fclose(in);
+  
   if (cf_debug)
   {
     struct ipblock *iplist;
     size_t          ipsize;
-    size_t          i;
     
     iplist = ip_table(&ipsize);
-
-    for (i = 0 ; i < ipsize ; i++)
+    
+    for (size_t i = 0 ; i < ipsize ; i++)
     {
       char        tip  [20];
       char        tmask[20];
-      char       *t;
-      const char *tcmd;
       
-      t = ipv4(iplist[i].addr);
-      strcpy(tip,t);
-      t = ipv4(iplist[i].mask);
-      strcpy(tmask,t);
-      
-      tcmd = ci_map_chars(iplist[i].cmd,c_ift,C_IFT);
-      
+      strcpy(tip  ,ipv4(iplist[i].addr));
+      strcpy(tmask,ipv4(iplist[i].mask));
       (*cv_report)(
-      		LOG_DEBUG,
-      		"$8.8l $15.15l $15.15l",
-      		"%a %b %c",
-      		tcmd,
-		tip,
-		tmask
-    	);
-    }
-
-    MemFree(iplist);
+          LOG_DEBUG,
+          "%8.8s %15.15s %15.15s",
+          ci_map_chars(iplist[i].cmd,c_ift,C_IFT),
+          tip,
+          mask
+        );
+    }      
+    free(iplist);
   }
-  
+
   return(ERR_OKAY);
 }
 
 /**************************************************************/
 
-int iplist_dump(void)
+void iplist_dump(void)
 {
-  Stream out;
-
-  out = FileStreamWrite(c_iplistfile,FILE_CREATE | FILE_TRUNCATE);
-  if (out == NULL)
+  FILE *out;
+  
+  out = fopen(c_iplistfile,"w");
+  if (out)
   {
-    (*cv_report)(LOG_ERR,"$","could not open %a",c_iplistfile);
-    return(ERR_ERR);
+    iplist_dump_stream(out);
+    fclose(out);
   }
-  
-  iplist_dump_stream(out);
-  
-  StreamFree(out);
-  return(ERR_OKAY);
+  else
+    (*cv_report)(LOG_ERR,"iplist_dump(): fopen(%s) = %s",(char *)c_iplistfile,strerror(errno));
 }
 
 /*****************************************************************/
 
-int iplist_dump_stream(Stream out)
+void iplist_dump_stream(FILE *out)
 {
   struct ipblock *array;
   size_t          asize;
@@ -220,18 +208,10 @@ int iplist_dump_stream(Stream out)
   for (i = 0 ; i < asize ; i++)
   {
     sprintf(ipaddr,"%s/%d",ipv4(array[i].addr),array[i].smask);
-
-    LineSFormat(
-    	out,
-    	"$18.18l $",
-    	"%a %b\n",
-	ipaddr,
-    	ci_map_chars(array[i].cmd,c_ift,C_IFT)
-    );
+    fprintf(out,"%18.18s %s",ipaddr,ci_map_chars(array[i].cmd,c_ift,C_IFT));
   }
 
-  MemFree(array);  
-  return(ERR_OKAY);
+  free(array);  
 }
 
 /*************************************************************/
@@ -243,8 +223,8 @@ int ip_match(byte *ip,size_t size __attribute__((unused)))
   int            off   = -1;
   int            bit   =  0;
   
-  ddt(ip   != NULL);
-  ddt(size == 4);
+  assert(ip   != NULL);
+  assert(size == 4);
   
   while(p != NULL)
   {
@@ -264,7 +244,7 @@ int ip_match(byte *ip,size_t size __attribute__((unused)))
     else
     {
       match->count++;
-      ddt(match->match != IFT_NONE);
+      assert(match->match != IFT_NONE);
       return (match->match);
     }
     
@@ -284,10 +264,10 @@ int ip_add_sm(byte *ip,size_t size __attribute__((unused)),int mask,int cmd)
   int            bit   =  0;
   int            b;
   
-  ddt(ip   != NULL);
-  ddt(size == 4);
-  ddt(mask >  -1);
-  ddt(mask <  33);
+  assert(ip   != NULL);
+  assert(size == 4);
+  assert(mask >  -1);
+  assert(mask <  33);
 
   /*----------------------------------
   ; if the mask is 0, we don't support
@@ -315,7 +295,7 @@ int ip_add_sm(byte *ip,size_t size __attribute__((unused)),int mask,int cmd)
     {
       if (p->zero == NULL)
       {
-        new         = MemAlloc(sizeof(struct ipnode));
+        new         = malloc(sizeof(struct ipnode));
         new->parent = p;
         new->zero   = NULL;
         new->one    = NULL;
@@ -329,7 +309,7 @@ int ip_add_sm(byte *ip,size_t size __attribute__((unused)),int mask,int cmd)
     {
       if (p->one == NULL)
       {
-        new         = MemAlloc(sizeof(struct ipnode));
+        new         = malloc(sizeof(struct ipnode));
         new->parent = p;
         new->zero   = NULL;
         new->one    = NULL;
@@ -364,7 +344,7 @@ int ip_add_sm(byte *ip,size_t size __attribute__((unused)),int mask,int cmd)
 
 /*******************************************************************/
 
-int ip_print(Stream out)
+void ip_print(FILE *out)
 {
   struct ipblock *array;
   size_t          asize;
@@ -373,27 +353,27 @@ int ip_print(Stream out)
   char            tmask[20];
   char           *t;
 
+  assert(out != NULL);
+  
   array = ip_table(&asize);
-    
-  for (i = 0 ; (!StreamEOF(out)) && (i < asize) ; i++)
+  
+  for (i = 0 ; i < asize ; i++)  
   {
     t = ipv4(array[i].addr);
     strcpy(tip,t);
     t = ipv4(array[i].mask);
     strcpy(tmask,t);
-      
-    LineSFormat(
-      	out,
-      	"$15.15l $15.15l $8.8l L10",
-      	"%d %c %a %b\n",
-      	tip,
-      	tmask,
-      	ci_map_chars(array[i].cmd,c_ift,C_IFT),
-      	(unsigned long)array[i].count
+    
+    fprintf(
+        out,
+        "%15.15s %15.15s %8.8s %10lu",
+        tip,
+        tmask,
+        ci_map_chars(array[i].cmd,c_ift,C_IFT),
+        (unsigned long)array[i].count
       );
   }
-  MemFree(array);
-  return(ERR_OKAY);
+  free(array);
 }
 
 /*******************************************************************/
@@ -405,28 +385,30 @@ struct ipblock *ip_table(size_t *ps)
   byte            mask[16];
   size_t          rc;
 
-  ddt(ps != NULL);
+  assert(ps != NULL);
   
   rc             = 1;
-  array          = MemAlloc(g_ipcnt * sizeof(struct ipblock));
+  array          = malloc(g_ipcnt * sizeof(struct ipblock));
   array[0].size  = 4;
   array[0].count = g_tree->count;
   array[0].smask = 0;
   array[0].cmd   = g_tree->match;
+  
   memset(array[0].mask,0,4);
   memset(array[0].addr,0,4);
-
   memset(addr,0,sizeof(addr));
   memset(mask,0,sizeof(mask));
+  
   if (g_tree->zero)
     rc = ip_collect(addr,mask,4,g_tree->zero,0,0x80,   0,array,1);
 
   memset(addr,0,sizeof(addr));
   memset(mask,0,sizeof(mask));
+  
   if (g_tree->one)
     rc = ip_collect(addr,mask,4,g_tree->one, 0,0x80,0x80,array,rc);
 
-  (*cv_report)(LOG_DEBUG,"L L","g: %a rc: %b",g_ipcnt,rc);
+  (*cv_report)(LOG_DEBUG,"g: %lu rc: %lu",(unsigned long)g_ipcnt,(unsigned long)rc);
   *ps = rc;
   return(array);
 }
@@ -448,14 +430,14 @@ static size_t ip_collect(
   int nmb;
   int noff;
   
-  ddt(ip    != NULL);
-  ddt(mask  != NULL);
-  ddt(size  == 4);
-  ddt(p     != NULL);
-  ddt(off   >= 0);
-  ddt(off   <   4);
-  ddt(array != NULL);
-  ddt(
+  assert(ip    != NULL);
+  assert(mask  != NULL);
+  assert(size  == 4);
+  assert(p     != NULL);
+  assert(off   >= 0);
+  assert(off   <   4);
+  assert(array != NULL);
+  assert(
              (bit == 0x00)
   	  || (bit == 0x01)
   	  || (bit == 0x02)
@@ -466,7 +448,7 @@ static size_t ip_collect(
   	  || (bit == 0x40)
   	  || (bit == 0x80)
   	);
-  ddt(
+  assert(
              (mbit == 0x01)
           || (mbit == 0x02)
           || (mbit == 0x04)

@@ -36,15 +36,12 @@
 #include <getopt.h>
 #include <netdb.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <fcntl.h>
 
-#include <cgilib/memory.h>
-#include <cgilib/errors.h>
-#include <cgilib/stream.h>
-#include <cgilib/util.h>
-#include <cgilib/types.h>
-#include <cgilib/ddt.h>
+#include <cgilib6/util.h>
 
 #include "../../common/src/greylist.h"
 #include "../../common/src/globals.h"
@@ -77,10 +74,10 @@ enum
 
 /********************************************************************/
 
-static void		 dump_defaults	(void);
-static void		 parse_cmdline	(int,char *[]);
-static void		 daemon_init	(void);
-static void		 my_exit	(void);
+static void	 dump_defaults	(void);
+static void	 parse_cmdline	(int,char *[]);
+static void	 daemon_init	(void);
+static void	 my_exit	(void);
 
 /*********************************************************************/
 
@@ -95,7 +92,7 @@ char	      *c_log_id          = SERVER_LOG_ID;
 char	      *c_secret		 = SECRET;
 size_t         c_secretsize	 = SECRETSIZE;
 int            cf_debug          = 0;
-void         (*cv_report)(int,char *,char *, ...) = report_syslog;
+void         (*cv_report)(int,const char *, ...) = report_syslog;
 
 char          *c_whitefile       = SERVER_STATEDIR "/whitelist.txt";
 char          *c_greyfile        = SERVER_STATEDIR "/greyfile.txt";	
@@ -117,6 +114,7 @@ int            cf_foreground     = 0;
 int            cf_oldcounts      = 0;
 
 	/*---------------------------------------------------*/
+	
 char                 g_argv0[FILENAME_MAX];
 char               **g_argv;
 
@@ -219,8 +217,8 @@ int (GlobalsInit)(int argc,char *argv[])
 {
   size_t i;
   
-  ddt(argc >  0);
-  ddt(argv != NULL);
+  assert(argc >  0);
+  assert(argv != NULL);
 
   /*--------------------------------------------------------------
   ; we save the arguments for possible later use.  What possible
@@ -252,14 +250,14 @@ int (GlobalsInit)(int argc,char *argv[])
   parse_cmdline(argc,argv);
   openlog(c_log_id,0,c_log_facility);
 
-  g_pool       = MemAlloc(c_poolmax * sizeof(struct tuple));
-  g_tuplespace = MemAlloc(c_poolmax * sizeof(Tuple));
+  g_pool       = malloc(c_poolmax * sizeof(struct tuple));
+  g_tuplespace = malloc(c_poolmax * sizeof(Tuple));
 
-  memset(g_pool,      0,c_poolmax * sizeof(struct tuple));
+  memset(g_pool, 0,c_poolmax * sizeof(struct tuple));
   for (i = 0 ; i < c_poolmax ; i++)
     g_tuplespace[i] = &g_pool[i];
 
-  g_tree         = MemAlloc(sizeof(struct ipnode));
+  g_tree         = malloc(sizeof(struct ipnode));
   g_tree->parent = NULL;
   g_tree->zero   = NULL;
   g_tree->one    = NULL;
@@ -314,8 +312,8 @@ int (GlobalsInit)(int argc,char *argv[])
 
 int (GlobalsDeinit)(void)
 {
-  MemFree(g_pool);
-  MemFree(g_tuplespace);
+  free(g_pool);
+  free(g_tuplespace);	/* XXX - free g_tree */
   closelog();
   return(ERR_OKAY);
 }
@@ -332,54 +330,52 @@ static void dump_defaults(void)
   towhite = report_delta(c_timeout_white);
   toclean = report_delta(c_time_cleanup);
   
-  LineSFormat(
-  	StderrStream,
-  	"$ $ $ i i L $ $ $ $ $ $ $ $ $ $ $ $ $",
-  	"\t--whitelist <file>\t\t(%a)\n"
-  	"\t--greylist  <file>\t\t(%b)\n"
-  	"\t--host <hostname>\t\t(%c)\n"
-  	"\t--port <num>\t\t\t(%d)\n"
-  	"\t--max-tuples <num>\t\t(%f)\n"
-  	"\t--time-cleanup <num>\t\t(%q)\n"
-  	"\t--timeout-grey <timespec>\t(%g)\n"
-  	"\t--timeout-white <timespec>\t(%h)\n"
-  	"\t--iplist <file>\t\t\t(%r)\n"
-  	"\t--time-format <strftime>\t(%i)\n"
-  	"\t--report-format syslog | stderr\t(%j)\n"
-  	"\t--log-facility <facility>\t(%k)\n"
-  	"\t--log-level <level>\t\t(%l)\n"
-  	"\t--log-sysid <string>\t\t(%m)\n"
-  	"\t--debug\t\t\t\t(%n)\n"
-  	"\t--foreground\t\t\t(%o)\n"
-  	"\t--old-counts\t\t\t(%s)\n"
-  	"\t--stderr\t\t\t(%p)\n"
-  	"\t--version\t\t\t(" PROG_VERSION ")\n"
-  	"\t--help\n"
-  	"\t\t* not implemented\n",
-  	c_whitefile,
-  	c_greyfile,
-  	c_host,
-  	c_port,
-  	0,
-  	(unsigned long)c_poolmax,
-  	togrey,
-  	towhite,
-  	c_timeformat,
-  	(cv_report == report_stderr) ? "stderr" : "syslog",
-	ci_map_chars(c_log_facility,c_facilities,C_FACILITIES),
-  	ci_map_chars(c_log_level,   c_levels,    C_LEVELS),
-  	c_log_id,
-  	(cf_debug) ? "true" : "false" ,
-  	(cf_foreground) ? "true" : "false",
-  	(cv_report == report_stderr) ? "true" : "false",
-  	toclean,
-  	c_iplistfile,
-  	(cf_oldcounts) ? "true" : "false"
+  fprintf(
+        stderr,
+        "\t--whitelist <file>\t\t(%s)\n"
+        "\t--greylist  <file>\t\t(%s)\n"
+        "\t--host <hostname>\t\t(%s)\n"
+        "\t--port <num>\t\t\t(%d)\n"
+        "\t--max-tuples <num>\t\t(%lu)\n"
+        "\t--time-cleanup <num>\t\t(%s)\n"
+        "\t--timeout-grey <timespec>\t(%s)\n"
+        "\t--timeout-white <timespec>\t(%s)\n"
+        "\t--iplist <file>\t\t\t(%s)\n"
+        "\t--time-format <strftime>\t(%s)\n"
+        "\t--report format syslog | stderr\t(%s)\n"
+        "\t--log-facility <facility>\t(%s)\n"
+        "\t--log-level <level>\t\t(%s)\n"
+        "\t--log-sysid <string>\t\t(%s)\n"
+        "\t--debug\t\t\t\t(%s)\n"
+        "\t--foreground\t\t\t(%s)\n"
+        "\t--old-counts\t\t\t(%s)\n"
+        "\t--stderr\t\t\t(%s)\n"
+        "\t--version\t\t\t(" PROG_VERSION ")\n"
+        "\t--help\n"
+        "\n",
+        c_whitefile,
+        c_greyfile,
+        c_host,
+        c_port,
+        (unsigned long)c_poolmax,
+        toclean,
+        togrey,
+        towhite,
+        c_iplistfile,
+        c_timeformat,
+        (cv_report == report_stderr) ? "stderr" : "syslog",
+        ci_map_chars(c_log_facility,c_facilities,C_FACILITIES),
+        ci_map_chars(c_log_level,   c_levels,    C_LEVELS),
+        c_log_id,
+        (cf_debug)                   ? "true" : "false" ,
+        (cf_foreground)              ? "true" : "false",
+        (cf_oldcounts)               ? "true" : "false",
+        (cv_report == report_stderr) ? "true" : "false"        
   );
 
-  MemFree(toclean);
-  MemFree(towhite);
-  MemFree(togrey);
+  free(toclean);
+  free(towhite);
+  free(togrey);
 }
 
 /********************************************************************/ 
@@ -389,8 +385,8 @@ static void parse_cmdline(int argc,char *argv[])
   char *tmp;
   int   option = 0;
   
-  ddt(argc >  0);
-  ddt(argv != NULL);
+  assert(argc >  0);
+  assert(argv != NULL);
   
   while(1)
   {
@@ -401,13 +397,13 @@ static void parse_cmdline(int argc,char *argv[])
       case OPT_NONE:
            break;
       case OPT_LIST_WHITE:
-           c_whitefile = dup_string(optarg);
+           c_whitefile = optarg;
            break;
       case OPT_LIST_GREY:
-           c_greyfile = dup_string(optarg);
+           c_greyfile = optarg;
            break;
       case OPT_HOST:
-           c_host = dup_string(optarg);
+           c_host = optarg;
            break;
       case OPT_PORT:
            c_port = strtoul(optarg,NULL,10);
@@ -431,52 +427,47 @@ static void parse_cmdline(int argc,char *argv[])
            c_timeout_white = read_dtime(optarg,c_timeout_white);
            break;
       case OPT_FILE_IPLIST:
-           c_iplistfile = dup_string(optarg);
+           c_iplistfile = optarg;
            break;
       case OPT_TIME_FORMAT:
-           c_timeformat = dup_string(optarg);
+           c_timeformat = optarg;
            break;
       case OPT_REPORT_FORMAT:
+           if (strcmp(optarg,"syslog") == 0)
+             cv_report = report_syslog;
+           else if (strcmp(optarg,"stdout") == 0)
+             cv_report = report_stderr;
+           else
            {
-             tmp = up_string(dup_string(optarg));
-             
-             if (strcmp(tmp,"SYSLOG") == 0)
-               cv_report = report_syslog;
-             else if (strcmp(tmp,"STDOUT") == 0)
-               cv_report = report_stderr;
-             else
-             {
-               LineSFormat(StderrStream,"$","format %a not supported\n",optarg);
-               exit(EXIT_FAILURE);
-             }
-             MemFree(tmp);
+             fprintf(stderr,"format %s not supported\n",optarg);
+             exit(EXIT_FAILURE);
            }
            break;
       case OPT_SECRET:
-           c_secret     = dup_string(optarg);
+           c_secret     = optarg;
            c_secretsize = strlen(c_secret);
            break;
       case OPT_DEBUG:
-           cf_debug = 1;
+           cf_debug     = 1;
            c_log_level  = LOG_DEBUG;
-           LineSFormat(StderrStream,"","using '--sys-facility debug'\n");
+           fprintf(stderr,"using '--log-level debug'\n");
            break;
       case OPT_LOG_FACILITY:
            {
-             tmp = up_string(dup_string(optarg));
+             tmp            = up_string(strdup(optarg));
              c_log_facility = ci_map_int(tmp,c_facilities,C_FACILITIES);
-             MemFree(tmp);
+             free(tmp);
            }
            break;
       case OPT_LOG_LEVEL:
            {
-             tmp = up_string(dup_string(optarg));
-             c_log_level   = ci_map_int(tmp,c_levels,C_LEVELS);
-             MemFree(tmp);
+             tmp         = up_string(strdup(optarg));
+             c_log_level = ci_map_int(tmp,c_levels,C_LEVELS);
+             free(tmp);
            }
            break;
       case OPT_LOG_ID:
-           c_log_id = dup_string(optarg);
+           c_log_id = optarg;
            break;
       case OPT_FOREGROUND:
            cf_foreground = 1;
@@ -488,11 +479,11 @@ static void parse_cmdline(int argc,char *argv[])
            cv_report = report_stderr;
            break;
       case OPT_VERSION:
-           LineS(StdoutStream,"Version: " PROG_VERSION "\n");
+           fputs("Version: " PROG_VERSION "\n",stderr);
 	   exit(EXIT_FAILURE);
       case OPT_HELP:
       default:
-           LineSFormat(StderrStream,"$","usage: %a [options]\n",argv[0]);
+           fprintf(stderr,"usage: %s [options]\n",argv[0]);
            dump_defaults();
            exit(EXIT_FAILURE);
     }
@@ -509,7 +500,7 @@ static void daemon_init(void)
   pid = fork();
   if (pid == (pid_t)-1)
   {
-    (*cv_report)(LOG_EMERG,"$","daemon_init(): fork() returned %a",strerror(errno));
+    (*cv_report)(LOG_EMERG,"daemon_init(): fork() = %s",strerror(errno));
     exit(EXIT_FAILURE);
   }
   else if (pid != 0)	/* parent goes bye bye */
@@ -521,7 +512,7 @@ static void daemon_init(void)
   pid = fork();
   if (pid == (pid_t)-1)
   {
-    (*cv_report)(LOG_EMERG,"$","daemon_init(): fork(2) = %a",strerror(errno));
+    (*cv_report)(LOG_EMERG,"daemon_init(): fork(2) = %s",strerror(errno));
     exit(EXIT_FAILURE);
   }
   else if (pid != 0)
@@ -533,11 +524,11 @@ static void daemon_init(void)
   fh = open("/dev/null",O_RDWR);
   if (fh == -1)
   {
-    (*cv_report)(LOG_EMERG,"$","daemon_init():open(/dev/null) = %a",strerror(errno));
+    (*cv_report)(LOG_EMERG,"daemon_init(): open(/dev/null) = %s",strerror(errno));
     exit(EXIT_FAILURE);
   }
   
-  ddt(fh > 2);
+  assert(fh > 2);
   dup2(fh,STDIN_FILENO);
   dup2(fh,STDOUT_FILENO);
   dup2(fh,STDERR_FILENO);	/* we always close this when going into daemon mode */
@@ -560,8 +551,8 @@ static void my_exit(void)
   
   if (cf_foreground)
   {
-    StreamFlush(StdoutStream);
-    StreamFlush(StderrStream);
+    fflush(stdout);
+    fflush(stderr);
   }
 }
 

@@ -19,21 +19,25 @@
 *
 *************************************************************************/
 
+#define _GNU_SOURCE
+
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <assert.h>
 
 #include <syslog.h>
 
-#include <cgilib/stream.h>
-#include <cgilib/errors.h>
-#include <cgilib/util.h>
-#include <cgilib/memory.h>
-#include <cgilib/ddt.h>
+#include <cgilib6/util.h>
 
 #include "../../common/src/greylist.h"
 #include "../../common/src/util.h"
 #include "tuple.h"
 #include "globals.h"
+
+#if !defined(NDEBUG)
+#  define D(x)	x
+#endif
 
 /**********************************************************************/
 
@@ -43,10 +47,10 @@ int tuple_cmp_ift(const void *left,const void *right)
   const struct tuple *r = right;
   int                 rc;
   
-  ddt(left   != NULL);
-  ddt(right  != NULL);
-  ddt(l->pad == 0xDECAFBAD);
-  ddt(r->pad == 0xDECAFBAD);
+  assert(left   != NULL);
+  assert(right  != NULL);
+  assert(l->pad == 0xDECAFBAD);
+  assert(r->pad == 0xDECAFBAD);
   
   if ((rc = memcmp(l->ip,r->ip,sizeof(l->ip))) != 0) return(rc);
   
@@ -76,9 +80,9 @@ Tuple tuple_search(Tuple key,size_t *pidx)
   size_t half;
   int    q;
   
-  ddt(key      != NULL);
-  ddt(pidx     != NULL);
-  ddt(key->pad == 0xDECAFBAD);
+  assert(key      != NULL);
+  assert(pidx     != NULL);
+  assert(key->pad == 0xDECAFBAD);
   
   g_tuples_read++;
   g_tuples_read_cucurrent++;
@@ -114,17 +118,17 @@ Tuple tuple_search(Tuple key,size_t *pidx)
 
 Tuple tuple_allocate(void)
 {
-  ddt(g_poolnum <= c_poolmax);
+  assert(g_poolnum <= c_poolmax);
   
   if (g_poolnum == c_poolmax)
   {
-    (*cv_report)(LOG_ERR,"","too many requests-attempting to clean house");
+    (*cv_report)(LOG_ERR,"too many requests-attempting to clean house");
     tuple_expire(time(NULL));
     if (g_poolnum == c_poolmax)
     {
       size_t i;
       
-      (*cv_report)(LOG_ERR,"","too many requests-cleaning house failed-starting over");
+      (*cv_report)(LOG_ERR,"too many requests-cleaning house failed-starting over");
       g_poolnum    = 0;
       g_tuples_low = 0;	/* reset the low count automatically */
       
@@ -140,12 +144,12 @@ Tuple tuple_allocate(void)
 
 void tuple_add(Tuple rec,size_t index)
 {
-  ddt(g_poolnum <  c_poolmax);
-  ddt(index     <= g_poolnum);
-  ddt(rec       != NULL);
-  ddt(rec       >= &g_pool[0]);
-  ddt(rec       <= &g_pool[c_poolmax - 1]);
-  ddt(rec->pad  == 0xDECAFBAD);
+  assert(g_poolnum <  c_poolmax);
+  assert(index     <= g_poolnum);
+  assert(rec       != NULL);
+  assert(rec       >= &g_pool[0]);
+  assert(rec       <= &g_pool[c_poolmax - 1]);
+  assert(rec->pad  == 0xDECAFBAD);
   
   g_tuples_write++;
   g_tuples_write_cucurrent++;
@@ -225,7 +229,7 @@ void tuple_expire(time_t Tao)
     if (g_tuplespace[i]->f & F_REMOVE)
     {
       g_tuplespace[j++] = &g_pool[i];
-      ddt(j < c_poolmax);
+      assert(j < c_poolmax);
     }
   }
   
@@ -235,82 +239,70 @@ void tuple_expire(time_t Tao)
 
 /**********************************************************************/
 
-int whitelist_dump(void)
+void whitelist_dump(void)
 {
-  Stream out;
+  FILE *out;
   
-  out = FileStreamWrite(c_whitefile,FILE_CREATE | FILE_TRUNCATE);
-  if (out == NULL)
+  out = fopen(c_whitefile,"w");
+  if (out)
   {
-    (*cv_report)(LOG_ERR,"$","could not open %a",c_whitefile);
-    return(ERR_ERR);
+    whitelist_dump_stream(out);
+    fclose(out);
   }
-
-  whitelist_dump_stream(out);
-  
-  StreamFree(out);
-  return(ERR_OKAY);
+  else
+    (*cv_report)(LOG_ERR,"whitelist_dump(): fopen(%s,WRITE) = %s",c_whitefile,strerror(errno));
 }
 
 /******************************************************************/
 
-int whitelist_dump_stream(Stream out)
+void whitelist_dump_stream(FILE *out)
 {
-  size_t i;
-
-  ddt(out != NULL);
+  assert(out != NULL);
   
-  for (i = 0 ; (!StreamEOF(out)) && (i < g_poolnum) ; i++)
+  for (size_t i = 0 ; i < g_poolnum ; i++)
   {
     if ((g_tuplespace[i]->f & (F_WHITELIST | F_REMOVE)) == F_WHITELIST)
     {
-      LineSFormat(
-      		out,
-      		"$ $ $",
-      		"%a %b %c\n",
-      		ipv4(g_tuplespace[i]->ip),
-      		(g_tuplespace[i]->fromsize) ? g_tuplespace[i]->from : "-",
-      		(g_tuplespace[i]->tosize)   ? g_tuplespace[i]->to   : "-"
+      fprintf(
+            out,
+            "%s %s %s\n",
+            ipv4(g_tuplespace[i]->ip),
+            (g_tuplespace[i]->fromsize) ? g_tuplespace[i]->from : "-",
+            (g_tuplespace[i]->tosize)   ? g_tuplespace[i]->to   : "-"
       	);
     }
   }
-  return(ERR_OKAY);
 }
 
 /********************************************************************/
 
-int tuple_dump(void)
+void tuple_dump(void)
 {
-  Stream out;
+  FILE *out;
   
-  out = FileStreamWrite(c_dumpfile,FILE_CREATE | FILE_TRUNCATE);
-  if (out == NULL)
+  out = fopen(c_dumpfile,"w");
+  if (out)
   {
-    (*cv_report)(LOG_ERR,"$","could not open %a",c_dumpfile);
-    return(ERR_ERR);
+    tuple_dump_stream(out);
+    fclose(out);
   }
-  
-  tuple_dump_stream(out);
-  StreamFree(out);
-  return(ERR_OKAY);
+  else
+    (*cv_report)(LOG_ERR,"tuple_dump(): fopen(%s,WRITE) = %s",c_dumpfile,strerror(errno));
 }
 
 /*******************************************************************/
 
-int tuple_dump_stream(Stream out)
+void tuple_dump_stream(FILE *out)
 {
-  size_t i;
+  assert(out != NULL);
   
-  ddt(out != NULL);
-  
-  for (i = 0 ; (!StreamEOF(out)) && (i < g_poolnum) ; i++)
+  for (size_t i = 0 ; i < g_poolnum ; i++)
   {
     if ((!g_tuplespace[i]->f & F_WHITELIST))
     {
-      LineSFormat(
-      	out,
-        "$ $ $ $ $ $ $ $ L L",
-        "%a %b %c %d%e%f%g%h %i %j\n",
+      fprintf(
+        out,
+        "%s %s %s %s%s%s%s%s %lu %lu\n",
         ipv4(g_tuplespace[i]->ip),
         (g_tuplespace[i]->fromsize) ? g_tuplespace[i]->from : "-",
         (g_tuplespace[i]->tosize)   ? g_tuplespace[i]->to   : "-",
@@ -324,41 +316,35 @@ int tuple_dump_stream(Stream out)
       );
     }
   }
-  return(ERR_OKAY);
 }
 
 /******************************************************************/
 
-int tuple_all_dump(void)
+void tuple_all_dump(void)
 {
-  Stream out;
+  FILE *out;
   
-  out = FileStreamWrite(c_dumpfile,FILE_CREATE | FILE_TRUNCATE);
-  if (out == NULL)
+  out = fopen(c_dumpfile,"w");
+  if (out)
   {
-    (*cv_report)(LOG_ERR,"$","could not open %a",c_dumpfile);
-    return(ERR_ERR);
+    tuple_all_dump_stream(out);
+    fclose(out);
   }
-  
-  tuple_all_dump_stream(out);
-  StreamFree(out);
-  return(ERR_OKAY);
+  else
+    (*cv_report)(LOG_ERR,"tuple_all_dump(): fopen(%s) = %s",c_dumpfile,strerror(errno));
 }
 
 /******************************************************************/
 
-int tuple_all_dump_stream(Stream out)
+void tuple_all_dump_stream(FILE *out)
 {
-  size_t i;
+  assert(out != NULL);
 
-  ddt(out != NULL);
-
-  for (i = 0 ; (!StreamEOF(out)) && (i < g_poolnum) ; i++)
+  for (size_t i = 0 ; i < g_poolnum ; i++)
   {
-    LineSFormat(
+    fprintf(
         out,
-        "$ $ $ $ $ $ $ $ L L",
-        "%a %b %c %d%e%f%g%h %i %j\n",
+        "%s %s %s %s%s%s%s%s %lu %lu\n",
         ipv4(g_tuplespace[i]->ip),
         (g_tuplespace[i]->fromsize) ? g_tuplespace[i]->from : "-",
         (g_tuplespace[i]->tosize)   ? g_tuplespace[i]->to   : "-",
@@ -371,40 +357,39 @@ int tuple_all_dump_stream(Stream out)
         (unsigned long)g_tuplespace[i]->atime
     );
   }
-  return(ERR_OKAY);
 }
 
 /******************************************************************/
 
-int whitelist_load(void)
+void whitelist_load(void)
 {
-  struct tuple tuple;
-  Stream       in;
-  time_t       now;
+  struct tuple  tuple;
+  FILE         *in;
+  time_t        now;
+  char         *line;
+  size_t        linesize;
   
-  now = time(NULL);
-  in  = FileStreamRead(c_whitefile);
+  line     = NULL;
+  linesize = 0;
+  now      = time(NULL);
+  in       = fopen(c_whitefile,"r");
+  
   if (in == NULL)	/* normal condition, if it doesn't exist */
-    return(ERR_OKAY);	/* don't sweat about it */
+    return;		/* don't sweat about it */
     
-  while(!StreamEOF(in))
+  while(getline(&line,&linesize,in) > 0)
   {
     Tuple   stored;
     size_t  idx;
-    char   *line;
     char   *p;
     char   *n;
     
     memset(&tuple,0,sizeof(struct tuple));
     
-    line = LineSRead(in);
     if (empty_string(line)) 
-    {
-      MemFree(line);
       continue;
-    }
 
-    D(tuple.pad = 0xDECAFBAD);
+    D(tuple.pad = 0xDECAFBAD;)
     tuple.ip[0] = strtoul(line,&p,10); p++;
     tuple.ip[1] = strtoul(p,&p,10);    p++;
     tuple.ip[2] = strtoul(p,&p,10);    p++;
@@ -418,10 +403,7 @@ int whitelist_load(void)
     ;------------------------------------------------*/
     
     if (n == NULL)
-    {
-      MemFree(line);
       continue;
-    }
     
     *n++ = '\0';
    
@@ -450,9 +432,8 @@ int whitelist_load(void)
     tuple.ctime    = tuple.atime = now;
 
     (*cv_report)(
-    	LOG_DEBUG,
-	"$ $ $",
-	"Adding [%a , %b , %c]",
+        LOG_DEBUG,
+        "Adding [%s , %s , %s]",
 	ipv4(tuple.ip),
 	tuple.from,
 	tuple.to
@@ -470,7 +451,7 @@ int whitelist_load(void)
     }
     else
     {
-      (*cv_report)(LOG_DEBUG,"","FOUND!");
+      (*cv_report)(LOG_DEBUG,"FOUND!");
       stored->atime = now;
       
       if ((stored->f & F_WHITELIST) == 0)
@@ -478,10 +459,10 @@ int whitelist_load(void)
         stored->f |= F_WHITELIST;
         g_whitelisted++;
       }
-    }
-    
-    MemFree(line);
+    }    
   }
+  
+  free(line);
   
   /*--------------------------------------------------------
   ; we've started the program, and potentially seeded the
@@ -492,9 +473,7 @@ int whitelist_load(void)
   g_tuples_low  = g_poolnum;
   g_tuples_high = g_poolnum;
   
-  StreamFree(in);
-  return(ERR_OKAY);
+  fclose(in);
 }
 
 /**********************************************************************/
-

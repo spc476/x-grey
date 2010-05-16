@@ -22,8 +22,8 @@
 #ifndef GREYLIST_H
 #define GREYLIST_H
 
+#include <stdio.h>
 #include <time.h>
-#include <cgilib/stream.h>
 #include "../../common/src/greylist.h"
 #include "server.h"
 
@@ -36,13 +36,13 @@ Tuple	 tuple_search		(Tuple,size_t *);
 Tuple	 tuple_allocate		(void);
 void	 tuple_add		(Tuple,size_t);
 void	 tuple_expire		(time_t);
-int	 tuple_dump		(void);
-int	 tuple_dump_stream	(Stream);
-int	 tuple_all_dump		(void);
-int	 tuple_all_dump_stream	(Stream);
-int	 whitelist_dump		(void);
-int	 whitelist_dump_stream	(Stream);
-int	 whitelist_load		(void);
+void	 tuple_dump		(void);
+void	 tuple_dump_stream	(FILE *);
+void	 tuple_all_dump		(void);
+void	 tuple_all_dump_stream	(FILE *);
+void	 whitelist_dump		(void);
+void	 whitelist_dump_stream	(FILE *);
+void	 whitelist_load		(void);
 
 #endif
 

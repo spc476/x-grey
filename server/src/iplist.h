@@ -22,8 +22,8 @@
 #ifndef IPLIST_H
 #define IPLIST_H
 
+#include <stdio.h>
 #include <stddef.h>
-#include <cgilib/stream.h>
 #include "../../common/src/greylist.h"
 
 struct ipblock
@@ -49,11 +49,11 @@ struct ipnode
 
 int		 iplist_read		(const char *);
 int		 iplist_check		(byte *,size_t);
-int		 iplist_dump		(void);
-int		 iplist_dump_stream	(Stream);
+void		 iplist_dump		(void);
+void		 iplist_dump_stream	(FILE *);
 struct ipblock	*ip_table		(size_t *);
 int		 ip_match		(byte *,size_t);
 int		 ip_add_sm		(byte *,size_t,int,int);
-int		 ip_print		(Stream);
+void		 ip_print		(FILE *);
 
 #endif

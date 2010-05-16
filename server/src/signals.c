@@ -44,9 +44,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <cgilib/memory.h>
-#include <cgilib/stream.h>
-
 #include "../../common/src/util.h"
 #include "globals.h"
 #include "iplist.h"
@@ -92,11 +89,7 @@ void check_signals(void)
   if (mf_sighup)   handle_sighup();
   if (mf_stupid)
   {
-    (*cv_report)(
-    		LOG_ERR,
-		"",
-    		"set a signal handler,but forgot to write code to handle it"
-    	);
+    (*cv_report)(LOG_ERR,"set a signal handler,but forgot to write code to handle it");
     mf_stupid = 0;
   }
 }
@@ -115,14 +108,8 @@ void sighandler_critical(int sig)
   ; ourselves.  Not the best thing, but better than getting a 
   ; call at 5:00 am in the morning!
   ;--------------------------------------------------------*/
-
-  (*cv_report)(
-       LOG_ERR,
-       "$",
-       "DANGER!  %a - restarting program",
-       sys_siglist[sig]
-    );
-
+  
+  (*cv_report)(LOG_ERR,"DANGER! %s - restarting program",sys_siglist[sig]);
   save_state();
 
   /*---------------------------------------------------------
@@ -133,7 +120,7 @@ void sighandler_critical(int sig)
   sigprocmask(SIG_UNBLOCK,&sigset,NULL);
   
   execve(g_argv0,g_argv,environ);
-  (*cv_report)(LOG_ERR,"$ $","exec('%a') = %b",g_argv[0],strerror(errno));
+  (*cv_report)(LOG_ERR,"execve(%s) = %s",g_argv0,strerror(errno));
   exit(EXIT_FAILURE);	/* when all else fails! */
 }
 
@@ -175,7 +162,7 @@ void handle_sigchld(void)
   int   ret;
   int   status;
   
-  (*cv_report)(LOG_DEBUG,"","child process ended");
+  (*cv_report)(LOG_DEBUG,"child process ended");
   mf_sigchld = 0;
 
   while(1)
@@ -186,24 +173,24 @@ void handle_sigchld(void)
     {
       if (errno == ECHILD) return;
       if (errno == EINTR) continue;
-      (*cv_report)(LOG_ERR,"$","waitpid() returned %a",strerror(errno));
+      (*cv_report)(LOG_ERR,"waitpid() = %s",strerror(errno));
       return;
     }
   
     if (WIFEXITED(status))
     {
       ret = WEXITSTATUS(status);
-      (*cv_report)(LOG_DEBUG,"i","Child process returned %a",ret);
+      (*cv_report)(LOG_DEBUG,"Child process returned %d",ret);
     }
     else if (WIFSIGNALED(status))
     {
       ret = WTERMSIG(status);
-      (*cv_report)(LOG_ERR,"L i","Process %a terminated by signal(%b)",(unsigned long)child,ret);
+      (*cv_report)(LOG_ERR,"Process %lu terminated by signal(%d)",(unsigned long)child,ret);
     }
     else if(WIFSTOPPED(status))
     {
       ret = WSTOPSIG(status);
-      (*cv_report)(LOG_ERR,"L i","Process %a stopped by signal(%b)",(unsigned long)child,ret);
+      (*cv_report)(LOG_ERR,"Process %lu stopped by signal(%d)",(unsigned long)child,ret);
     }
   }
 }
@@ -256,7 +243,7 @@ void save_state(void)
  
 static void handle_sigint(void)
 {
-  (*cv_report)(LOG_DEBUG,"","Interrupt Signal");
+  (*cv_report)(LOG_DEBUG,"Interrupt Signal");
 
   save_state();
   GlobalsDeinit();
@@ -267,7 +254,7 @@ static void handle_sigint(void)
 
 static void handle_sigquit(void)
 {
-  (*cv_report)(LOG_DEBUG,"","Quit signal");
+  (*cv_report)(LOG_DEBUG,"Quit signal");
 
   save_state();
   GlobalsDeinit();
@@ -278,7 +265,7 @@ static void handle_sigquit(void)
 
 static void handle_sigterm(void)
 {
-  (*cv_report)(LOG_DEBUG,"","Terminate Signal");
+  (*cv_report)(LOG_DEBUG,"Terminate Signal");
 
   save_state();
   GlobalsDeinit();
@@ -289,7 +276,7 @@ static void handle_sigterm(void)
 
 static void handle_sigpipe(void)
 {
-  (*cv_report)(LOG_DEBUG,"","one side closed their connection");
+  (*cv_report)(LOG_DEBUG,"one side closed their connection");
   mf_sigpipe = 0;
 }
 
@@ -299,7 +286,7 @@ static void handle_sigalrm(void)
 {
   time_t now;
   
-  (*cv_report)(LOG_DEBUG,"","Alarm-time for house cleaning!");
+  (*cv_report)(LOG_DEBUG,"Alarm-time for house cleaning!");
 
   mf_sigalrm      = 0;
   now             = time(NULL);
@@ -320,7 +307,7 @@ static void handle_sigalrm(void)
   if (g_tuples_write_cu > g_tuples_write_cumax)
     g_tuples_write_cumax = g_tuples_write_cu;
 
-  (*cv_report)(LOG_INFO,"L","cu-expire: %a",(unsigned long)g_req_cu);
+  (*cv_report)(LOG_INFO,"cu-expire: %lu",(unsigned long)g_req_cu);
 
   tuple_expire(now);
 
@@ -328,7 +315,7 @@ static void handle_sigalrm(void)
   {
     pid_t child;
   
-    (*cv_report)(LOG_DEBUG,"","saving state");
+    (*cv_report)(LOG_DEBUG,"saving state");
   
     g_time_savestate = now;
     child            = gld_fork();
@@ -349,7 +336,7 @@ static void handle_sigusr1(void)
 {
   pid_t  child;
 
-  (*cv_report)(LOG_DEBUG,"","User 1 Signal");
+  (*cv_report)(LOG_DEBUG,"User 1 Signal");
   mf_sigusr1 = 0;
 
   child = gld_fork();
@@ -365,7 +352,7 @@ static void handle_sigusr1(void)
 
 static void handle_sigusr2(void)
 {
-  (*cv_report)(LOG_DEBUG,"","User 2 Signal");
+  (*cv_report)(LOG_DEBUG,"User 2 Signal");
   mf_sigusr2 = 0;
   tuple_expire(time(NULL));
 }
@@ -376,16 +363,16 @@ static void handle_sighup(void)
 {
   char *t;
 
-  (*cv_report)(LOG_DEBUG,"","Sighup");
+  (*cv_report)(LOG_DEBUG,"Sighup");
   mf_sighup = 0;
   t = report_time(c_starttime,time(NULL));
-  (*cv_report)(LOG_INFO,"$","%a",t);
-  (*cv_report)(LOG_INFO,"L10","tuples:            %a",(unsigned long)g_poolnum);
-  (*cv_report)(LOG_INFO,"L10","greylisted:        %a",(unsigned long)g_greylisted);
-  (*cv_report)(LOG_INFO,"L10","whitelisted:       %a",(unsigned long)g_whitelisted);
-  (*cv_report)(LOG_INFO,"L10","greylist expired:  %a",(unsigned long)g_greylist_expired);
-  (*cv_report)(LOG_INFO,"L10","whitelist expired: %a",(unsigned long)g_whitelist_expired);
-  MemFree(t);
+  (*cv_report)(LOG_INFO,"%s",t);
+  (*cv_report)(LOG_INFO,"tuples:            %10lu",(unsigned long)g_poolnum);
+  (*cv_report)(LOG_INFO,"greylisted:        %10lu",(unsigned long)g_greylisted);
+  (*cv_report)(LOG_INFO,"whitelisted:       %10lu",(unsigned long)g_whitelisted);
+  (*cv_report)(LOG_INFO,"greylist expired:  %10lu",(unsigned long)g_greylist_expired);
+  (*cv_report)(LOG_INFO,"whitelist expired: %10lu",(unsigned long)g_whitelist_expired);
+  free(t);
 }
 
 /*********************************************************************/

@@ -1,9 +1,6 @@
-#CINCL=-I /usr/local/include
-#LINCL=-L /usr/local/lib
 
-#CC=gcc -g -pg
-CC=gcc $(CINCL)
-CFLAGS=-Wall -pedantic -g -ansi -Wextra
+CC=gcc -std=c99
+CFLAGS=-Wall -pedantic -g -Wextra
 LFLAGS=$(LINCL) -lcgi5 -lreadline -lcurses
 
 ../bin/gld-mcp : build/main.o	\

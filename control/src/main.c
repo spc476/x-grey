@@ -19,6 +19,9 @@
 *
 *************************************************************************/
 
+#define _GNU_SOURCE
+#define _POSIX_SOURCE
+
 #ifndef __GNUC__
 #  define __attribute(x)
 #endif
@@ -26,6 +29,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
+#include <errno.h>
+#include <assert.h>
 
 #include <syslog.h>
 #include <signal.h>
@@ -38,11 +44,7 @@
 #include <readline/history.h>
 #include <netinet/in.h>
 
-#include <cgilib/memory.h>
-#include <cgilib/ddt.h>
-#include <cgilib/stream.h>
-#include <cgilib/util.h>
-#include <cgilib/types.h>
+#include <cgilib6/util.h>
 
 #include "../../common/src/greylist.h"
 #include "../../common/src/globals.h"
@@ -75,6 +77,7 @@ static void	iplist_file_bogonspace	(char *);
 static int	send_request		(void *,size_t,void *,size_t,int);
 static void	handler_sigalrm		(int);
 static void	help			(void);
+static void	fcopy			(FILE *,FILE *);
 
 /*************************************************************/
 
@@ -89,16 +92,12 @@ int main(int argc,char *argv[])
 {
   int cmd;
   
-  MemInit();
-  DdtInit();
-  StreamInit();
-  
   cmd = GlobalsInit(argc,argv);
   
   if (cmd < 0)
   {
-    LineS(StderrStream,"can't init program\n");
-    StreamFlush(StderrStream);
+    fputs("can't init program\n",stderr);
+    fflush(stderr);
     return(EXIT_FAILURE);
   }
 
@@ -111,7 +110,7 @@ int main(int argc,char *argv[])
   if (cmd < argc)
   {
     size_t  cmds  = argc - cmd;
-    String *what  = MemAlloc(cmds * sizeof(String));
+    String *what  = malloc(cmds * sizeof(String));
     size_t  i;
     
     for (i = 0 ; cmd < argc ; i++,cmd++)
@@ -122,15 +121,13 @@ int main(int argc,char *argv[])
     
     cv_pager = pager_batch;
     process_cmdline(what,cmds);  
-    MemFree(what);
+    free(what);
   }
   else
   {
-    LineSFormat(
-    	StdoutStream,
-    	"$",
+    printf(
 	"\n"
-    	"%a " PROG_VERSION " Copyright (C) " COPYRIGHT_YEAR " Sean Conner\n"
+    	"%s " PROG_VERSION " Copyright (C) " COPYRIGHT_YEAR " Sean Conner\n"
 	"\n"
     	"This program comes with ABSOLUTELY NO WARRANTY; for details type 'show w'.\n"
     	"This is free software, and you are welcome to redistribute it\n"
@@ -156,7 +153,7 @@ static void cmdline(void)
   sprintf(prompt,"%s>",c_log_id);
   using_history();
   
-  while(1)
+  while(true)
   {
     cmd = readline(prompt);
     
@@ -175,22 +172,22 @@ static void cmdline(void)
 
     cmdline = split(&cmds,cmd);    
     process_cmdline(cmdline,cmds);
-    MemFree(cmdline);
+    free(cmdline);
     
-    StreamFlush(StdoutStream);  
+    fflush(stdout);
     free(cmd);
   }
   
   free(cmd);
-  StreamWrite(StdoutStream,'\n');
+  fputc('\n',stdout);
 }
 
 /****************************************************************/
 
 static void process_cmdline(String *cmdline,size_t cmds)
 {
-  ddt(cmdline != NULL);
-  ddt(cmds    >  0);
+  assert(cmdline != NULL);
+  assert(cmds    >  0);
 
   if (cmds == 0) return;
   
@@ -199,13 +196,13 @@ static void process_cmdline(String *cmdline,size_t cmds)
   else if (strcmp(cmdline[0].d,"iplist") == 0)
     iplist(cmdline,cmds);
   else if (strcmp(cmdline[0].d,"to") == 0)
-    tofrom(cmdline,cmds,CMD_MCP_TO,CMD_MCP_TO_RESP,FALSE);
+    tofrom(cmdline,cmds,CMD_MCP_TO,CMD_MCP_TO_RESP,0);
   else if (strcmp(cmdline[0].d,"to-domain") == 0)
-    tofrom(cmdline,cmds,CMD_MCP_TO_DOMAIN,CMD_MCP_TO_DOMAIN_RESP,TRUE);
+    tofrom(cmdline,cmds,CMD_MCP_TO_DOMAIN,CMD_MCP_TO_DOMAIN_RESP,1);
   else if (strcmp(cmdline[0].d,"from") == 0)
-    tofrom(cmdline,cmds,CMD_MCP_FROM,CMD_MCP_FROM_RESP,FALSE);
+    tofrom(cmdline,cmds,CMD_MCP_FROM,CMD_MCP_FROM_RESP,0);
   else if (strcmp(cmdline[0].d,"from-domain") == 0)
-    tofrom(cmdline,cmds,CMD_MCP_FROM_DOMAIN,CMD_MCP_FROM_DOMAIN_RESP,TRUE);
+    tofrom(cmdline,cmds,CMD_MCP_FROM_DOMAIN,CMD_MCP_FROM_DOMAIN_RESP,1);
   else if (strcmp(cmdline[0].d,"tuple") == 0)
     tuple(cmdline,cmds);
   else if (strcmp(cmdline[0].d,"help") == 0)
@@ -218,8 +215,8 @@ static void process_cmdline(String *cmdline,size_t cmds)
 
 static void show(String *cmdline,size_t cmds)
 {
-  ddt(cmdline != NULL);
-  ddt(cmds    >  0);
+  assert(cmdline != NULL);
+  assert(cmds    >  0);
   
   if (cmds < 2)
     return;
@@ -271,9 +268,9 @@ static int send_request(
   ssize_t                rrc;
   CRC32                  crc;
   
-  ddt(req    != NULL);
-  ddt(result != NULL);
-  ddt(size   >  0);
+  assert(req    != NULL);
+  assert(result != NULL);
+  assert(size   >  0);
   
   crc       = crc32(INIT_CRC32,&greq->version,reqsize - sizeof(CRC32));
   crc       = crc32(crc,c_secret,c_secretsize);
@@ -310,8 +307,8 @@ static int send_request(
   if (rrc == -1)
   {
     if (errno != EINTR)
-      (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
-    return(ERR_ERR);
+      (*cv_report)(LOG_ERR,"recvfrom() = %s",strerror(errno));
+    return ERR_ERR;
   }
   
   crc = crc32(INIT_CRC32,&gr->version,rrc - sizeof(CRC32));
@@ -319,29 +316,29 @@ static int send_request(
   
   if (crc != ntohl(gr->crc))
   {
-    (*cv_report)(LOG_ERR,"","bad packet");
-    return(ERR_ERR);
+    (*cv_report)(LOG_ERR,"bad packet");
+    return ERR_ERR;
   }
 
-  if (ntohs(gr->version) != VERSION)
+  if (ntohs(gr->version) > VERSION)
   {
-    (*cv_report)(LOG_ERR,"","received response from wrong version");
-    return(ERR_ERR);
+    (*cv_report)(LOG_ERR,"received response from wrong version");
+    return ERR_ERR;
   }
   
   if (ntohs(gr->MTA) != MTA_MCP)
   {
-    (*cv_report)(LOG_ERR,"","we got a reponse for something else");
-    return(ERR_ERR);
+    (*cv_report)(LOG_ERR,"we got a reponse for something else");
+    return ERR_ERR;
   }
   
   if (ntohs(gr->type) != expected_response)
   {
-    (*cv_report)(LOG_ERR,"","received wrong response");
-    return(ERR_ERR);
+    (*cv_report)(LOG_ERR,"received wrong response");
+    return ERR_ERR;
   }
   
-  return(ERR_OKAY);
+  return ERR_OKAY;
 }
 
 /*********************************************************************/
@@ -371,20 +368,18 @@ static void show_stats(void)
   
   if (rc != ERR_OKAY)
   {
-    LineS(StdoutStream,"bad response\n");
+    fputs("bad response\n",stdout);
     return;
   }
 
   t = report_time(ntohl(gss->starttime),ntohl(gss->nowtime));
 
-  LineSFormat(
-  	StdoutStream,
-  	"$ L10 L10 L10 L10",
-  	"%a\n"
-  	"Requests:               %b\n"
-  	"Requests-Cu:            %c\n"
-  	"Requests-Cu-Max:        %d\n"
-  	"Requests-Cu-Ave:        %e\n"
+  printf(
+  	"%s\n"
+  	"Requests:               %10lu\n"
+  	"Requests-Cu:            %10lu\n"
+  	"Requests-Cu-Max:        %10lu\n"
+  	"Requests-Cu-Ave:        %10lu\n"
 	"\n",
   	t,
   	(unsigned long)ntohl(gss->requests),
@@ -393,19 +388,17 @@ static void show_stats(void)
   	(unsigned long)ntohl(gss->requests_cu_ave)
   );
   
-  LineSFormat(
-  	StdoutStream,
-  	"L10 L10 L10 L10 L10 L10 L10 L10 L10 L10",
-  	"Tuples-Low:             %a\n"
-  	"Tuples-High:            %b\n"
-  	"Tuples-Read:            %c\n"
-  	"Tuples-Read-Cu:         %d\n"
-  	"Tuples-Read-Cu-Max:     %e\n"
-  	"Tuples-Read-Cu-Ave:     %f\n"
-  	"Tuples-Write:           %g\n"
-  	"Tuples-Write-Cu:        %h\n"
-  	"Tuples-Write-Cu-Max:    %i\n"
-  	"Tuples-Write-Cu-Ave:    %j\n"
+  printf(
+  	"Tuples-Low:             %10lu\n"
+  	"Tuples-High:            %10lu\n"
+  	"Tuples-Read:            %10lu\n"
+  	"Tuples-Read-Cu:         %10lu\n"
+  	"Tuples-Read-Cu-Max:     %10lu\n"
+  	"Tuples-Read-Cu-Ave:     %10lu\n"
+  	"Tuples-Write:           %10lu\n"
+  	"Tuples-Write-Cu:        %10lu\n"
+  	"Tuples-Write-Cu-Max:    %10lu\n"
+  	"Tuples-Write-Cu-Ave:    %10lu\n"
   	"\n",
   	(unsigned long)ntohl(gss->tuples_low),
   	(unsigned long)ntohl(gss->tuples_high),
@@ -418,14 +411,12 @@ static void show_stats(void)
   	(unsigned long)htonl(gss->tuples_write_cu_max),
   	(unsigned long)htonl(gss->tuples_write_cu_ave)
   );
-  	
-  LineSFormat(
-  	StdoutStream,
-  	"L10 L10 L10 L10",
-  	"IP-Entries:             %a\n"
-  	"IP-Greylisted:          %b\n"
-  	"IP-Accepted:            %c\n"
-  	"IP-Rejected:            %d\n"
+  
+  printf(
+  	"IP-Entries:             %10lu\n"
+  	"IP-Greylisted:          %10lu\n"
+  	"IP-Accepted:            %10lu\n"
+  	"IP-Rejected:            %10lu\n"
 	"\n",
   	(unsigned long)ntohl(gss->ips),
   	(unsigned long)ntohl(gss->ip_greylist),
@@ -433,27 +424,23 @@ static void show_stats(void)
   	(unsigned long)ntohl(gss->ip_reject)
   );
   
-  LineSFormat(
-  	StdoutStream,
-  	"L10 L10 L10 L10",
-  	"From-Entries:           %a\n"
-  	"From-Greylisted:        %b\n"
-  	"From-Accepted:          %c\n"
-  	"From-Rejected:          %d\n"
+  printf(
+  	"From-Entries:           %10lu\n"
+  	"From-Greylisted:        %10lu\n"
+  	"From-Accepted:          %10lu\n"
+  	"From-Rejected:          %10lu\n"
 	"\n",
   	(unsigned long)ntohl(gss->from),
   	(unsigned long)ntohl(gss->from_greylist),
   	(unsigned long)ntohl(gss->from_accept),
   	(unsigned long)ntohl(gss->from_reject)
   );
-  
-  LineSFormat(
-  	StdoutStream,
-  	"L10 L10 L10 L10",
-  	"From-Domain-Entries:    %a\n"
-  	"From-Domain-Greylisted: %b\n"
-  	"From-Domain-Accepted:   %c\n"
-  	"From-Domain-Rejected:   %d\n"
+
+  printf(  
+  	"From-Domain-Entries:    %10lu\n"
+  	"From-Domain-Greylisted: %10lu\n"
+  	"From-Domain-Accepted:   %10lu\n"
+  	"From-Domain-Rejected:   %10lu\n"
 	"\n",
   	(unsigned long)ntohl(gss->fromd),
   	(unsigned long)ntohl(gss->fromd_greylist),
@@ -461,13 +448,11 @@ static void show_stats(void)
   	(unsigned long)ntohl(gss->fromd_reject)
   );
   
-  LineSFormat(
-  	StdoutStream,
-  	"L10 L10 L10 L10",
-  	"To-Entries:             %a\n"
-  	"To-Greylisted:          %b\n"
-  	"To-Accepted:            %c\n"
-  	"To-Rejected:            %d\n"
+  printf(
+  	"To-Entries:             %10lu\n"
+  	"To-Greylisted:          %10lu\n"
+  	"To-Accepted:            %10lu\n"
+  	"To-Rejected:            %10lu\n"
 	"\n",
   	(unsigned long)ntohl(gss->to),
   	(unsigned long)ntohl(gss->to_greylist),
@@ -475,13 +460,11 @@ static void show_stats(void)
   	(unsigned long)ntohl(gss->to_reject)
   );
   
-  LineSFormat(
-  	StdoutStream,
-  	"L10 L10 L10 L10",
-  	"To-Domain-Entries:      %a\n"
-  	"To-Domain-Greylisted:   %b\n"
-  	"To-Domain-Accepted:     %c\n"
-  	"To-Domain-Rejected:     %d\n"
+  printf(
+  	"To-Domain-Entries:      %10lu\n"
+  	"To-Domain-Greylisted:   %10lu\n"
+  	"To-Domain-Accepted:     %10lu\n"
+  	"To-Domain-Rejected:     %10lu\n"
 	"\n",
   	(unsigned long)ntohl(gss->tod),
   	(unsigned long)ntohl(gss->tod_greylist),
@@ -489,14 +472,12 @@ static void show_stats(void)
   	(unsigned long)ntohl(gss->tod_reject)
   );
   
-  LineSFormat(
-  	StdoutStream,
-  	"L10 L10 L10 L10 L10",
-  	"Tuples:                 %a\n"
-  	"Greylisted:             %b\n"
-  	"Greylisted-Expired:     %c\n"
-  	"Whitelisted:            %d\n"
-  	"Whitelisted-Expired:    %e\n",
+  printf(
+  	"Tuples:                 %10lu\n"
+  	"Greylisted:             %10lu\n"
+  	"Greylisted-Expired:     %10lu\n"
+  	"Whitelisted:            %10lu\n"
+  	"Whitelisted-Expired:    %10lu\n",
   	(unsigned long)ntohl(gss->tuples),
   	(unsigned long)ntohl(gss->greylisted),
   	(unsigned long)ntohl(gss->greylist_expired),
@@ -504,7 +485,7 @@ static void show_stats(void)
   	(unsigned long)ntohl(gss->whitelist_expired)
   );
   	
-  MemFree(t);
+  free(t);
 }
 
 /******************************************************************/
@@ -530,7 +511,7 @@ static void show_config(void)
   
   if (rc != ERR_OKAY)
   {
-    LineS(StdoutStream,"bad response\n");
+    fputs("bad response\n",stdout);
     return;
   }
   
@@ -539,14 +520,12 @@ static void show_config(void)
   greylist  = report_delta(ntohl(gsc->timeout_grey));
   whitelist = report_delta(ntohl(gsc->timeout_white));
   
-  LineSFormat(
-  	StdoutStream,
-  	"L10 $ $ $ $",
-  	"Max-Tuples:        %a\n"
-  	"Timeout-Cleanup:   %b\n"
-  	"Timeout-Embargo:   %c\n"
-  	"Timeout-Greylist:  %d\n"
-  	"Timeout-Whitelist: %e\n",
+  printf(
+  	"Max-Tuples:        %10lu\n"
+  	"Timeout-Cleanup:   %s\n"
+  	"Timeout-Embargo:   %s\n"
+  	"Timeout-Greylist:  %s\n"
+  	"Timeout-Whitelist: %s\n",
   	(unsigned long)ntohl(gsc->max_tuples),
   	cleanup,
   	embargo,
@@ -554,10 +533,10 @@ static void show_config(void)
   	whitelist
     );
 
-  MemFree(whitelist);
-  MemFree(greylist);
-  MemFree(embargo);
-  MemFree(cleanup);
+  free(whitelist);
+  free(greylist);
+  free(embargo);
+  free(cleanup);
 }
 
 /*************************************************************/
@@ -580,21 +559,21 @@ static void show_report(int req,int resp)
   
   if (rc != ERR_OKAY)
   {
-    LineS(StdoutStream,"bad response\n");
+    fputs("bad reponse\n",stdout);
     return;
   }
   
   conn = create_socket(c_host,c_port,SOCK_STREAM);
   if (conn == -1)
   {
-    LineS(StdoutStream,"cannot connect to gld");
+    fputs("cannot connect to gld\n",stdout);
     return;
   }
   
   rc = connect(conn,(struct sockaddr *)&c_raddr,c_raddrsize);
   if (rc == -1)
   {
-    LineS(StdoutStream,"cannot connect to gld");
+    fputs("cannot connect to gld\n",stdout);
     return;
   }
 
@@ -618,11 +597,16 @@ static void help(void)
 
 void pager_batch(int fh)
 {
-  Stream in;
+  FILE *in;
   
-  in = FHStreamRead(fh);
-  StreamCopy(StdoutStream,in);
-  StreamFree(in);
+  assert(fh > -1);
+
+  in = fdopen(fh,"r");
+  if (in)
+  {
+    fcopy(stdout,in);
+    fclose(in);
+  }
 }
 
 /*************************************************************/
@@ -635,16 +619,16 @@ void pager_interactive(int fh)
   int    status;
   int    rc;
   
-  ddt(fh >= 0);
+  assert(fh >= 0);
   
   pid = fork();
   if (pid == -1)	/* error */
-    (*cv_report)(LOG_ERR,"$","fork() = %a",strerror(errno));
+    (*cv_report)(LOG_ERR,"fork() = %s",strerror(errno));
   else if (pid > 0)	/* parent */
   {
     child = waitpid(pid,&status,0);
     if (child == (pid_t)-1)
-      (*cv_report)(LOG_ERR,"$","waitpid() = %a",strerror(errno));
+      (*cv_report)(LOG_ERR,"waitpid() = %s",strerror(errno));
   }
   else			/* child */
   {
@@ -670,8 +654,8 @@ static void iplist(String *cmdline,size_t cmds)
   char                        *p;
   int                          rc;
   
-  ddt(cmdline != NULL);
-  ddt(cmds    >  0);
+  assert(cmdline != NULL);
+  assert(cmds    >  0);
 
   if (cmds < 3)		/* valid command has at least 3 paramters */
     return;
@@ -703,7 +687,7 @@ static void iplist(String *cmdline,size_t cmds)
 
   if (ipr.cmd == (unet16)-1)
   {
-    LineS(StdoutStream,"bad command\n");
+    fputs("bad command\n",stdout);
     return;
   }
   
@@ -722,39 +706,41 @@ static void iplist(String *cmdline,size_t cmds)
   rc = send_request(&ipr,sizeof(ipr),&data,sizeof(data),CMD_MCP_IPLIST_RESP);
 
   if (rc != ERR_OKAY)
-  LineS(StdoutStream,"bad response\n");
+    fputs("bad response\n",stdout);
 }
 
 /******************************************************************/
 
 static void iplist_file(char *fname)
 {
-  Stream                       in;
+  FILE                        *in;
   struct glmcp_request_iplist  ipr;
   union greylist_all_packets   data;
   int                          linecnt;
+  char                        *line;
+  size_t                       linesize;
 
-  ddt(fname != NULL);
+  assert(fname != NULL);
   
-  in = FileStreamRead(fname);
+  in = fopen(fname,"r");
   if (in == NULL)
   {
-    LineSFormat(StdoutStream,"$","could not open %a",fname);
+    printf("%s: %s\n",fname,strerror(errno));
     return;
   }
   
-  linecnt = 0;
+  line     = NULL;
+  linesize = 0;
+  linecnt  = 0;
   
-  while(!StreamEOF(in))
+  while(getline(&line,&linesize,in) > 0)
   {
-    char   *line;
     char   *p;
     char   *r;
     int     rc;
     size_t  octet;
     
     linecnt++;
-    line = LineSRead(in);
     if (empty_string(line)) continue;
     p = trim_space(line);
     if (*p == '#') continue;
@@ -789,11 +775,9 @@ static void iplist_file(char *fname)
     up_string(p);
     ipr.cmd = ci_map_int(p,c_ift,C_IFT);
 
-    MemFree(line);
-    
     if (ipr.cmd == (unet16)-1)
     {
-      LineSFormat(StdoutStream,"$ i","%a(%b): syntax error",fname,linecnt);
+      printf("%s(%d): syntax error",fname,linecnt);
       return;
     }
   
@@ -801,39 +785,42 @@ static void iplist_file(char *fname)
 
     rc = send_request(&ipr,sizeof(ipr),&data,sizeof(data),CMD_MCP_IPLIST_RESP);
     if (rc != ERR_OKAY)
-      LineS(StdoutStream,"bad response\n");
+      fputs("bad response\n",stdout);
   }
 
-  StreamFree(in);
+  free(line);
+  fclose(in);
 }
 
 /*****************************************************************/
 
 static void iplist_file_relaydelay(char *fname)
 {
+  FILE                        *in;
   struct glmcp_request_iplist  ipr;
-  Stream                       in;
   union greylist_all_packets   data;
   size_t                       octet;
   int                          rc;
   int                          linecnt;
+  char                        *line;
+  size_t                       linesize;
   
-  in = FileStreamRead(fname);
+  in = fopen(fname,"r");
   if (in == NULL)
   {
-    LineSFormat(StdoutStream,"$","could not open %a",fname);
+    printf("%s: %s\n",fname,strerror(errno));
     return;
   }
   
-  linecnt = 0;
+  line     = NULL;
+  linesize = 0;
+  linecnt  = 0;
   
-  while(!StreamEOF(in))
+  while(getline(&line,&linesize,in) > 0)
   {
-    char *line;
     char *p;
     
     linecnt++;
-    line = LineSRead(in);
     if (empty_string(line)) continue;
     p = trim_space(line);
     if (*p == '#') continue;
@@ -858,38 +845,41 @@ static void iplist_file_relaydelay(char *fname)
     
     rc = send_request(&ipr,sizeof(ipr),&data,sizeof(data),CMD_MCP_IPLIST_RESP);
     if (rc != ERR_OKAY)
-      LineS(StdoutStream,"bad response\n");
+      fputs("bad response\n",stdout);
   }
-  StreamFree(in);
+  free(line);
+  fclose(in);
 }
 
 /*************************************************************************/
 
 static void iplist_file_bogonspace(char *fname)
 {
+  FILE                        *in;
   struct glmcp_request_iplist  ipr;
-  Stream                       in;
   union greylist_all_packets   data;
   size_t                       octet;
   int                          rc;
   int                          linecnt;
+  char                        *line;
+  size_t                       linesize;
   
-  in = FileStreamRead(fname);
+  in = fopen(fname,"r");
   if (in == NULL)
   {
-    LineSFormat(StdoutStream,"$","could not open %a",fname);
+    printf("%s: %s\n",fname,strerror(errno));
     return;
   }
   
-  linecnt = 0;
+  line     = NULL;
+  linesize = 0;
+  linecnt  = 0;
   
-  while(!StreamEOF(in))
+  while(getline(&line,&linesize,in) > 0)
   {
-    char *line;
     char *p;
     
     linecnt++;
-    line = LineSRead(in);
     if (empty_string(line)) continue;
     p = trim_space(line);
     if (*p == '#') continue;
@@ -916,9 +906,10 @@ static void iplist_file_bogonspace(char *fname)
     
     rc = send_request(&ipr,sizeof(ipr),&data,sizeof(data),CMD_MCP_IPLIST_RESP);
     if (rc != ERR_OKAY)
-      LineS(StdoutStream,"bad response\n");
+      fputs("bad response\n",stdout);
   }
-  StreamFree(in);
+  free(line);
+  fclose(in);
 }
 
 /*************************************************************************/
@@ -931,8 +922,8 @@ static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
   size_t                       addrsize;
   int                          rc;
   
-  ddt(cmdline != NULL);
-  ddt(cmds    >  0);
+  assert(cmdline != NULL);
+  assert(cmds    >  0);
   
   if (cmds != 3)
     return;
@@ -946,7 +937,7 @@ static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
     char *at = strchr(cmdline[2].d,'@');
     if (at)
     {
-      LineSFormat(StdoutStream,"$","this '%a' is not a domain\n",cmdline[2].d);
+      printf("this '%s' is not a domain\n",cmdline[2].d);
       return;
     }
   }
@@ -972,15 +963,14 @@ static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
   	);
 
   if (rc != ERR_OKAY)
-    LineS(StdoutStream,"bad response\n");
+    fputs("bad response\n",stdout);
 }
 
 /**********************************************************************/
 
 static void show_warranty(void)
 {
-  LineS(
-  	StdoutStream,
+  printf(
   	"\n"
   	"THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY\n"
   	"APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT\n"
@@ -1042,8 +1032,8 @@ static void tuple(String *cmdline,size_t cmds)
   byte                       *p;
   int                         rc;
   
-  ddt(cmdline != NULL);
-  ddt(cmds    >  0);
+  assert(cmdline != NULL);
+  assert(cmds    >  0);
 
   if (cmds != 5)
     return;
@@ -1092,7 +1082,7 @@ static void tuple(String *cmdline,size_t cmds)
   
   rc = send_request(&outpacket,packetsize,&inpacket,sizeof(inpacket),cmd + 1);    
   if (rc != ERR_OKAY)
-    LineS(StdoutStream,"bad response\n");   
+    fputs("bad response\n",stdout);
     
   glr           = (struct greylist_response *)&inpacket;
   glr->response = ntohs(glr->response);
@@ -1100,10 +1090,8 @@ static void tuple(String *cmdline,size_t cmds)
   
   if (!((glr->why == REASON_GREYLIST) || (glr->why == REASON_WHITELIST)))
   {
-    LineSFormat(
-    	StdoutStream,
-    	"$ $",
-    	"Tuple not added because of %a %b rule\n",
+    printf(
+        "tuple not added because of %s %s rule\n",
     	ci_map_chars(glr->why,m_reason,8),
     	ci_map_chars(glr->response,c_ift,C_IFT)
     );
@@ -1111,3 +1099,17 @@ static void tuple(String *cmdline,size_t cmds)
 }
 
 /***********************************************************************/
+
+static void fcopy(FILE *fpout,FILE *fpin)
+{
+  char   buffer[BUFSIZ];
+  size_t size;
+  
+  assert(fpout != NULL);
+  assert(fpin  != NULL);
+  
+  while((size = fread(buffer,1,BUFSIZ,fpin)) > 0)
+    fwrite(buffer,1,size,fpout);
+}
+
+/*************************************************************************/

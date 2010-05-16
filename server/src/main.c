@@ -19,9 +19,15 @@
 *
 *************************************************************************/
 
+#define _POSIX_SOURCE
+#define _BSD_SOURCE
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <stdbool.h>
+#include <assert.h>
 
 #include <netdb.h>
 #include <netinet/in.h>
@@ -29,12 +35,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <syslog.h>
-
-#include <cgilib/memory.h>
-#include <cgilib/ddt.h>
-#include <cgilib/stream.h>
-#include <cgilib/util.h>
-#include <cgilib/types.h>
 
 #include "../../common/src/greylist.h"
 #include "../../common/src/globals.h"
@@ -48,6 +48,10 @@
 #include "iplist.h"
 #include "emaildomain.h"
 
+#if !defined(NDEBUG)
+#  define D(x)	x
+#endif
+
 /********************************************************************/
 
 void 		 type_greylist		(struct request *,int);
@@ -55,7 +59,7 @@ void		 type_tuple_remove	(struct request *);
 static void	 mainloop		(int);
 static void	 send_reply		(struct request *,int,int,int);
 static void	 send_packet		(struct request *,void *,size_t);
-static void	 cmd_mcp_report		(struct request *,int (*)(Stream),int);
+static void	 cmd_mcp_report		(struct request *,void (*)(FILE *),int);
 static void	 cmd_mcp_tofrom		(struct request *,int,int);
 static int	 greylist_sanitize_req	(struct tuple *,struct request *);
 static void	 log_tuple		(struct tuple *,int,int);
@@ -66,10 +70,6 @@ int main(int argc,char *argv[])
 {
   int sock;
   
-  MemInit();
-  DdtInit();
-  StreamInit();
-
   GlobalsInit(argc,argv);
 
   sock = create_socket(c_host,c_port,SOCK_DGRAM);
@@ -78,8 +78,8 @@ int main(int argc,char *argv[])
     
   {
     char *t = timetoa(c_starttime);
-    (*cv_report)(LOG_INFO,"$","start time: %a",t);
-    MemFree(t);
+    (*cv_report)(LOG_INFO,"start time: %s",t);
+    free(t);
   }
 
   mainloop(sock);
@@ -114,7 +114,7 @@ static void mainloop(int sock)
     if (rrc == -1)
     {
       if (errno != EINTR)
-        (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
+        (*cv_report)(LOG_ERR,"mainloop(): recvfrom() = %s",strerror(errno));
       continue;
     }
     
@@ -128,13 +128,13 @@ static void mainloop(int sock)
     
     if (crc != ntohl(req.glr->crc))
     {
-      (*cv_report)(LOG_DEBUG,"U","bad CRC-skipping packet %a",(unsigned long)crc);
+      (*cv_report)(LOG_DEBUG,"bad CRC %08lX---skipping packet",(unsigned long)crc);
       continue;
     }
     
-    if (ntohs(req.glr->version) != VERSION)
+    if (ntohs(req.glr->version) > VERSION)
     {
-      (*cv_report)(LOG_DEBUG,"","received bad version");
+      (*cv_report)(LOG_DEBUG,"received bad version");
       send_reply(&req,CMD_NONE_RESP,GLERR_VERSION_NOT_SUPPORTED,REASON_NONE);
       continue;
     }
@@ -166,7 +166,7 @@ static void mainloop(int sock)
 	     else
 	       ave = 0;
              
-	     stats.crc = stats.pad     = htons(0);	/* VVV */
+	     stats.crc = stats.pad     = 0;
              stats.version             = htons(VERSION);
              stats.MTA                 = req.glr->MTA;
              stats.type                = htons(CMD_MCP_SHOW_STATS_RESP);
@@ -188,11 +188,11 @@ static void mainloop(int sock)
 	     stats.tuples_read         = htonl(g_tuples_read);
 	     stats.tuples_read_cu      = htonl(g_tuples_read_cu);
 	     stats.tuples_read_cu_max  = htonl(g_tuples_read_cumax);
-	     stats.tuples_read_cu_ave  = htonl(0);
+	     stats.tuples_read_cu_ave  = 0;
 	     stats.tuples_write        = htonl(g_tuples_write);
 	     stats.tuples_write_cu     = htonl(g_tuples_write_cu);
 	     stats.tuples_write_cu_max = htonl(g_tuples_write_cumax);
-	     stats.tuples_write_cu_ave = htonl(0);
+	     stats.tuples_write_cu_ave = 0;
 	     stats.tuples_low          = htonl(g_tuples_low);
 	     stats.tuples_high         = htonl(g_tuples_high);
 	     stats.from                = htonl(g_sfrom  + 1);
@@ -219,7 +219,7 @@ static void mainloop(int sock)
            {
              struct glmcp_response_show_config config;
              
-	     config.crc = config.pad = htons(0);
+	     config.crc = config.pad = 0;
              config.version          = htons(VERSION);
              config.MTA              = req.glr->MTA;
              config.type             = htons(CMD_MCP_SHOW_CONFIG_RESP);
@@ -261,7 +261,6 @@ static void mainloop(int sock)
              struct glmcp_request_iplist *pip = (struct glmcp_request_iplist *)req.glr;
              int   cmd  = ntohs(pip->cmd);
              int   mask = ntohs(pip->mask);
-	     char *t;
              
              if (ntohs(pip->ipsize) != 4)
              {
@@ -269,9 +268,7 @@ static void mainloop(int sock)
                break;
              }
 
-	     t = ipv4(pip->data);
-	     (*cv_report)(LOG_DEBUG,"$ i i","about to add %a/%b %c",t,mask,cmd);
-             
+	     (*cv_report)(LOG_DEBUG,"about to add %s/%d %d",ipv4(pip->data),mask,cmd);
              ip_add_sm(pip->data,4,mask,cmd);
              send_reply(&req,CMD_MCP_IPLIST_RESP,0,REASON_NONE);
            }
@@ -304,7 +301,7 @@ void type_tuple_remove(struct request *req)
   int          rc;
   size_t       idx;
   
-  ddt(req != NULL);
+  assert(req != NULL);
   
   rc = greylist_sanitize_req(&tuple,req);
   if (rc != ERR_OKAY) return;
@@ -330,7 +327,7 @@ void type_greylist(struct request *req,int response)
   char                    *at;
   int                      rc;
 
-  ddt(req != NULL);
+  assert(req != NULL);
 
   rc = greylist_sanitize_req(&tuple,req);
   if (rc != ERR_OKAY) return;
@@ -575,8 +572,8 @@ static int greylist_sanitize_req(struct tuple *tuple,struct request *req)
   byte                    *p;
   size_t                   rsize;
   
-  ddt(tuple != NULL);
-  ddt(req   != NULL);
+  assert(tuple != NULL);
+  assert(req   != NULL);
   
   glr = req->glr;
   p   = glr->data;
@@ -599,7 +596,7 @@ static int greylist_sanitize_req(struct tuple *tuple,struct request *req)
 
   if (rsize > req->size)
   {
-    (*cv_report)(LOG_DEBUG,"L L","bad size, expected %a got %b",(unsigned long)req->size,(unsigned long)rsize);
+    (*cv_report)(LOG_DEBUG,"bad size, expected %lu got %lu",(unsigned long)req->size,(unsigned long)rsize);
     send_reply(req,CMD_NONE_RESP,GLERR_BAD_DATA,REASON_NONE);
     return(ERR_ERR);
   }
@@ -622,7 +619,7 @@ static int greylist_sanitize_req(struct tuple *tuple,struct request *req)
   if (tuple->tosize   <  glr->tosize)   tuple->f |= F_TRUNCTO;
   if (glr->ipsize    == 16)             tuple->f |= F_IPv6;
 
-  return(ERR_OKAY);
+  return ERR_OKAY;
 }
 
 /*****************************************************************************/
@@ -631,11 +628,11 @@ static void send_reply(struct request *req,int type,int response,int why)
 {
   struct greylist_response resp;
   
-  ddt(req      != NULL);
-  ddt(type     >= 0);
-  ddt(response >= 0);
+  assert(req      != NULL);
+  assert(type     >= 0);
+  assert(response >= 0);
   
-  resp.crc      = htons(0);
+  resp.crc      = 0;
   resp.version  = htons(VERSION);
   resp.MTA      = req->glr->MTA;
   resp.type     = htons(type);
@@ -653,9 +650,9 @@ static void send_packet(struct request *req,void *packet,size_t size)
   ssize_t                   rrc;
   CRC32                     crc;
   
-  ddt(req    != NULL);
-  ddt(packet != NULL);
-  ddt(size   >  0);
+  assert(req    != NULL);
+  assert(packet != NULL);
+  assert(size   >  0);
   
   crc      = crc32(INIT_CRC32,&glr->version,size - sizeof(unet32));
   crc      = crc32(crc,c_secret,c_secretsize);
@@ -676,7 +673,7 @@ static void send_packet(struct request *req,void *packet,size_t size)
     {
       if (errno == EINTR)
         continue;
-      (*cv_report)(LOG_ERR,"$","sendto() = %a",strerror(errno));
+      (*cv_report)(LOG_ERR,"send_packet(): sendto() = %s",strerror(errno));
       if (errno == EINVAL)
         break;
       sleep(1);
@@ -686,16 +683,16 @@ static void send_packet(struct request *req,void *packet,size_t size)
 
 /*********************************************************************/
 
-static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
+static void cmd_mcp_report(struct request *req,void (*cb)(FILE *),int resp)
 {
-  struct sockaddr remote;
-  socklen_t       rsize;
-  pid_t           pid;
-  int             tcp;
-  int             conn;
-  Stream          out;
+  struct sockaddr  remote;
+  socklen_t        rsize;
+  pid_t            pid;
+  int              tcp;
+  int              conn;
+  FILE            *out;
   
-  ddt(req != NULL);
+  assert(req != NULL);
   
   memcpy(&remote,&req->remote,sizeof(struct sockaddr));
   tcp = create_socket(c_host,c_port,SOCK_STREAM);
@@ -703,7 +700,7 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
   if (tcp == -1)
   {
     send_reply(req,CMD_NONE_RESP,GLERR_CANT_GENERATE_REPORT,REASON_NONE);
-    (*cv_report)(LOG_ERR,"","could not create socket for report");
+    (*cv_report)(LOG_ERR,"could not create socket for report");
     return;
   }
 
@@ -737,24 +734,27 @@ static void cmd_mcp_report(struct request *req,int (*cb)(Stream),int resp)
 
   if (conn == -1)
   {
-    (*cv_report)(LOG_ERR,"$","accept() = %a",strerror(errno));
+    (*cv_report)(LOG_ERR,"cmd_mcp_report(): accept() = %s",strerror(errno));
     _exit(0);
   }
   
   alarm(0);
   close(tcp);
-  out = FHStreamWrite(conn);
-  if (out == NULL)
+  out = fdopen(conn,"w");
+  
+  if (out)
   {
-    (*cv_report)(LOG_ERR,"","out of memory?");
+    (*cb)(out);
+    fclose(out);
     close(conn);
-    _exit(0);
+    _exit(EXIT_SUCCESS);
   }
-  
-  (*cb)(out);
-  
-  StreamFree(out);
-  _exit(0);
+  else
+  {
+    (*cv_report)(LOG_ERR,"cmd_mcp_report(): fdopen() = %s",strerror(errno));
+    close(conn);
+    _exit(EXIT_FAILURE);
+  }
 }
 
 /****************************************************************/
@@ -765,9 +765,9 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
   struct emaildomain           edkey;
   EDomain                      value;
   size_t                       index;
-  int                          def;
+  bool                         def;
   
-  ddt(req != NULL);
+  assert(req != NULL);
   
   ptf = &req->packet.mcp_tofrom;
   
@@ -781,14 +781,14 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
       || (strcmp(edkey.text,"DEFAULT") == 0)
     )
   {
-    def = TRUE;
+    def = true;
   }
   else
   {
-    def = FALSE;
+    def = false;
   }
-
-  (*cv_report)(LOG_DEBUG,"$ i","adding %a as %b",edkey.text,edkey.cmd);
+  
+  (*cv_report)(LOG_DEBUG,"adding %s as %d",edkey.text,edkey.cmd);
   
   /*-------------------------------------------------------
   ; basically, if the command is IFT_REMOVE and the context
@@ -816,7 +816,7 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
            {
              if (edkey.cmd != IFT_REMOVE)
              {
-               edkey.text = dup_string(edkey.text);
+               edkey.text = strdup(edkey.text);
                edomain_add_to(&edkey,index);
              }
            }
@@ -848,7 +848,7 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
            {
              if (edkey.cmd != IFT_REMOVE)
              {
-               edkey.text = dup_string(edkey.text);
+               edkey.text = strdup(edkey.text);
                edomain_add_tod(&edkey,index);
              }
            }
@@ -880,7 +880,7 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
            {
              if (edkey.cmd != IFT_REMOVE)
              {
-               edkey.text = dup_string(edkey.text);
+               edkey.text = strdup(edkey.text);
                edomain_add_from(&edkey,index);
              }
            }
@@ -912,7 +912,7 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
            {
              if (edkey.cmd != IFT_REMOVE)
              {
-               edkey.text = dup_string(edkey.text);
+               edkey.text = strdup(edkey.text);
                edomain_add_fromd(&edkey,index);
              }
            }
@@ -929,7 +929,7 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
 	 }
          break;
     default:
-         ddt(0);
+         assert(0);
   }
   
   send_reply(req,resp,0,REASON_NONE);
@@ -940,9 +940,8 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
 static void log_tuple(struct tuple *tuple,int rc,int why)
 {
   (*cv_report)(
-  	LOG_INFO,
-  	"$ $ $ $ $ $ $",
-  	"tuple: [%a , %b , %c]%d%e %f %g",
+        LOG_INFO,
+        "tuple: [%s , %s , %s]%s%s %s %s",
   	ipv4(tuple->ip),
   	tuple->from,
   	tuple->to,
