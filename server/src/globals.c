@@ -19,6 +19,8 @@
 *
 *************************************************************************/
 
+#define _GNU_SOURCE
+
 #include <errno.h>
 #include <stdarg.h>
 #include <string.h>
@@ -26,6 +28,7 @@
 #include <time.h>
 #include <ctype.h>
 
+#include <libgen.h>
 #include <unistd.h>
 #include <syslog.h>
 #include <signal.h>
@@ -114,7 +117,7 @@ int            cf_foreground     = 0;
 int            cf_oldcounts      = 0;
 
 	/*---------------------------------------------------*/
-
+char                 g_argv0[FILENAME_MAX];
 char               **g_argv;
 
 size_t               g_poolnum;
@@ -226,6 +229,22 @@ int (GlobalsInit)(int argc,char *argv[])
   ; they're killed and this program will then reexec itself to start
   ; up.  This is what they do in Erlang to remain up and running.
   ;--------------------------------------------------------------*/
+  
+  if (argv[0][0] == '/')
+    strcpy(g_argv0,argv[0]);
+  else
+  {
+    char  cwd[FILENAME_MAX];
+    char *path;
+    
+    path = getcwd(cwd,FILENAME_MAX);
+    if (path == NULL)
+    {
+      /* XXX - ERROR */
+      return ERR_ERR;
+    }
+    snprintf(g_argv0,sizeof(g_argv0),"%s/%s",path,argv[0]);
+  }
   
   g_argv      = argv;
   c_starttime = g_time_savestate = time(NULL);
@@ -485,7 +504,8 @@ static void parse_cmdline(int argc,char *argv[])
 static void daemon_init(void)
 {
   pid_t pid;
-
+  int   fh;
+  
   pid = fork();
   if (pid == (pid_t)-1)
   {
@@ -494,28 +514,35 @@ static void daemon_init(void)
   }
   else if (pid != 0)	/* parent goes bye bye */
     exit(EXIT_SUCCESS);
-  
-  /*----------------------------------------------
-  ; there used to be a chdir("/tmp") call here, but
-  ; then the re-exec may fail if the program was
-  ; started using a relative path.  It has been
-  ; disabled for now.
-  ;----------------------------------------------*/
-
-  /*chdir("/tmp");*/
 
   setsid();
-
-  StreamFree(StdinStream);	/* these no longer needed */
-  StreamFree(StdoutStream);
-  close(STDOUT_FILENO);
-  close(STDIN_FILENO);
-
-  if (cv_report == report_syslog)
+  set_signal(SIGHUP,SIG_IGN);
+  
+  pid = fork();
+  if (pid == (pid_t)-1)
   {
-    StreamFree(StderrStream); /* except maybe this one */
-    close(STDERR_FILENO);
+    (*cv_report)(LOG_EMERG,"$","daemon_init(): fork(2) = %a",strerror(errno));
+    exit(EXIT_FAILURE);
   }
+  else if (pid != 0)
+    _exit(EXIT_SUCCESS);
+  
+  chdir("/");
+  umask(022);
+  
+  fh = open("/dev/null",O_RDWR);
+  if (fh == -1)
+  {
+    (*cv_report)(LOG_EMERG,"$","daemon_init():open(/dev/null) = %a",strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+  
+  ddt(fh > 2);
+  dup2(fh,STDIN_FILENO);
+  dup2(fh,STDOUT_FILENO);
+  dup2(fh,STDERR_FILENO);	/* we always close this when going into daemon mode */
+  
+  close(fh);
 }
 
 /**********************************************************************/
