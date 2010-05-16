@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include <libgen.h>
 #include <unistd.h>
@@ -184,29 +185,29 @@ volatile int m_debug = 1;
 
 static const struct option mc_options[] =
 {
-  { "whitelist"      	, required_argument	, NULL	, OPT_LIST_WHITE	},
-  { "graylist"		, required_argument	, NULL	, OPT_LIST_GREY 	} ,
-  { "greylist"		, required_argument	, NULL	, OPT_LIST_GREY		} ,
+  { "whitelist"      	, required_argument	, NULL	, OPT_LIST_WHITE	} ,	/* gone */
+  { "graylist"		, required_argument	, NULL	, OPT_LIST_GREY 	} ,	/* gone */
+  { "greylist"		, required_argument	, NULL	, OPT_LIST_GREY		} ,	/* gone */
   { "host"		, required_argument	, NULL	, OPT_HOST		} ,
   { "port"		, required_argument	, NULL	, OPT_PORT		} ,
-  { "max-tuples"	, required_argument	, NULL	, OPT_MAX_TUPLES	} ,
-  { "time-cleanup" 	, required_argument	, NULL	, OPT_TIME_CLEANUP	} ,
-  { "time-checkpoint"	, required_argument	, NULL	, OPT_TIME_SAVESTATE	} ,
-  { "timeout-embargo"	, required_argument	, NULL	, OPT_TIMEOUT_EMBARGO	} ,
-  { "timeout-grey"	, required_argument	, NULL	, OPT_TIMEOUT_GREY	} ,
-  { "timeout-grey"	, required_argument	, NULL	, OPT_TIMEOUT_GREY	} ,
-  { "timeout-white"	, required_argument	, NULL	, OPT_TIMEOUT_WHITE	} ,
-  { "iplist"		, required_argument	, NULL	, OPT_FILE_IPLIST	} ,
-  { "time-format"     	, required_argument 	, NULL	, OPT_TIME_FORMAT    	} ,
-  { "report-format"     , required_argument 	, NULL	, OPT_REPORT_FORMAT	} ,
-  { "log-facility"   	, required_argument 	, NULL	, OPT_LOG_FACILITY	} ,
-  { "log-level"      	, required_argument 	, NULL	, OPT_LOG_LEVEL		} ,
-  { "log-id"      	, required_argument 	, NULL	, OPT_LOG_ID        	} ,
-  { "secret"		, required_argument	, NULL	, OPT_SECRET		} ,
+  { "max-tuples"	, required_argument	, NULL	, OPT_MAX_TUPLES	} ,	/* gone */
+  { "time-cleanup" 	, required_argument	, NULL	, OPT_TIME_CLEANUP	} ,	/* gone */
+  { "time-checkpoint"	, required_argument	, NULL	, OPT_TIME_SAVESTATE	} ,	/* gone */
+  { "timeout-embargo"	, required_argument	, NULL	, OPT_TIMEOUT_EMBARGO	} ,	/* gone */
+  { "timeout-grey"	, required_argument	, NULL	, OPT_TIMEOUT_GREY	} ,	/* gone */
+  { "timeout-grey"	, required_argument	, NULL	, OPT_TIMEOUT_GREY	} ,	/* gone */
+  { "timeout-white"	, required_argument	, NULL	, OPT_TIMEOUT_WHITE	} ,	/* gone */
+  { "iplist"		, required_argument	, NULL	, OPT_FILE_IPLIST	} ,	/* gone */
+  { "time-format"     	, required_argument 	, NULL	, OPT_TIME_FORMAT    	} ,	/* gone */
+  { "report-format"     , required_argument 	, NULL	, OPT_REPORT_FORMAT	} ,	/* gone --if foreground use stderr */
+  { "log-facility"   	, required_argument 	, NULL	, OPT_LOG_FACILITY	} ,	/* gone */
+  { "log-level"      	, required_argument 	, NULL	, OPT_LOG_LEVEL		} ,	/* gone */
+  { "log-id"      	, required_argument 	, NULL	, OPT_LOG_ID        	} ,	/* gone */
+  { "secret"		, required_argument	, NULL	, OPT_SECRET		} ,	/* gone */
   { "debug"          	, no_argument       	, NULL	, OPT_DEBUG		} ,
   { "foreground"     	, no_argument       	, NULL	, OPT_FOREGROUND   	} ,
-  { "old-counts"	, no_argument		, NULL	, OPT_OLDCOUNTS		} ,
-  { "stderr"	     	, no_argument       	, NULL	, OPT_STDERR       	} ,
+  { "old-counts"	, no_argument		, NULL	, OPT_OLDCOUNTS		} ,	/* gone */
+  { "stderr"	     	, no_argument       	, NULL	, OPT_STDERR       	} ,	/* gone */
   { "version"		, no_argument		, NULL	, OPT_VERSION		} ,
   { "help"	     	, no_argument       	, NULL	, OPT_HELP         	} ,
   { NULL	     	, 0		 	, NULL	, 0 			}
