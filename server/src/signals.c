@@ -132,7 +132,7 @@ void sighandler_critical(int sig)
   sigfillset(&sigset);
   sigprocmask(SIG_UNBLOCK,&sigset,NULL);
   
-  execve((const char *)g_argv[0],(char **const)g_argv,environ);
+  execve(g_argv0,g_argv,environ);
   (*cv_report)(LOG_ERR,"$ $","exec('%a') = %b",g_argv[0],strerror(errno));
   exit(EXIT_FAILURE);	/* when all else fails! */
 }
