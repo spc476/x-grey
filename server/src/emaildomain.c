@@ -19,87 +19,89 @@
 *
 *************************************************************************/
 
+#define _GNU_SOURCE
+
 #include <string.h>
+#include <assert.h>
+#include <errno.h>
 
 #include <syslog.h>
 
-#include <cgilib/memory.h>
-#include <cgilib/stream.h>
-#include <cgilib/util.h>
-#include <cgilib/ddt.h>
+#include <cgilib6/util.h>
 
 #include "../../common/src/globals.h"
 #include "../../common/src/util.h"
-
 #include "emaildomain.h"
 #include "globals.h"
 
 #define ED_DELTA	100
 
-static void tofrom_dump_stream	(Stream,EDomain,size_t);
-static int  tofrom_read		(
-				  const char *,
-				  EDomain (*)(EDomain,size_t *),
-				  void    (*)(EDomain,size_t),
-				  int      *,
-				  size_t   *
+static void file_dump		(const char *,void (*)(FILE *));
+static void tofrom_dump_stream	(FILE *,EDomain,size_t);
+static void tofrom_read		(
+				  const char  *,
+				  EDomain    (*)(EDomain,size_t *),
+				  void       (*)(EDomain,size_t),
+				  int         *,
+				  size_t      *
 				);
 static void tofrom_read_stream	(
-				  Stream,
-				  EDomain (*)(EDomain,size_t *),
-				  void    (*)(EDomain,size_t),
-				  int      *,
-				  size_t   *
+                                  const char  *,
+				  FILE        *,
+				  EDomain    (*)(EDomain,size_t *),
+				  void       (*)(EDomain,size_t),
+				  int         *,
+				  size_t      *
 				);
 
 /******************************************************************/
 
 int edomain_cmp(EDomain key,EDomain node)
 {
-  ddt(key  != NULL);
-  ddt(node != NULL);
+  assert(key  != NULL);
+  assert(node != NULL);
   
-  return(strcmp(key->text,node->text));
+  return strcmp(key->text,node->text);
 }
 
 /*********************************************************************/
 
 EDomain edomain_search_to(EDomain key,size_t *pidx)
 {
-  ddt(key  != NULL);
-  ddt(pidx != NULL);
+  assert(key  != NULL);
+  assert(pidx != NULL);
   
-  return (edomain_search(key,pidx,g_to,g_sto));
+  return edomain_search(key,pidx,g_to,g_sto);
 }
 
 /***********************************************************************/
 
 EDomain edomain_search_tod(EDomain key,size_t *pidx)
 {
-  ddt(key  != NULL);
-  ddt(pidx != NULL);
+  assert(key  != NULL);
+  assert(pidx != NULL);
   
-  return (edomain_search(key,pidx,g_tod,g_stod));
+  return edomain_search(key,pidx,g_tod,g_stod);
 }
 
 /********************************************************************/
 
 EDomain edomain_search_from(EDomain key,size_t *pidx)
 {
-  ddt(key  != NULL);
-  ddt(pidx != NULL);
+  assert(key  != NULL);
+  assert(pidx != NULL);
   
-  return(edomain_search(key,pidx,g_from,g_sfrom));
+  return edomain_search(key,pidx,g_from,g_sfrom);
 }
 
 /******************************************************************/
 
 EDomain edomain_search_fromd(EDomain key,size_t *pidx)
 {
-  ddt(key  != NULL);
-  ddt(pidx != NULL);
+  assert(key  != NULL);
+  assert(pidx != NULL);
   
-  return(edomain_search(key,pidx,g_fromd,g_sfromd));
+  return edomain_search(key,pidx,g_fromd,g_sfromd);
 }
 
 /*******************************************************************/
@@ -111,8 +113,8 @@ EDomain edomain_search(EDomain key,size_t *pidx,EDomain array,size_t len)
   size_t half;
   int    q;
   
-  ddt(key  != NULL);
-  ddt(pidx != NULL);
+  assert(key  != NULL);
+  assert(pidx != NULL);
   
   first = 0;
   
@@ -144,13 +146,13 @@ EDomain edomain_search(EDomain key,size_t *pidx,EDomain array,size_t len)
 
 void edomain_add_from(EDomain rec,size_t index)
 {
-  ddt(rec   != NULL);
-  ddt(index <= g_sfrom);
+  assert(rec   != NULL);
+  assert(index <= g_sfrom);
   
   if (g_sfrom == g_smaxfrom)
   {
     g_smaxfrom += ED_DELTA;
-    g_from      = MemResize(g_from,g_smaxfrom * sizeof(struct emaildomain));
+    g_from      = realloc(g_from,g_smaxfrom * sizeof(struct emaildomain));
   }
   
   memmove(
@@ -169,10 +171,10 @@ void edomain_remove_from(size_t index)
 {
   size_t count;
   
-  ddt(index <= g_sfrom);
+  assert(index <= g_sfrom);
   
   if (g_sfrom == 0) return;
-  MemFree(g_from[index].text);
+  free(g_from[index].text);
   count = (g_sfrom - index) - 1;
   if (count)
   {
@@ -190,13 +192,13 @@ void edomain_remove_from(size_t index)
 
 void edomain_add_fromd(EDomain rec,size_t index)
 {
-  ddt(rec   != NULL);
-  ddt(index <= g_sfromd);
+  assert(rec   != NULL);
+  assert(index <= g_sfromd);
     
   if (g_sfromd == g_smaxfromd)
   {
     g_smaxfromd += ED_DELTA;
-    g_fromd      = MemResize(g_fromd,g_smaxfromd * sizeof(struct emaildomain));
+    g_fromd      = realloc(g_fromd,g_smaxfromd * sizeof(struct emaildomain));
   }
   
   memmove(
@@ -215,10 +217,10 @@ void edomain_remove_fromd(size_t index)
 {
   size_t count;
   
-  ddt(index <= g_sfromd);
+  assert(index <= g_sfromd);
   
   if (g_sfromd == 0) return;
-  MemFree(g_fromd[index].text);
+  free(g_fromd[index].text);
   count = (g_sfromd - index) - 1;
   if (count)
   {
@@ -235,13 +237,13 @@ void edomain_remove_fromd(size_t index)
 
 void edomain_add_to(EDomain rec,size_t index)
 {
-  ddt(rec   != NULL);
-  ddt(index <= g_sto);
+  assert(rec   != NULL);
+  assert(index <= g_sto);
   
   if (g_sto == g_smaxto)
   {
     g_smaxto += ED_DELTA;
-    g_to      = MemResize(g_to,g_smaxto * sizeof(struct emaildomain));
+    g_to      = realloc(g_to,g_smaxto * sizeof(struct emaildomain));
   }
   
   memmove(
@@ -260,10 +262,10 @@ void edomain_remove_to(size_t index)
 {
   size_t count;
   
-  ddt(index <= g_sto);
+  assert(index <= g_sto);
 
   if (g_sto == 0) return;  
-  MemFree(g_to[index].text);
+  free(g_to[index].text);
   count = (g_sto - index) - 1;
 
   if (count)
@@ -281,13 +283,13 @@ void edomain_remove_to(size_t index)
 
 void edomain_add_tod(EDomain rec,size_t index)
 {
-  ddt(rec   != NULL);
-  ddt(index <= g_stod);
+  assert(rec   != NULL);
+  assert(index <= g_stod);
   
   if (g_stod == g_smaxtod)
   {
     g_smaxtod += ED_DELTA;
-    g_tod      = MemResize(g_tod,g_smaxtod * sizeof(struct emaildomain));
+    g_tod      = realloc(g_tod,g_smaxtod * sizeof(struct emaildomain));
   }
   
   memmove(
@@ -306,10 +308,10 @@ void edomain_remove_tod(size_t index)
 {
   size_t count;
   
-  ddt(index <= g_stod);
+  assert(index <= g_stod);
   
   if (g_stod == 0) return;
-  MemFree(g_tod[index].text);
+  free(g_tod[index].text);
   count = (g_stod - index) - 1;
   if (count)
   {
@@ -324,179 +326,151 @@ void edomain_remove_tod(size_t index)
 
 /*******************************************************************/
 
-int to_dump(void)
+static void file_dump(const char *fname,void (*function)(FILE *))
 {
-  Stream out;
+  FILE *fpout;
   
-  out = FileStreamWrite(c_tofile,FILE_CREATE | FILE_TRUNCATE);
-  if (out == NULL)
+  assert(fname    != NULL);
+  assert(function != NULL);
+  
+  fpout = fopen(fname,"w");
+  if (fpout)
   {
-    (*cv_report)(LOG_ERR,"$","could not open %a",c_tofile);
-    return(ERR_ERR);
+    (*function)(fpout);
+    fclose(fpout);
   }
-  
-  to_dump_stream(out);
-  StreamFree(out);
-  return(ERR_OKAY);
+  else
+    (*cv_report)(LOG_ERR,"fopen(%s,WRITE) = %s",(char *)fname,strerror(errno));
+}
+
+/**********************************************************************/
+
+void to_dump(void)
+{
+  file_dump(c_tofile,to_dump_stream);
 }
 
 /******************************************************************/
 
-int tod_dump(void)
+void tod_dump(void)
 {
-  Stream out;
-  
-  out = FileStreamWrite(c_todfile,FILE_CREATE | FILE_TRUNCATE);
-  if (out == NULL)
-  {
-    (*cv_report)(LOG_ERR,"$","could not open %a",c_todfile);
-    return (ERR_ERR);
-  }
-  
-  tod_dump_stream(out);
-  StreamFree(out);
-  return(ERR_OKAY);
+  file_dump(c_todfile,tod_dump_stream);
 }
 
 /******************************************************************/
 
-int from_dump(void)
+void from_dump(void)
 {
-  Stream out;
-  
-  out = FileStreamWrite(c_fromfile,FILE_CREATE | FILE_TRUNCATE);
-  if (out == NULL)
-  {
-    (*cv_report)(LOG_ERR,"$","could not open %a",c_fromfile);
-    return(ERR_ERR);
-  }
-  
-  from_dump_stream(out);
-  StreamFree(out);
-  return(ERR_OKAY);
+  file_dump(c_fromfile,from_dump_stream);
 }
 
 /******************************************************************/
 
-int fromd_dump(void)
+void fromd_dump(void)
 {
-  Stream out;
-  
-  out = FileStreamWrite(c_fromdfile,FILE_CREATE | FILE_TRUNCATE);
-  if (out == NULL)
-  {
-    (*cv_report)(LOG_ERR,"$","could not open %a",c_fromdfile);
-    return(ERR_ERR);
-  }
-  
-  fromd_dump_stream(out);
-  StreamFree(out);
-  return(ERR_OKAY);
+  file_dump(c_fromdfile,fromd_dump_stream);
 }
 
 /****************************************************************/
 
-int to_dump_stream(Stream out)
+void to_dump_stream(FILE *out)
 {
   const char *cmd;
   
-  ddt(out != NULL);
+  assert(out != NULL);
   
   tofrom_dump_stream(out,g_to,g_sto);
   cmd = ci_map_chars(g_defto,c_ift,C_IFT);
-  LineSFormat(out,"L10 $8.8l","%a %b DEFAULT\n",g_toc,cmd);
-  return(ERR_OKAY);
+  fprintf(out,"%10lu %8.8s DEFAULT\n",(unsigned long)g_toc,cmd);
 }
 
 /*********************************************************************/
 
-int tod_dump_stream(Stream out)
+void tod_dump_stream(FILE *out)
 {
   const char *cmd;
   
-  ddt(out);
+  assert(out);
   
   tofrom_dump_stream(out,g_tod,g_stod);
   cmd = ci_map_chars(g_deftodomain,c_ift,C_IFT);
-  LineSFormat(out,"L10 $8.8l","%a %b DEFAULT\n",g_todomainc,cmd);
-  return(ERR_OKAY);
+  fprintf(out,"%10lu %8.8s DEFAULT\n",(unsigned long)g_todomainc,cmd);
 }
 
 /********************************************************************/
 
-int from_dump_stream(Stream out)
+void from_dump_stream(FILE *out)
 {
   const char *cmd;
   
-  ddt(out);
+  assert(out);
   
   tofrom_dump_stream(out,g_from,g_sfrom);
   cmd = ci_map_chars(g_deffrom,c_ift,C_IFT);
-  LineSFormat(out,"L10 $8.8l","%a %b DEFAULT\n",g_fromc,cmd);
-  return(ERR_OKAY);
+  fprintf(out,"%10lu %8.8s DEFAULT\n",(unsigned long)g_fromc,cmd);
 }
 
 /********************************************************************/
 
-int fromd_dump_stream(Stream out)
+void fromd_dump_stream(FILE *out)
 {
   const char *cmd;
   
-  ddt(out);
+  assert(out);
   
   tofrom_dump_stream(out,g_fromd,g_sfromd);
   cmd = ci_map_chars(g_deffromdomain,c_ift,C_IFT);
-  LineSFormat(out,"L10 $8.8l","%a %b DEFAULT\n",g_fromdomainc,cmd);
-  return(ERR_OKAY);
+  fprintf(out,"%10lu %8.8s DEFAULT\n",(unsigned long)g_fromdomainc,cmd);
 }
 
 /*******************************************************************/
 
-static void tofrom_dump_stream(Stream out,EDomain list,size_t size)
+static void tofrom_dump_stream(FILE *out,EDomain list,size_t size)
 {
   size_t      i;
   const char *cmd;
 
-  ddt(out  != NULL);
+  assert(out  != NULL);
+  assert(list != NULL);
 
   for (i = 0 ; i < size ; i++)
   {
     cmd = ci_map_chars(list[i].cmd,c_ift,C_IFT);
-    LineSFormat(out,"L10 $8.8l $","%a %b %c\n",list[i].count,cmd,list[i].text);
+    fprintf(out,"%10lu %8.8s %s",(unsigned long)list[i].count,cmd,list[i].text);    
   }
 }
 
 /*********************************************************************/
 
-int to_read(void)
+void to_read(void)
 {
-  return (tofrom_read(c_tofile,edomain_search_to,edomain_add_to,&g_defto,&g_toc));
+  tofrom_read(c_tofile,edomain_search_to,edomain_add_to,&g_defto,&g_toc);
 }
 
 /*******************************************************************/
 
-int tod_read(void)
+void tod_read(void)
 {
-  return (tofrom_read(c_todfile,edomain_search_tod,edomain_add_tod,&g_deftodomain,&g_todomainc));
+  tofrom_read(c_todfile,edomain_search_tod,edomain_add_tod,&g_deftodomain,&g_todomainc);
 }
 
 /******************************************************************/
 
-int from_read(void)
+void from_read(void)
 {
-  return (tofrom_read(c_fromfile,edomain_search_from,edomain_add_from,&g_deffrom,&g_fromc));
+  tofrom_read(c_fromfile,edomain_search_from,edomain_add_from,&g_deffrom,&g_fromc);
 }
 
 /*****************************************************************/
 
-int fromd_read(void)
+void fromd_read(void)
 {
-  return (tofrom_read(c_fromdfile,edomain_search_fromd,edomain_add_fromd,&g_deffromdomain,&g_fromdomainc));
+  tofrom_read(c_fromdfile,edomain_search_fromd,edomain_add_fromd,&g_deffromdomain,&g_fromdomainc);
 }
 
 /******************************************************************/
 
-static int tofrom_read(
+static void tofrom_read(
 		const char  *fname,
 		EDomain    (*search)(EDomain,size_t *),
 		void       (*add)   (EDomain,size_t),
@@ -504,62 +478,69 @@ static int tofrom_read(
 		size_t      *pcount
 	)
 {
-  Stream in;
+  FILE *in;
   
-  ddt(fname  != NULL);
-  ddt(search);
-  ddt(add);
-  ddt(pdef   != NULL);
-  ddt(pcount != NULL);
-  
-  in = FileStreamRead(fname);
-  if (in == NULL)
+  assert(fname  != NULL);
+  assert(search);
+  assert(add);
+  assert(pdef   != NULL);
+  assert(pcount != NULL);
+
+  in = fopen(fname,"r");  
+  if (in)
   {
-    (*cv_report)(LOG_ERR,"$","could not open %a",fname);
-    return(ERR_ERR);
+    tofrom_read_stream(fname,in,search,add,pdef,pcount);
+    fclose(in);
   }
-  
-  tofrom_read_stream(in,search,add,pdef,pcount);
-  StreamFree(in);
-  return(ERR_OKAY);
+  else
+    (*cv_report)(LOG_ERR,"fopen(%s,READ) = %s",(char *)fname,strerror(errno));
 }
 
 /*******************************************************************/
 
 static void tofrom_read_stream(
-		Stream    in,
-		EDomain (*search)(EDomain,size_t *),
-		void    (*add)   (EDomain,size_t),
-		int      *pdef,
-		size_t   *pcount
+                const char  *fname,
+		FILE        *in,
+		EDomain    (*search)(EDomain,size_t *),
+		void       (*add)   (EDomain,size_t),
+		int         *pdef,
+		size_t      *pcount
 	)
 {
   struct emaildomain  ed;
   EDomain             value;
   String             *fields;
   size_t              fsize;
+  char               *linebuff;
   char               *line;
+  size_t              linesize;
   size_t              idx;
+  unsigned long       linecnt;
   
-  ddt(in     != NULL);
-  ddt(search);
-  ddt(add);
-  ddt(pdef   != NULL);
-  ddt(pcount != NULL);
+  assert(fname  != NULL);
+  assert(in     != NULL);
+  assert(search);
+  assert(add);
+  assert(pdef   != NULL);
+  assert(pcount != NULL);
   
-  line    = dup_string("");
-  fields  = MemAlloc(sizeof(String));
+  linebuff = NULL;
+  linesize = 0;
+  linecnt  = 0;
+  fields   = malloc(sizeof(String));
   
-  while(!StreamEOF(in))
+  while(!feof(in))
   {
-    MemFree(fields);
-    MemFree(line);
+    free(fields);
+    if (getline(&linebuff,&linesize,in) <= 0)
+      break;
     
-    line = LineSRead(in);
-    if (empty_string(line))
+    linecnt++;
+    
+    if (empty_string(linebuff))
       continue;
     
-    line = trim_space(line);
+    line = trim_space(linebuff);
     
     if (line[0] == '#')
       continue;
@@ -567,7 +548,7 @@ static void tofrom_read_stream(
     fields = split(&fsize,line);
     if (fsize < 3)
     {
-      (*cv_report)(LOG_ERR,"","bad input in one of the email files");
+      (*cv_report)(LOG_ERR,"%s(%lu): bad input",(char *)fname,linecnt);
       continue;
     }
     
@@ -592,16 +573,18 @@ static void tofrom_read_stream(
       ed.count = 0;
     ed.cmd   = ci_map_int(fields[1].d,c_ift,C_IFT);
     
-    (*cv_report)(LOG_DEBUG,"$ i","adding %a as %b",ed.text,ed.cmd);
+    (*cv_report)(LOG_DEBUG,"adding %s as %d",ed.text,ed.cmd);
 
     value = (*search)(&ed,&idx);
 
     if (value == NULL)
     {
-      ed.text = dup_string(ed.text);
+      ed.text = strdup(ed.text);
       (*add)(&ed,idx);
     }
   }
+  
+  free(linebuff);
 }
 
 /******************************************************************/

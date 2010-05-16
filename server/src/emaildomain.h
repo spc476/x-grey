@@ -22,9 +22,8 @@
 #ifndef EMAIL_DOMAIN_H
 #define EMAIL_DOMAIN_H
 
+#include <stdio.h>
 #include <stdlib.h>
-
-#include <cgilib/stream.h>
 
 /******************************************************************/
 
@@ -52,18 +51,17 @@ void		edomain_add_to		(EDomain,size_t);
 void		edomain_remove_to	(size_t);
 void		edomain_add_tod		(EDomain,size_t);
 void		edomain_remove_tod	(size_t);
-int		to_dump			(void);
-int		tod_dump		(void);
-int		from_dump		(void);
-int		fromd_dump		(void);
-int		to_dump_stream		(Stream);
-int		tod_dump_stream		(Stream);
-int		from_dump_stream	(Stream);
-int		fromd_dump_stream	(Stream);
-int		to_read			(void);
-int		tod_read		(void);
-int		from_read		(void);
-int		fromd_read		(void);
+void		to_dump			(void);
+void		tod_dump		(void);
+void		from_dump		(void);
+void		fromd_dump		(void);
+void		to_dump_stream		(FILE *);
+void		tod_dump_stream		(FILE *);
+void		from_dump_stream	(FILE *);
+void		fromd_dump_stream	(FILE *);
+void		to_read			(void);
+void		tod_read		(void);
+void		from_read		(void);
+void		fromd_read		(void);
 		
 #endif
-
