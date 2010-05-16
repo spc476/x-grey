@@ -26,8 +26,6 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#include <cgilib/stream.h>
-
 #include "greylist.h"
 
 #define SECSMIN		(60.0)
@@ -55,8 +53,8 @@ typedef struct mystring
 int	    create_socket		(const char *,int,int);
 int	    ci_map_int			(const char *,const struct chars_int [],size_t);
 const char *ci_map_chars		(int,const struct chars_int [],size_t);
-void	    report_syslog		(int,char *,char *, ... );
-void	    report_stderr		(int,char *,char *, ... );
+void	    report_syslog		(int,const char *, ... );
+void	    report_stderr		(int,const char *, ... );
 void	    log_address			(struct sockaddr *);
 char	   *ipv4			(const byte *);
 int	    set_signal			(int,void (*)(int));

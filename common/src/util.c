@@ -19,20 +19,17 @@
 *
 *************************************************************************/
 
-/*********************************************************************
-*
-* _POSIX_SOURCE gets us struct sigaction
-*
-**********************************************************************/
-
 #define _POSIX_SOURCE
+#define _BSD_SOURCE
 
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
 #include <errno.h>
+#include <assert.h>
 
 #include <netdb.h>
 #include <netinet/in.h>
@@ -43,10 +40,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <syslog.h>
-
-#include <cgilib/memory.h>
-#include <cgilib/util.h>
-#include <cgilib/ddt.h>
 
 #include "eglobals.h"
 #include "util.h"
@@ -64,9 +57,9 @@ int create_socket(const char *host,int port,int type)
   int                 rc;
   int                 reuse = 1;
 
-  ddt(host != NULL);
-  ddt(port >= 0);
-  ddt(port <= 65535);
+  assert(host != NULL);
+  assert(port >= 0);
+  assert(port <= 65535);
   
   lh = inet_addr(host);
 
@@ -75,7 +68,7 @@ int create_socket(const char *host,int port,int type)
     localhost = gethostbyname(host);
     if (localhost == NULL)
     {
-      (*cv_report)(LOG_ERR,"$ $","gethostbyname(%a) = %b",c_host,strerror(errno));
+      (*cv_report)(LOG_ERR,"gethostbyname(%s) = %s",c_host,strerror(errno));
       return -1;
     }
     memcpy(&sin.sin_addr.s_addr,localhost->h_addr,localhost->h_length);
@@ -89,26 +82,26 @@ int create_socket(const char *host,int port,int type)
   s = socket(AF_INET,type,0);
   if (s < -1)
   {
-    (*cv_report)(LOG_ERR,"$","socket() = %a",strerror(errno));
+    (*cv_report)(LOG_ERR,"socket() = %s",strerror(errno));
     return -1;
   }
   
   rc = setsockopt(s,SOL_SOCKET,SO_REUSEADDR,&reuse,sizeof(reuse));
   if (rc == -1)
   {
-    (*cv_report)(LOG_ERR,"$","setsockopt(SO_REUSEADDR) = %a",strerror(errno));
+    (*cv_report)(LOG_ERR,"setsockopt(SO_REUSEADDR) = %s",strerror(errno));
     return -1;
   }
   
   if (bind(s,(struct sockaddr *)&sin,sizeof(sin)))
   {
-    (*cv_report)(LOG_ERR,"$","bind() = %a",strerror(errno));
+    (*cv_report)(LOG_ERR,"bind() = %s",strerror(errno));
     return -1;
   }
   
   log_address((struct sockaddr *)&sin);
   
-  return(s);
+  return s;
 }
 
 /*******************************************************************/
@@ -117,16 +110,16 @@ int ci_map_int(const char *name,const struct chars_int list[],size_t size)
 {
   size_t i;
 
-  ddt(name != NULL);
-  ddt(list != NULL);
-  ddt(size >  0);
+  assert(name != NULL);
+  assert(list != NULL);
+  assert(size >  0);
 
   for (i = 0 ; i < size ; i++)
   {
     if (strcmp(name,list[i].name) == 0)
       return(list[i].value);
   }
-  return(-1);
+  return -1;
 }
 
 /************************************************************************/
@@ -135,61 +128,61 @@ const char *ci_map_chars(int value,const struct chars_int list[],size_t size)
 {
   size_t i;
 
-  ddt(list != NULL);
-  ddt(size >  0);
+  assert(list != NULL);
+  assert(size >  0);
 
   for (i = 0 ; i < size ; i++)
   {
     if (value == list[i].value)
       return(list[i].name);
   }
-  return("");
+  return "";
 }
 
 /***********************************************************************/
 
-void report_syslog(int level,char *format,char *msg, ... )
+void report_syslog(int level,const char *msg, ... )
 {
-  Stream   out;
-  va_list  arg;
-  char    *txt;
+  assert(level >= 0);
+  assert(level <  8);
+  assert(msg   != NULL);
   
-  ddt(level  >= 0);
-  ddt(format != NULL);
-  ddt(msg    != NULL);
-  
-  va_start(arg,msg);
   if (level <= c_log_level)
   {
-    out = StringStreamWrite();
-    LineSFormatv(out,format,msg,arg);
-    txt = StringFromStream(out);
-    syslog(level,"[%lu] %s",++m_logseq,txt);
-    MemFree(txt);
-    StreamFree(out);
+    va_list arg;
+    char    buffer[BUFSIZ + 1];
+    size_t  bytes;
+    
+    va_start(arg,msg);
+    bytes = snprintf(buffer,BUFSIZ,"[%lu] ",++m_logseq);
+    vsnprintf(&buffer[bytes],BUFSIZ - bytes,msg,arg);
+    syslog(level,"%s",buffer);
+    va_end(arg);
   }
-  va_end(arg);
 }
 
 /********************************************************************/
 
-void report_stderr(int level,char *format,char *msg, ... )
+void report_stderr(int level,const char *msg, ... )
 {
-  va_list arg;
+  assert(level >= 0);
+  assert(level <  8);
+  assert(msg   != NULL);
   
-  ddt(level  >= 0);
-  ddt(format != NULL);
-  ddt(msg    != NULL);
-  
-  va_start(arg,msg);
   if (level <= c_log_level)
   {
-    LineSFormat(StderrStream,"L","[%a] ",++m_logseq);
-    LineSFormatv(StderrStream,format,msg,arg);
-    StreamWrite(StderrStream,'\n');
-    StreamFlush(StderrStream);
-  }
-  va_end(arg);
+    va_list arg;
+    char    buffer[BUFSIZ + 1];
+    size_t  bytes;
+    
+    va_start(arg,msg);
+    bytes           = snprintf(buffer,BUFSIZ,"[%lu] ",++m_logseq);
+    bytes           = vsnprintf(&buffer[bytes],BUFSIZ - bytes,msg,arg);
+    buffer[bytes++] = '\n';
+    buffer[bytes]   = '\0';
+    write(STDERR_FILENO,buffer,bytes);
+    va_end(arg);
+  }    
 }
 
 /*******************************************************************/
@@ -200,18 +193,17 @@ void log_address(struct sockaddr *pin)
   
   if (pin->sa_family != AF_INET)
   {
-    (*cv_report)(LOG_INFO,"S","wrong family of packet: %a",pin->sa_family);
+    (*cv_report)(LOG_INFO,"wrong family of packet: %d",pin->sa_family);
     return;
   }
   
   pi = (struct sockaddr_in *)pin;
   
   (*cv_report)(
-  	LOG_DEBUG,
-  	"$ S",
-  	"Address: %a:%b",
-  	ipv4((const byte *)&pi->sin_addr.s_addr),
-  	ntohs(pi->sin_port)
+        LOG_DEBUG,
+        "Address: %s:%d",
+        ipv4((const byte *)&pi->sin_addr.s_addr),
+        ntohs(pi->sin_port)
   );
 }
 
@@ -221,10 +213,10 @@ char *ipv4(const byte *ip)
 {
   static char buffer[20];
   
-  ddt(ip != NULL);
+  assert(ip != NULL);
   
   sprintf(buffer,"%d.%d.%d.%d",ip[0],ip[1],ip[2],ip[3]);
-  return(buffer);
+  return buffer;
 }
 
 /***********************************************************************/
@@ -250,7 +242,7 @@ int set_signal(int sig,void (*handler)(int))
   
   rc = sigaction(sig,&act,&oact);
   if (rc == -1)
-    (*cv_report)(LOG_ERR,"$","sigaction() returned %a",strerror(errno));
+    (*cv_report)(LOG_ERR,"sigaction() = %s",strerror(errno));
   
   return rc;
 }
@@ -291,18 +283,13 @@ double read_dtime(char *arg,double defaultval)
       case '\0':
            break;
       default:
-           LineSFormat(
-                StderrStream,
-                "$",
-                "Bad time specifier '%a'---using default\n",
-                arg
-           );
+           fprintf(stderr,"Bad time specifier '%s'---using default\n",arg);
            return defaultval;
     }
     time += val;
   } while (*p);
 
-  return(time);
+  return time;
 }
 
 /*******************************************************************/
@@ -312,7 +299,7 @@ size_t read_size(char *arg)
   size_t value;
   char   *p;
   
-  ddt(arg != NULL);
+  assert(arg != NULL);
   
   value = strtoul(arg,&p,10);
   
@@ -324,58 +311,48 @@ size_t read_size(char *arg)
     case 'b':
     default:   break;
   }
-  return(value);
+  return value;
 }
 
 /*******************************************************************/
 
 char *iptoa(IP addr)
 {
-  Stream ip;
-  char   *tip;
+  char buffer[16];
   
-  ddt(addr != 0);
+  assert(addr != 0);
   
-  ip = StringStreamWrite();
-  LineSFormat(
-  	ip,
-  	"i i i i",
-  	"%a.%b.%c.%d",
-  	(addr >> 24) & 0xFF,
-  	(addr >> 16) & 0xFF,
-  	(addr >>  8) & 0xFF,
-  	(addr      ) & 0xFF
+  snprintf(
+    buffer,
+    sizeof(buffer),
+    "%d.%d.%d.%d",
+    (addr >> 24) & 0xFF,
+    (addr >> 16) & 0xFF,
+    (addr >>  8) & 0xFF,
+    (addr      ) & 0xFF
   );
-  
-  tip = StringFromStream(ip);
-  StreamFree(ip);
-  return(tip);
+
+  return strdup(buffer);
 }
 
 /*********************************************************************/
 
 char *ipptoa(IP addr,Port p)
 {
-  Stream  ip;
-  char   *tip;
+  char buffer[23];
   
-  ddt(addr != 0);
-  
-  ip = StringStreamWrite();
-  LineSFormat(
-  	ip,
-  	"i i i i S",
-  	"%a.%b.%c.%d:%e",
-  	(addr >> 24) & 0xFF,
-  	(addr >> 16) & 0xFF,
-  	(addr >>  8) & 0xFF,
-  	(addr      ) & 0xFF,
-  	p
+  snprintf(
+    buffer,
+    sizeof(buffer),
+    "%d.%d.%d.%d:%d",
+    (addr >> 24) & 0xFF,
+    (addr >> 16) & 0xFF,
+    (addr >>  8) & 0xFF,
+    (addr      ) & 0xFF,
+    p
   );
   
-  tip = StringFromStream(ip);
-  StreamFree(ip);
-  return(tip);
+  return strdup(buffer);
 }
 
 /**************************************************************/
@@ -385,18 +362,17 @@ char *timetoa(time_t stamp)
   char buffer[BUFSIZ];
   
   strftime(buffer,BUFSIZ,"%Y-%m-%dT%H:%M:%S",localtime(&stamp));
-  return(dup_string(buffer));
+  return strdup(buffer);
 }
 
 /**************************************************************/
 
 char *report_time(time_t start,time_t end)
 {
-  Stream     out;
-  char      *ret;
   char      *delta;
   char       txt_start[BUFSIZ];
   char       txt_end  [BUFSIZ];
+  char       msg      [BUFSIZ];
   char      *ptstart;
   char      *ptend;
   struct tm *ptime;
@@ -416,37 +392,27 @@ char *report_time(time_t start,time_t end)
   else
     ptend = "[ERROR in timestamp]";
 
-  out   = StringStreamWrite();
   delta = report_delta(difftime(end,start));
   
-  LineSFormat(out,"$ $ $","Start: %a End: %b Running time: %c",ptstart,ptend,delta);
-    
-  ret = StringFromStream(out);
-  
-  MemFree(delta);
-  StreamFree(out);
-  return(ret);
+  snprintf(msg,sizeof(msg),"Start: %s End: %s Running: %s",ptstart,ptend,delta);
+  free(delta);
+  return strdup(msg);
 }
   
 /******************************************************************/
 
 char *report_delta(double diff)
 {
-  Stream  out;
-  char   *ret;
-  int     year;
-  int     day;
-  int     hour;
-  int     min;
-  int     sec;
+  char   buffer[BUFSIZ];
+  size_t idx;
+  int    year;
+  int    day;
+  int    hour;
+  int    min;
+  int    sec;
 
-  ddt(diff >= 0.0);
+  assert(diff >= 0.0);
   
-  out = StringStreamWrite();
-  
-  if (out == NULL)
-    return(dup_string("[error reporting delta]"));
-    
   year  = (int)(diff / SECSYEAR);
   diff -= ((double)year) * SECSYEAR;
   
@@ -460,16 +426,16 @@ char *report_delta(double diff)
   diff -= ((double)min) * SECSMIN;
   
   sec   = (int)(diff);
+  idx   = 0;
   
-  if (year) LineSFormat(out,"i"," %ay",year);
-  if (day)  LineSFormat(out,"i"," %ad",day);
-  if (hour) LineSFormat(out,"i"," %ah",hour);
-  if (min)  LineSFormat(out,"i"," %am",min);
-  if (sec)  LineSFormat(out,"i"," %as",sec);
+  if (year) idx += sprintf(&buffer[idx],"%dy",year);
+  if (day)  idx += sprintf(&buffer[idx],"%dd",day);
+  if (hour) idx += sprintf(&buffer[idx],"%dh",hour);
+  if (min)  idx += sprintf(&buffer[idx],"%dm",min);
+  if (sec)  idx += sprintf(&buffer[idx],"%ds",sec);
   
-  ret = StringFromStream(out);
-  StreamFree(out);
-  return(ret);
+  assert(idx < BUFSIZ);
+  return strdup(buffer);
 }
 
 /*********************************************************************/
@@ -481,15 +447,15 @@ String *split(size_t *pnum,char *txt)
   String *pool = NULL;
   char   *p;
   
-  ddt(pnum != NULL);
-  ddt(txt  != NULL);
+  assert(pnum != NULL);
+  assert(txt  != NULL);
   
   while(*txt)
   {
     if (num == max)
     {
       max += 1024;
-      pool = MemResize(pool,max * sizeof(String));
+      pool = realloc(pool,max * sizeof(String));
     }
     
     for ( ; (*txt) && isspace(*txt) ; txt++)
@@ -510,46 +476,43 @@ String *split(size_t *pnum,char *txt)
     *p++ = '\0';
     txt  = p;
     (*cv_report)(
-    	LOG_DEBUG,
-	"L $ L L",
-	"%a '%b' %c %d",
-	(unsigned long)num - 1,
-	pool[num-1].d,
-	(unsigned long)pool[num-1].s,
-	(unsigned long)strlen(pool[num-1].d)
-    );	
+        LOG_DEBUG,
+        "%lu '%s' %lu %lu",
+        (unsigned long)num - 1,
+        pool[num - 1].d,
+        (unsigned long)pool[num - 1].s,
+        (unsigned long)strlen(pool[num - 1].d)
+      );
   }
   
   (*cv_report)(
-  	LOG_DEBUG,
-	"i $ i i",
-	"%a '%b' %c %d",
-	(unsigned long)num - 1,
-	pool[num-1].d,
-	(unsigned long)pool[num-1].s,
-	(unsigned long)strlen(pool[num-1].d)
-  );
+        LOG_DEBUG,
+        "%lu '%s' %lu %lu",
+        (unsigned long)num - 1,
+        pool[num - 1].d,
+        (unsigned long)pool[num - 1].s,
+        (unsigned long)strlen(pool[num - 1].d)
+      );
   *pnum = num;
-  return(pool);
+  return pool;
 }
 
 /********************************************************************/
 
 void write_pidfile(const char *fname)
 {
-  Stream pfile;
+  FILE *fp;
   
-  ddt(fname != NULL);
+  assert(fname != NULL);
   
-  pfile = FileStreamWrite(fname,FILE_CREATE | FILE_TRUNCATE);
-  if (pfile == NULL)
-    (*cv_report)(LOG_ERR,"$","unable to write pid file %a",fname);
-  else
+  fp = fopen(fname,"w");
+  if (fp)
   {
-    LineSFormat(pfile,"L","%a\n",(unsigned long)getpid());
-    StreamFlush(pfile);
-    StreamFree(pfile);
+    fprintf(fp,"%lu\n",(unsigned long)getpid());
+    fclose(fp);
   }
+  else
+    (*cv_report)(LOG_ERR,"fopen(%s) = %s",fname,strerror(errno));    
 }
 
 /*********************************************************************/
@@ -558,9 +521,9 @@ int parse_ip(byte *ip,int *mask,char *text)
 {
   size_t octetcount = 0;
   
-  ddt(ip   != NULL);
-  ddt(mask != NULL);
-  ddt(text != NULL);
+  assert(ip   != NULL);
+  assert(mask != NULL);
+  assert(text != NULL);
 
   do  
   {
@@ -582,7 +545,7 @@ int parse_ip(byte *ip,int *mask,char *text)
   else
     *mask = 32;
   
-  return(ERR_OKAY);
+  return ERR_OKAY;
 }
 
 /************************************************************************/

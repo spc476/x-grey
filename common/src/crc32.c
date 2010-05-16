@@ -19,6 +19,8 @@
 *
 *************************************************************************/
 
+#include <assert.h>
+
 #include "greylist.h"
 #include "crc32.h"
 
@@ -97,6 +99,9 @@ static const CRC32 m_crc32_table[] =
 CRC32 crc32(CRC32 crc,const void *data,size_t size)
 {
   const byte *p = data;
+  
+  assert(data != NULL);
+  assert(size >  0);
   
   while(size--)
   {	/* VVV - uninit mem size 4 next line */

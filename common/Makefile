@@ -1,10 +1,6 @@
 
-#CINCL=-I /usr/local/include
-#LINCL=-L /usr/local/lib
-#CC=gcc -pg
-#CC=gcc $(CINCL)
-CC=gcc -fomit-frame-pointer -O3 -DNDEBUG
-CFLAGS=-Wall -pedantic -g -ansi -Wextra
+CC=gcc -std=c99
+CFLAGS=-Wall -pedantic -g -Wextra
 LFLAGS=$(LINCL) -lcgi5
 
 all : build/globals.o		\

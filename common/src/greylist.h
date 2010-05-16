@@ -76,6 +76,9 @@
 # error No integral type is 32 bits on this platform.
 #endif
 
+#define ERR_OKAY	0
+#define ERR_ERR		1
+
 enum
 {
   OPT_NONE,
