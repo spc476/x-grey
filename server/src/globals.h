@@ -63,6 +63,7 @@ extern size_t              g_poolnum;
 extern struct tuple       *g_pool;
 extern Tuple              *g_tuplespace;
 
+extern char                g_argv0[FILENAME_MAX];
 extern char              **g_argv;
 
 extern size_t		   g_requests;
