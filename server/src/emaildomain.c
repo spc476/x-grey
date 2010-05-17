@@ -431,7 +431,6 @@ static void tofrom_dump_stream(FILE *out,EDomain list,size_t size)
   const char *cmd;
 
   assert(out  != NULL);
-  assert(list != NULL);
 
   for (i = 0 ; i < size ; i++)
   {
