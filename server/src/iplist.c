@@ -367,11 +367,11 @@ void ip_print(FILE *out)
     
     fprintf(
         out,
-        "%15.15s %15.15s %8.8s %10lu\n",
-        tip,
-        tmask,
+        "%10lu %8.8s %15.15s %15.15s\n",
+        (unsigned long)array[i].count,
         ci_map_chars(array[i].cmd,c_ift,C_IFT),
-        (unsigned long)array[i].count
+        tip,
+        tmask
       );
   }
   free(array);
