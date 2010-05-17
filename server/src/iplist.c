@@ -208,7 +208,7 @@ void iplist_dump_stream(FILE *out)
   for (i = 0 ; i < asize ; i++)
   {
     sprintf(ipaddr,"%s/%d",ipv4(array[i].addr),array[i].smask);
-    fprintf(out,"%18.18s %s",ipaddr,ci_map_chars(array[i].cmd,c_ift,C_IFT));
+    fprintf(out,"%18.18s %s\n",ipaddr,ci_map_chars(array[i].cmd,c_ift,C_IFT));
   }
 
   free(array);  
@@ -366,7 +366,7 @@ void ip_print(FILE *out)
     
     fprintf(
         out,
-        "%15.15s %15.15s %8.8s %10lu",
+        "%15.15s %15.15s %8.8s %10lu\n",
         tip,
         tmask,
         ci_map_chars(array[i].cmd,c_ift,C_IFT),
