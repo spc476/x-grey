@@ -172,14 +172,14 @@ void report_stderr(int level,const char *msg, ... )
   if (level <= c_log_level)
   {
     va_list arg;
-    char    buffer[BUFSIZ + 1];
+    char    buffer[BUFSIZ + 2];
     size_t  bytes;
     
     va_start(arg,msg);
-    bytes           = snprintf(buffer,BUFSIZ,"[%lu] ",++m_logseq);
-    bytes           = vsnprintf(&buffer[bytes],BUFSIZ - bytes,msg,arg);
-    buffer[bytes++] = '\n';
-    buffer[bytes]   = '\0';
+    bytes            = snprintf(buffer,BUFSIZ,"[%lu] ",++m_logseq);
+    bytes           += vsnprintf(&buffer[bytes],BUFSIZ - bytes,msg,arg);
+    buffer[bytes++]  = '\n';
+    buffer[bytes]    = '\0';
     write(STDERR_FILENO,buffer,bytes);
     va_end(arg);
   }    
