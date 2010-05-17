@@ -72,7 +72,7 @@ int iplist_read(const char *fname)
   in = fopen(fname,"r");
   if (in == NULL)
   {
-    (*cv_report)(LOG_ERR,"iplist_read(): fopen(%s) = %s",fname,strerror(errno));
+    (*cv_report)(LOG_ERR,"iplist_read(): fopen(%s,READ) = %s",fname,strerror(errno));
     return ERR_ERR;
   }
   
@@ -192,7 +192,7 @@ void iplist_dump(void)
     fclose(out);
   }
   else
-    (*cv_report)(LOG_ERR,"iplist_dump(): fopen(%s) = %s",(char *)c_iplistfile,strerror(errno));
+    (*cv_report)(LOG_ERR,"iplist_dump(): fopen(%s,WRITE) = %s",(char *)c_iplistfile,strerror(errno));
 }
 
 /*****************************************************************/

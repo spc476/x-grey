@@ -512,7 +512,7 @@ void write_pidfile(const char *fname)
     fclose(fp);
   }
   else
-    (*cv_report)(LOG_ERR,"fopen(%s) = %s",fname,strerror(errno));    
+    (*cv_report)(LOG_ERR,"fopen(%s,WRITE) = %s",fname,strerror(errno));    
 }
 
 /*********************************************************************/

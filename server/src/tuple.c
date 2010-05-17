@@ -331,7 +331,7 @@ void tuple_all_dump(void)
     fclose(out);
   }
   else
-    (*cv_report)(LOG_ERR,"tuple_all_dump(): fopen(%s) = %s",c_dumpfile,strerror(errno));
+    (*cv_report)(LOG_ERR,"tuple_all_dump(): fopen(%s,WRITE) = %s",c_dumpfile,strerror(errno));
 }
 
 /******************************************************************/
