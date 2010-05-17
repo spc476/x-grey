@@ -19,12 +19,12 @@
 *
 *************************************************************************/
 
-#define _GNU_SOURCE
-#define _POSIX_SOURCE
 
 #ifndef __GNUC__
 #  define __attribute(x)
 #endif
+
+#define _POSIX_SOURCE
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -56,6 +56,15 @@
 #define min(a,b)	((a) < (b)) ? (a) : (b)
 
 /**************************************************************/
+
+	/*------------------------------------------------------------------
+	; this is defined external because if I define _GNU_SOURCE to get it
+	; defined, I then break calls to sendto(), recvfrom() and
+	; connection(), since they're defined using some wierd GNU alien
+	; technology that I have no ken of.
+	;------------------------------------------------------------------*/
+	
+extern ssize_t getline	(char **,size_t *,FILE *);
 
 static void	cmdline			(void);
 static void	process_cmdline		(String *,size_t);
