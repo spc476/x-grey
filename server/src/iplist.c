@@ -164,12 +164,13 @@ int iplist_read(const char *fname)
       
       strcpy(tip  ,ipv4(iplist[i].addr));
       strcpy(tmask,ipv4(iplist[i].mask));
+
       (*cv_report)(
           LOG_DEBUG,
           "%8.8s %15.15s %15.15s",
           ci_map_chars(iplist[i].cmd,c_ift,C_IFT),
           tip,
-          mask
+          tmask
         );
     }      
     free(iplist);
