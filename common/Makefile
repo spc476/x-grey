@@ -1,7 +1,6 @@
 
 CC=gcc -std=c99
 CFLAGS=-Wall -pedantic -g -Wextra
-LFLAGS=$(LINCL) -lcgi5
 
 all : build/globals.o		\
 		build/util.o	\

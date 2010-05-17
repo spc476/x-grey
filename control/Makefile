@@ -1,7 +1,7 @@
 
 CC=gcc -std=c99
 CFLAGS=-Wall -pedantic -g -Wextra
-LFLAGS=$(LINCL) -lcgi5 -lreadline -lcurses
+LFLAGS=$(LINCL) -lcgi6 -lreadline -lcurses
 
 ../bin/gld-mcp : build/main.o	\
 		build/globals.o
