@@ -1,12 +1,7 @@
 
-#CINCL=-I /usr/local/include
-#LINCL=-L /usr/local/lib
-
-#CC=gcc -g -pg
-CC=gcc $(CINCL)
-#CC=gcc -fomit-frame-pointer -O3
-CFLAGS=-Wall -pedantic -g -ansi -Wextra
-LFLAGS=$(LINCL) -lcgi5
+CC=gcc -std=c99
+CFLAGS=-Wall -pedantic -g -Wextra
+LFLAGS=$(LINCL) -lcgi6
 
 ../bin/pfc : build/main.o	\
 		build/globals.o
