@@ -1,10 +1,12 @@
 2010-05-14
 
 	* ALL: port to CGILib6
+		DONE 2010-05-18
 
 	* ALL: rework signal handling---for logging to stderr, write to
 	  local buffer, then call write().  Can't trust my code, or the 
 	  Standard C library to be thread safe.
+		DONE 2010-05-17
 
 2010-05-10
 
