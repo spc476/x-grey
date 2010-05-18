@@ -46,7 +46,7 @@ extern const char *const          c_filterchannel;
 extern const int                  cf_foreground;
 extern const int                  cf_debug;
 extern const size_t               c_maxstack;
-extern void                     (*cv_report)(int,char *,char *,...);
+extern void                     (*cv_report)(int,const char *, ...);
 
 extern int                        gl_sock;
 
@@ -54,6 +54,6 @@ extern int                        gl_sock;
 
 int	(GlobalsInit)	(int,char *[]);
 int	(GlobalsDeinit)	(void);
-void	report_syslog	(int,char *,char *, ... );
+void	report_syslog	(int,const char *, ... );
 
 #endif

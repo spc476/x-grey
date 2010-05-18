@@ -1,10 +1,7 @@
 
-#CINCL=-I /usr/local/include
-#LINCL=-L /usr/local/lib
-
-CC=gcc  $(CINCL)
-CFLAGS=-Wall -pedantic -g -ansi -Wextra
-LFLAGS=-lmilter -lpthread $(LINCL) -lcgi5
+CC=gcc -std=c99
+CFLAGS=-Wall -pedantic -g -Wextra
+LFLAGS=-lmilter -lpthread $(LINCL) -lcgi6
 
 ../bin/smc : build/main.o	\
 		build/globals.o

@@ -19,11 +19,15 @@
 *
 *************************************************************************/
 
+#define _BSD_SOURCE
+
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
+#include <assert.h>
 
 #include <syslog.h>
 #include <getopt.h>
@@ -32,9 +36,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <cgilib/memory.h>
-#include <cgilib/util.h>
-#include <cgilib/ddt.h>
+#include <cgilib6/util.h>
 
 #include "../../common/src/greylist.h"
 #include "../../common/src/globals.h"
@@ -67,7 +69,7 @@ char                *c_log_id	    = POSTFIX_LOG_ID;
 int                  cf_debug       = 0;
 char                *c_secret       = SECRET;
 size_t               c_secretsize   = SECRETSIZE;
-void               (*cv_report)(int,char *,char *,...) = report_syslog;
+void               (*cv_report)(int,const char *, ...) = report_syslog;
 
   /*----------------------------------------------------*/
 
@@ -94,15 +96,15 @@ int (GlobalsInit)(int argc,char *argv[])
 {
   struct hostent *remote;
 
-  ddt(argc >  0);
-  ddt(argv != NULL);
+  assert(argc >  0);
+  assert(argv != NULL);
   
   parse_cmdline(argc,argv);
   remote = gethostbyname(c_rhost);
   if (remote == NULL)
   {
-    (*cv_report)(LOG_ERR,"$ $","gethostbyname(%a) = %b",c_rhost,strerror(errno));
-    return(EXIT_FAILURE);
+    (*cv_report)(LOG_ERR,"gethostbyname(%s) = %s",c_rhost,strerror(errno));
+    return EXIT_FAILURE;
   }
   
   memcpy(&c_raddr.sin_addr.s_addr,remote->h_addr,remote->h_length);
@@ -110,7 +112,7 @@ int (GlobalsInit)(int argc,char *argv[])
   c_raddr.sin_port   = htons(c_rport);
 
   openlog(c_log_id,0,c_log_facility);
-  return(EXIT_SUCCESS);
+  return EXIT_SUCCESS;
 }
 
 /******************************************************************/
@@ -126,8 +128,8 @@ static void parse_cmdline(int argc,char *argv[])
 {
   int option = 0;
   
-  ddt(argc >  0);
-  ddt(argv != NULL);
+  assert(argc >  0);
+  assert(argv != NULL);
   
   while(1)
   {
@@ -138,13 +140,13 @@ static void parse_cmdline(int argc,char *argv[])
       case OPT_NONE:
            break;
       case OPT_HOST:
-           c_host = dup_string(optarg);
+           c_host = optarg;
            break;
       case OPT_PORT:
            c_port = strtoul(optarg,NULL,10);
            break;
       case OPT_RHOST:
-           c_rhost = dup_string(optarg);
+           c_rhost = optarg;
            break;
       case OPT_RPORT:
            c_rport = strtoul(optarg,NULL,10);
@@ -154,30 +156,30 @@ static void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_LOG_FACILITY:
            {
-             char *tmp = up_string(dup_string(optarg));
+             char *tmp = up_string(strdup(optarg));
              c_log_facility = ci_map_int(tmp,c_facilities,C_FACILITIES);
-             MemFree(tmp);
+             free(tmp);
            }
            break;
       case OPT_LOG_LEVEL:
            {
-             char *tmp = up_string(dup_string(optarg));
+             char *tmp = up_string(strdup(optarg));
              c_log_level = ci_map_int(tmp,c_levels,C_LEVELS);
-             MemFree(tmp);
+             free(tmp);
            }
            break;
       case OPT_LOG_ID:
-           c_log_id = dup_string(optarg);
+           c_log_id = optarg;
            break;
       case OPT_SECRET:
-           c_secret     = dup_string(optarg);
+           c_secret     = optarg;
            c_secretsize = strlen(c_secret);
            break;
       case OPT_DEBUG:
            cf_debug = 1;
            break;
       case OPT_VERSION:
-           LineS(StdoutStream,"Version: " PROG_VERSION "\n");
+           fputs("Version: " PROG_VERSION "\n",stdout);
            exit(EXIT_FAILURE);
       case OPT_HELP:
       default:
@@ -210,8 +212,9 @@ static void dump_defaults(void)
     ci_map_chars(c_log_level,   c_levels,    C_LEVELS),
     c_log_id,
     (cf_debug) ? "true" : "false"
-  );  
-  MemFree(tout);
+  );
+  
+  free(tout);
 }
 
 /********************************************************************/

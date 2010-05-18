@@ -23,10 +23,13 @@
 #  define __attribute__(x)
 #endif
 
+#define _BSD_SOURCE
+
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -36,13 +39,9 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-#include <libmilter/mfapi.h>
+#include <cgilib6/util.h>
 
-#include <cgilib/memory.h>
-#include <cgilib/types.h>
-#include <cgilib/ddt.h>
-#include <cgilib/util.h>
-#include <cgilib/stream.h>
+#include <libmilter/mfapi.h>
 
 #include "../../common/src/greylist.h"
 #include "../../common/src/util.h"
@@ -96,10 +95,6 @@ int main(int argc,char *argv[])
 {
   int rc;
   
-  MemInit();
-  DdtInit();
-  StreamInit();
-  
   if (GlobalsInit(argc,argv) != EXIT_SUCCESS)
     return(EXIT_FAILURE);  
 
@@ -121,13 +116,13 @@ static sfsistat mf_connect(SMFICTX *ctx,char *hostname __attribute__((unused)),_
   struct mfprivate   *data;
   struct sockaddr_in *ip = (struct sockaddr_in *)addr;
 
-  ddt(ctx  != NULL);
-  ddt(addr != NULL);
+  assert(ctx  != NULL);
+  assert(addr != NULL);
 
   data = smfi_getpriv(ctx);
   if (data == NULL)
   {
-    data = MemAlloc(sizeof(struct mfprivate));
+    data = malloc(sizeof(struct mfprivate));
     smfi_setpriv(ctx,data);
   }
 
@@ -146,8 +141,8 @@ static sfsistat mf_mail_from(SMFICTX *ctx,char **argv)
   size_t            size;
   char             *tauth;
   
-  ddt(ctx  != NULL);
-  ddt(argv != NULL);
+  assert(ctx  != NULL);
+  assert(argv != NULL);
 
   /*---------------------------------------------------
   ; check to see if the user has authenticated, if so
@@ -179,21 +174,21 @@ static sfsistat mf_rcpt_to(SMFICTX *ctx,char **argv)
   char             *to;
   int               response;
   
-  ddt(ctx  != NULL);
-  ddt(argv != NULL);
+  assert(ctx  != NULL);
+  assert(argv != NULL);
   
   data     = smfi_getpriv(ctx);
-  to       = remove_char(dup_string(argv[0]),isbracket);
+  to       = remove_char(strdup(argv[0]),isbracket);
   response = check_greylist(gl_sock,data->ip,data->sender,to);
   
-  MemFree(to);
+  free(to);
   
   switch(response)
   {
     case IFT_ACCEPT:   return (SMFIS_ACCEPT);
     case IFT_REJECT:   return (SMFIS_REJECT);
     case IFT_GREYLIST: return (SMFIS_TEMPFAIL);
-    default: ddt(0);   return (SMFIS_ACCEPT);
+    default: assert(0);   return (SMFIS_ACCEPT);
   }
 }
 
@@ -203,12 +198,12 @@ static sfsistat mf_close(SMFICTX *ctx)
 {
   struct mfprivate *data;
   
-  ddt(ctx != NULL);
+  assert(ctx != NULL);
   
   data = smfi_getpriv(ctx);
 
   if (data != NULL)
-    MemFree(data);
+    free(data);
   
   smfi_setpriv(ctx,NULL);
   return(SMFIS_CONTINUE);
@@ -239,7 +234,7 @@ static int check_greylist(int sock,byte *ip,char *from,char *to)
   
   p = glq->data;
 
-  glq->crc      = htons(0);  
+  glq->crc      = 0;  
   glq->version  = htons(VERSION);
   glq->MTA      = htons(MTA_POSTFIX);
   glq->type     = htons(CMD_GREYLIST);
@@ -267,7 +262,7 @@ static int check_greylist(int sock,byte *ip,char *from,char *to)
   	);
   if (rrc == -1)
   {
-    (*cv_report)(LOG_ERR,"$","sendto() = %a",strerror(errno));
+    (*cv_report)(LOG_ERR,"sendto() = %s",strerror(errno));
     return(IFT_ACCEPT);
   }
   
@@ -299,9 +294,9 @@ static int check_greylist(int sock,byte *ip,char *from,char *to)
     ;---------------------------------------------------*/
     
     if (errno != EINTR)
-      (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
+      (*cv_report)(LOG_ERR,"recvfrom() = %s",strerror(errno));
     else
-      (*cv_report)(LOG_DEBUG,"","timeout");
+      (*cv_report)(LOG_DEBUG,"timeout");
     return(IFT_ACCEPT);
   }
   
@@ -310,36 +305,31 @@ static int check_greylist(int sock,byte *ip,char *from,char *to)
   
   if (crc != ntohl(glr->crc))
   {
-    (*cv_report)(LOG_ERR,"","received bad packet");
+    (*cv_report)(LOG_ERR,"received bad packet");
     return(IFT_ACCEPT);
   }
   
-  if (ntohs(glr->version) != VERSION)
+  if (ntohs(glr->version) > VERSION)
   {
-    (*cv_report)(LOG_ERR,"","received response from wrong version");
+    (*cv_report)(LOG_ERR,"received response from wrong version");
     return(IFT_ACCEPT);
   }
 
   if (ntohs(glr->MTA) != MTA_POSTFIX)
   {
-    (*cv_report)(LOG_ERR,"","are we running another MTA here?");
+    (*cv_report)(LOG_ERR,"are we running another MTA here?");
     return(IFT_ACCEPT);
   }
   
   if (ntohs(glr->type) != CMD_GREYLIST_RESP)
   {
-    (*cv_report)(LOG_ERR,"i","received error %a",ntohs(glr->response));
+    (*cv_report)(LOG_ERR,"received error %d",ntohs(glr->response));
     return(IFT_ACCEPT);
   }
   
   glr->response = ntohs(glr->response);
-  (*cv_report)(
-  	LOG_DEBUG,
-	"$",
-	"received %a",
-	ci_map_chars(glr->response,c_ift,C_IFT)
-  );
-  return(glr->response);
+  (*cv_report)(LOG_DEBUG,"received %s",ci_map_chars(glr->response,c_ift,C_IFT));
+  return glr->response;
 }
 
 /*******************************************************************/

@@ -33,11 +33,6 @@
 #include <netinet/in.h>
 #include <signal.h>
 
-#include <cgilib/memory.h>
-#include <cgilib/ddt.h>
-#include <cgilib/stream.h>
-#include <cgilib/util.h>
-
 #include "../../common/src/greylist.h"
 #include "../../common/src/crc32.h"
 #include "../../common/src/util.h"
@@ -105,10 +100,6 @@ int main(int argc,char *argv[])
   int		  sock;
   pid_t           child;
   int             rc;
-  
-  MemInit();
-  DdtInit();
-  StreamInit();
   
   parse_command_line(argc,argv);
   
@@ -213,7 +204,7 @@ int main(int argc,char *argv[])
 
     }
     
-    LineSFormat(StdoutStream,"L","%a packets sent\n",(unsigned long)count);
+    printf("%lu packets sent\n",(unsigned long)count);
   }
   else			/* child */
   {
@@ -263,31 +254,30 @@ void parse_command_line(int argc,char *argv[])
       case OPT_NONE:
            break;
       case OPT_RHOST:
-           g_rhost = dup_string(optarg);
+           g_rhost = optarg;
            break;
       case OPT_RPORT:
            g_rport = strtoul(optarg,NULL,10);
            break;
       case OPT_HOST:
-           c_host = dup_string(optarg);
+           c_host = optarg;
            break;
       case OPT_PORT:
            c_port = strtoul(optarg,NULL,10);
            break;
       case OPT_INPUT_FILE:
-           g_inputfile = dup_string(optarg);
+           g_inputfile = optarg;
            break;
       case OPT_HELP:
       default:
-           LineSFormat(
-           	StderrStream,
-           	"$ $ $ i $ i",
-           	"usage: %a [options]\n"
-           	"\t--input-file <file>\t(%b)\n"
-           	"\t--server <host>\t\t(%c)\n"
+           fprintf(
+                stderr,
+           	"usage: %s [options]\n"
+           	"\t--input-file <file>\t(%s)\n"
+           	"\t--server <host>\t\t(%s)\n"
            	"\t--server-port <num>\t(%d)\n"
-           	"\t--host <host>\t\t(%e)\n"
-           	"\t--port <num>\t\t(%f)\n"
+           	"\t--host <host>\t\t(%s)\n"
+           	"\t--port <num>\t\t(%d)\n"
            	"\t--help\n"
            	"\n",
            	argv[0],

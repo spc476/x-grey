@@ -19,6 +19,8 @@
 *
 ***********************************************************************/
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,10 +33,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
-#include <cgilib/memory.h>
-#include <cgilib/ddt.h>
-#include <cgilib/stream.h>
-#include <cgilib/util.h>
+#include <cgilib6/util.h>
 
 #include "../../common/src/greylist.h"
 #include "../../common/src/crc32.h"
@@ -76,29 +75,28 @@ void	parse_command_line	(int,char *[]);
 
 int main(int argc,char *argv[])
 {
-  Stream                   input;
+  FILE                    *input;
   int                      out       = -1;
   int                      filecount = 1;
   size_t                   count;
   byte                     outpacket[1500];
   struct greylist_request *glq;
+  char                    *line;
+  size_t                   linesize;
   
-  MemInit();
-  DdtInit();
-  StreamInit();
-
-  input = StdinStream;
+  input    = stdin;
+  line     = NULL;
+  linesize = 0;
   
   parse_command_line(argc,argv);
   
   if (g_inputfile)
-    input = FileStreamRead(g_inputfile);
+    input = fopen(g_inputfile,"r");
   
   count = g_count;
   
-  while(!StreamEOF(input))
+  while(getline(&line,&linesize,input) > 0)
   {
-    char   *line;
     char   *from;
     char   *to;
     size_t  sfrom;
@@ -122,8 +120,7 @@ int main(int argc,char *argv[])
       count = 0;
     }
       
-    line = LineSRead(input);
-    if (empty_string(line)) { MemFree(line); continue; }
+    if (empty_string(line)) continue;
     
     glq = (struct greylist_request *)outpacket;
     p   = glq->data;
@@ -164,12 +161,12 @@ int main(int argc,char *argv[])
     
     write(out,&packetsize,sizeof(packetsize));
     write(out,outpacket,packetsize);
-    MemFree(line);
     count++;
   }
   
+  free(line);
   close(out);
-  StreamFree(input);
+  fclose(input);
   return(EXIT_SUCCESS);
 }
 
@@ -188,28 +185,27 @@ void parse_command_line(int argc,char *argv[])
       case OPT_NONE:
            break;
       case OPT_INPUT_FILE:
-           g_inputfile = dup_string(optarg);
+           g_inputfile = optarg;
            break;
       case OPT_OUTPUT_FILE:
-           g_outputfile = dup_string(optarg);
+           g_outputfile = optarg;
            break;
       case OPT_COUNT:
            g_count = strtoul(optarg,NULL,10);
            break;
       case OPT_SECRET:
-           g_secret = dup_string(optarg);
+           g_secret     = optarg;
            g_secretsize = strlen(g_secret);
            break;
       case OPT_HELP:
       default:
-           LineSFormat(
-           	StderrStream,
-           	"$ $ $ L",
-           	"usage: %a [options]\n",
+           fprintf(
+           	stderr,
+           	"usage: %s [options]\n"
            	"\t--input-file <file>	(stdin)\n"
-           	"\t--output-file <file>	(%b)\n"
-           	"\t--secret <string>	(%c)\n"
-           	"\t--count <num>	(%d)\n"
+           	"\t--output-file <file>	(%s)\n"
+           	"\t--secret <string>	(%s)\n"
+           	"\t--count <num>	(%lu)\n"
            	"\t--help		(this text)\n"
            	"\n",
            	argv[0],

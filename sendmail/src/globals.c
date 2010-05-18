@@ -19,12 +19,16 @@
 *
 *************************************************************************/
 
+#define _GNU_SOURCE
+
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
+#include <signal.h>
+#include <assert.h>
 
 #include <syslog.h>
 #include <getopt.h>
@@ -37,9 +41,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <cgilib/memory.h>
-#include <cgilib/util.h>
-#include <cgilib/ddt.h>
+#include <cgilib6/util.h>
 
 #include "../../common/src/greylist.h"
 #include "../../common/src/globals.h"
@@ -81,7 +83,7 @@ char                *c_filterchannel = SENDMAIL_FILTERCHANNEL;
 int                  cf_foreground   = 0;
 int                  cf_debug        = 0;
 size_t               c_maxstack      = (64uL * 1024uL);
-void               (*cv_report)(int,char *,char *,...) = report_syslog;
+void               (*cv_report)(int,const char *, ...) = report_syslog;
 
 int                  gl_sock;
 
@@ -115,8 +117,8 @@ int (GlobalsInit)(int argc,char *argv[])
   struct rlimit   limit;
   int             rc;
   
-  ddt(argc >  0);
-  ddt(argv != NULL);
+  assert(argc >  0);
+  assert(argv != NULL);
   
   parse_cmdline(argc,argv);
 
@@ -131,13 +133,12 @@ int (GlobalsInit)(int argc,char *argv[])
   rc = getrlimit(RLIMIT_STACK,&limit);
   
   if (rc != 0)
-    (*cv_report)(LOG_WARNING,"$","getrlimit(RLIMIT_STACK) = %a, can't modify stack size",strerror(errno));
+    (*cv_report)(LOG_WARNING,"getrlimit(RLIMIT_STACK) = %s, can't modify stack size",strerror(errno));
   else 
   {
     (*cv_report)(
     	LOG_DEBUG,
-    	"L L",
-    	"stack current: %a max: %b",
+    	"stack current: %ul max: %ul",
     	(unsigned long)limit.rlim_cur,
     	(unsigned long)limit.rlim_max
     );
@@ -150,7 +151,7 @@ int (GlobalsInit)(int argc,char *argv[])
       rc = setrlimit(RLIMIT_STACK,&limit);
   
       if (rc != 0)
-        (*cv_report)(LOG_WARNING,"$","setrlimit(RLIMIT_STACK) = %a, can't modify stack size",strerror(errno));
+        (*cv_report)(LOG_WARNING,"setrlimit(RLIMIT_STACK) = %s, can't modify stack size",strerror(errno));
       else
       {
         extern char **environ;
@@ -167,7 +168,7 @@ int (GlobalsInit)(int argc,char *argv[])
         ; because what's the point?  
         ;-------------------------------------------*/
       
-        (*cv_report)(LOG_DEBUG,"","running with a smaller stack");
+        (*cv_report)(LOG_DEBUG,"running with a smaller stack");
         execve(argv[0],argv,environ);
       }
     }
@@ -176,7 +177,7 @@ int (GlobalsInit)(int argc,char *argv[])
   remote = gethostbyname(c_rhost);
   if (remote == NULL)
   {
-    (*cv_report)(LOG_ERR,"$ $","gethostbyname(%a) = %b",c_rhost,strerror(errno));
+    (*cv_report)(LOG_ERR,"gethostbyname(%s) = %s",c_rhost,strerror(errno));
     return(EXIT_FAILURE);
   }
   
@@ -208,8 +209,8 @@ static void parse_cmdline(int argc,char *argv[])
 {
   int option = 0;
   
-  ddt(argc >  0);
-  ddt(argv != NULL);
+  assert(argc >  0);
+  assert(argv != NULL);
   
   while(1)
   {
@@ -220,13 +221,13 @@ static void parse_cmdline(int argc,char *argv[])
       case OPT_NONE:
            break;
       case OPT_HOST:
-           c_host = dup_string(optarg);
+           c_host = optarg;
            break;
       case OPT_PORT:
            c_port = strtoul(optarg,NULL,10);
            break;
       case OPT_RHOST:
-           c_rhost = dup_string(optarg);
+           c_rhost = optarg;
            break;
       case OPT_RPORT:
            c_rport = strtoul(optarg,NULL,10);
@@ -235,40 +236,40 @@ static void parse_cmdline(int argc,char *argv[])
            c_timeout = read_dtime(optarg,c_timeout);
            break;
       case OPT_CHANNEL:
-           c_filterchannel = dup_string(optarg);
+           c_filterchannel = optarg;
            break;
       case OPT_MAXSTACK:
            c_maxstack = strtoul(optarg,NULL,10);	/* fix later */
            break;
       case OPT_LOG_FACILITY:
            {
-             char *tmp = up_string(dup_string(optarg));
+             char *tmp = up_string(strdup(optarg));
              c_log_facility = ci_map_int(tmp,c_facilities,C_FACILITIES);
-             MemFree(tmp);
+             free(tmp);
            }
            break;
       case OPT_LOG_LEVEL:
            {
-             char *tmp = up_string(dup_string(optarg));
+             char *tmp = up_string(strdup(optarg));
              c_log_level = ci_map_int(tmp,c_levels,C_LEVELS);
-             MemFree(tmp);
+             free(tmp);
            }
            break;
       case OPT_LOG_ID:
-           c_log_id = dup_string(optarg);
+           c_log_id = optarg;
            break;
       case OPT_FOREGROUND:
            cf_foreground = 1;
            break;
       case OPT_SECRET:
-           c_secret     = dup_string(optarg);
+           c_secret     = optarg;
            c_secretsize = strlen(c_secret);
            break;
       case OPT_DEBUG:
            cf_debug = 1;
            break;
       case OPT_VERSION:
-           LineS(StdoutStream,"Version: " PROG_VERSION "\n");
+           fputs("Version: " PROG_VERSION "\n",stdout);
            exit(EXIT_FAILURE);
       case OPT_HELP:
       default:
@@ -317,8 +318,9 @@ static void dump_defaults(void)
     c_log_id,
     c_filterchannel,
     (cf_debug) ? "true" : "false"
-  );  
-  MemFree(tout);
+  );
+  
+  free(tout);
 }
 
 /********************************************************************/
@@ -326,51 +328,45 @@ static void dump_defaults(void)
 static void daemon_init(void)
 {
   pid_t pid;
-  int   fhr;
-  int   fhw;
+  int   fh;
   
-  /*---------------------------------------------------
-  ; because I don't know the full details about the
-  ; milter library, I decided to redirect STDIN, STDOUT
-  ; and STDERR to /dev/null.  I figure it's safer
-  ; that way.
-  ;---------------------------------------------------*/
-  
-  fhr = open("/dev/null",O_RDONLY);
-  if (fhr == -1)
-  {
-    (*cv_report)(LOG_EMERG,"$","daemon_init(): open(/dev/null,read) = %a",strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-  
-  fhw = open("/dev/null",O_WRONLY);
-  if (fhw == -1)
-  {
-    (*cv_report)(LOG_EMERG,"$","daemon_init(): open(/dev/null,write) = %a",strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-
   pid = fork();
   if (pid == (pid_t)-1)
   {
-    (*cv_report)(LOG_EMERG,"$","daemon_init(): fork() = %a",strerror(errno));
+    (*cv_report)(LOG_EMERG,"daemon_init(): fork() = %s",strerror(errno));
     exit(EXIT_FAILURE);
   }
-  else if (pid != 0)
-  {
-    close(fhw);
-    close(fhr);
+  else if (pid != 0)	/* parent goes bye bye */
     exit(EXIT_SUCCESS);
-  }
   
   setsid();
+  set_signal(SIGHUP,SIG_IGN);
   
-  dup2(STDIN_FILENO,fhr);
-  dup2(STDOUT_FILENO,fhw);
-  dup2(STDERR_FILENO,fhw);
-
-  close(fhw);
-  close(fhr);
+  pid = fork();
+  if (pid == (pid_t)-1)
+  {
+    (*cv_report)(LOG_EMERG,"daemon_init(): fork(2) = %s",strerror(errno));
+    _exit(EXIT_FAILURE);
+  }
+  else if (pid != 0)
+    _exit(EXIT_SUCCESS);
+  
+  chdir("/");
+  umask(022);
+  
+  fh = open("/dev/null",O_RDWR);
+  if (fh == -1)
+  {
+    (*cv_report)(LOG_EMERG,"daemon_init(): open(/dev/null) = %s",strerror(errno));
+    _exit(EXIT_FAILURE);
+  }
+  
+  assert(fh > 2);
+  dup2(fh,STDIN_FILENO);
+  dup2(fh,STDOUT_FILENO);
+  dup2(fh,STDERR_FILENO);
+  
+  close(fh);
 }
 
 /********************************************************************/
@@ -379,8 +375,8 @@ static void my_exit(void)
 {
   unlink(&c_filterchannel[5]);
   closelog();
-  StreamFlush(StderrStream);
-  StreamFlush(StdoutStream);
+  fflush(stderr);
+  fflush(stdout);
 }
 
 /********************************************************************/

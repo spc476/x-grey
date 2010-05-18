@@ -33,11 +33,6 @@
 #include <netinet/in.h>
 #include <signal.h>
 
-#include <cgilib/memory.h>
-#include <cgilib/ddt.h>
-#include <cgilib/stream.h>
-#include <cgilib/util.h>
-
 #include "../../common/src/greylist.h"
 #include "../../common/src/crc32.h"
 #include "../../common/src/util.h"
@@ -79,10 +74,6 @@ int main(int argc,char *argv[])
   struct greylist_request *preq;
   int                      rc;
   
-  MemInit();
-  DdtInit();
-  StreamInit();
-  
   parse_command_line(argc,argv);
   
   /*--------------------------------------------------
@@ -121,7 +112,7 @@ int main(int argc,char *argv[])
     preq = (struct greylist_request *)packet;
     packet += *pps;
     status.st_size -= (sizeof(size_t) + *pps);
-    LineSFormat(StdoutStream,"x10.10L0","%a\n",(unsigned long)ntohl(preq->crc));
+    printf("%010lX\n",(unsigned long)ntohl(preq->crc));
   }
   
   munmap(vba,status.st_size);
@@ -144,15 +135,14 @@ void parse_command_line(int argc,char *argv[])
       case OPT_NONE:
            break;
       case OPT_INPUT_FILE:
-           g_inputfile = dup_string(optarg);
+           g_inputfile = optarg;
            break;
       case OPT_HELP:
       default:
-           LineSFormat(
-           	StderrStream,
-           	"$ $",
-           	"usage: %a [options]\n"
-           	"\t--input-file <file>\t(%b)\n"
+           fprintf(
+                stderr,
+           	"usage: %s [options]\n"
+           	"\t--input-file <file>\t(%s)\n"
            	"\t--help\n"
            	"\n",
            	argv[0],

@@ -42,12 +42,12 @@ extern const char *const          c_log_id;
 extern const int                  cf_debug;
 extern const char *const          c_secret;
 extern const size_t               c_secretsize;
-extern void                     (*cv_report)(int,char *,char *,...);
+extern void                     (*cv_report)(int,const char *, ...);
 
 /***********************************************************/
 
 int	(GlobalsInit)	(int,char *[]);
 int	(GlobalsDeinit)	(void);
-void	report_syslog	(int,char *,char *, ... );
+void	report_syslog	(int,const char *, ... );
 
 #endif

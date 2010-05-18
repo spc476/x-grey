@@ -35,6 +35,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -43,12 +44,6 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <unistd.h>
-
-#include <cgilib/memory.h>
-#include <cgilib/types.h>
-#include <cgilib/ddt.h>
-#include <cgilib/stream.h>
-#include <cgilib/util.h>
 
 #include "../../common/src/greylist.h"
 #include "../../common/src/util.h"
@@ -74,10 +69,6 @@ static char                  m_defer [] = "action=defer_if_permit Service tempor
 int main(int argc,char *argv[])
 {
   int sock;
-  
-  MemInit();
-  DdtInit();
-  StreamInit();
   
   if (GlobalsInit(argc,argv) != EXIT_SUCCESS)
     return(EXIT_FAILURE);  
@@ -134,10 +125,10 @@ static int process_request(int sock)
   ; Khaaaaaaaaaaaaaaaaaaaaaaaaaaaaan!
   ;-------------------------------------------------*/
   
-  request = dup_string("");
-  from    = dup_string("");
-  to      = dup_string("");
-  ip      = dup_string("");
+  request = strdup("");
+  from    = strdup("");
+  to      = strdup("");
+  ip      = strdup("");
 
   while(1)
   {
@@ -145,20 +136,20 @@ static int process_request(int sock)
     {
       if (bufsiz == BUFSIZ)
       {
-        (*cv_report)(LOG_ERR,"","buffer overflow-aborting");
+        (*cv_report)(LOG_ERR,"buffer overflow-aborting");
         return(0);
       }
       
       rrc = read(STDIN_FILENO,&buffer[bufsiz],BUFSIZ - bufsiz);
       if (rrc == -1)
       {
-        (*cv_report)(LOG_DEBUG,"$","read() = %a",strerror(errno));
+        (*cv_report)(LOG_DEBUG,"process_request(): read() = %s",strerror(errno));
 	return(0);
       }
       if (rrc ==  0) return(0);
       
       bufsiz += rrc;
-      ddt(bufsiz <= BUFSIZ);
+      assert(bufsiz <= BUFSIZ);
       refill  = 0;
     }
     
@@ -173,24 +164,24 @@ static int process_request(int sock)
     {
       int response;
       
-      (*cv_report)(LOG_INFO,"$ $ $","tuple: [%a %b %c]",ip,from,to);
+      (*cv_report)(LOG_INFO,"tuple: [%s , %s , %s]",ip,from,to);
       response = check_greylist(sock,ip,from,to);
       
       switch(response)
       {
         default: 
-	     ddt(0);
+	     assert(0);
         case IFT_ACCEPT:
 	     rrc = write(STDOUT_FILENO,m_dunno,sizeof(m_dunno) - 1);
-	     ddt(rrc == sizeof(m_dunno) - 1);
+	     assert(rrc == sizeof(m_dunno) - 1);
 	     break;
 	case IFT_REJECT:
 	     rrc = write(STDOUT_FILENO,m_reject,sizeof(m_reject) - 1);
-	     ddt(rrc == sizeof(m_reject) - 1);
+	     assert(rrc == sizeof(m_reject) - 1);
 	     break;
 	case IFT_GREYLIST:
 	     rrc = write(STDOUT_FILENO,m_defer,sizeof(m_defer) - 1);
-	     ddt(rrc == sizeof(m_defer) - 1);
+	     assert(rrc == sizeof(m_defer) - 1);
 	     break;
       }
 
@@ -209,33 +200,33 @@ static int process_request(int sock)
 
     if (v == NULL)
     {
-      (*cv_report)(LOG_ERR,"","bad input format");
+      (*cv_report)(LOG_ERR,"bad input format");
       return(0);
     }
 
     *p++ = '\0';
     *v++ = '\0';
 
-    (*cv_report)(LOG_DEBUG,"$ $","request: %a = %b",buffer,v);
+    (*cv_report)(LOG_DEBUG,"request: %s = %s",buffer,v);
 
     if (strcmp(buffer,"request") == 0)
     {
-      MemFree(request);
+      free(request);
       request = strdup(v);
     }
     else if (strcmp(buffer,"sender") == 0)
     {
-      MemFree(from);
+      free(from);
       from = strdup(v);
     }
     else if (strcmp(buffer,"recipient") == 0)
     {
-      MemFree(to);
+      free(to);
       to = strdup(v);
     }
     else if (strcmp(buffer,"client_address") == 0)
     {
-      MemFree(ip);
+      free(ip);
       ip = strdup(v);
     }
     
@@ -303,7 +294,7 @@ int check_greylist(int sock,char *ip,char *from,char *to)
   	);
   if (rrc == -1)
   {
-    (*cv_report)(LOG_ERR,"$","sendto() = %a",strerror(errno));
+    (*cv_report)(LOG_ERR,"check_greylist(): sendto() = %s",strerror(errno));
     return(IFT_ACCEPT);
   }
   
@@ -335,9 +326,9 @@ int check_greylist(int sock,char *ip,char *from,char *to)
     ;---------------------------------------------------*/
     
     if (errno != EINTR)
-      (*cv_report)(LOG_ERR,"$","recvfrom() = %a",strerror(errno));
+      (*cv_report)(LOG_ERR,"check_greylist(): recvfrom() = %s",strerror(errno));
     else
-      (*cv_report)(LOG_WARNING,"","timeout");
+      (*cv_report)(LOG_WARNING,"timeout");
     return(IFT_ACCEPT);
   }
   
@@ -346,13 +337,13 @@ int check_greylist(int sock,char *ip,char *from,char *to)
   
   if (crc != ntohl(glr->crc))
   {
-    (*cv_report)(LOG_ERR,"","received back packet");
+    (*cv_report)(LOG_ERR,"received back packet");
     return(IFT_ACCEPT);
   }
   
   if (ntohs(glr->version) != VERSION)
   {
-    (*cv_report)(LOG_ERR,"","received response from wrong version");
+    (*cv_report)(LOG_ERR,"received response from wrong version");
     return(IFT_ACCEPT);
   }
 
@@ -364,17 +355,12 @@ int check_greylist(int sock,char *ip,char *from,char *to)
   
   if (ntohs(glr->type) != CMD_GREYLIST_RESP)
   {
-    (*cv_report)(LOG_ERR,"i","received error %a",ntohs(glr->response));
+    (*cv_report)(LOG_ERR,"received error %d",ntohs(glr->response));
     return(IFT_ACCEPT);
   }
   
   glr->response = ntohs(glr->response);
-  (*cv_report)(
-  	LOG_DEBUG,
-	"$",
-	"received %a",
-	ci_map_chars(glr->response,c_ift,C_IFT)
-  );
+  (*cv_report)(LOG_DEBUG,"received %s",ci_map_chars(glr->response,c_ift,C_IFT));
   return(glr->response);
 }
 

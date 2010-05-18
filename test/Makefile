@@ -1,10 +1,7 @@
 
-#CINCL=-I /usr/local/include
-#LINCL=-L /usr/local/lib
-
-CC=gcc  $(CINCL)
-CFLAGS=-Wall -pedantic -g -ansi -Wextra
-LFLAGS=$(LINCL) -lcgi5
+CC=gcc -std=c99
+CFLAGS=-Wall -pedantic -g -Wextra
+LFLAGS=$(LINCL) -lcgi6
 
 all : build/mktuples build/sendtuples build/pcrc
 
