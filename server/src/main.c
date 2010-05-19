@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
 #include <assert.h>
 
 #include <netdb.h>
@@ -69,16 +70,23 @@ static void	 log_tuple		(struct tuple *,int,int);
 
 int main(int argc,char *argv[])
 {
+  time_t abend_last;
+  size_t abend_count;
+  
   parse_cmdline(argc,argv);
   openlog("gld-monitor",0,LOG_DAEMON);
 
   if (!cf_foreground)
     daemon_init();
-    
+  
+  abend_last = time(NULL);
+  abend_count = 0;
+  
   while(true)
   {
-    pid_t child;
-    bool  abend;
+    pid_t  child;
+    bool   abend;
+    time_t abend_now;
     
     child = fork();
     
@@ -128,14 +136,34 @@ int main(int argc,char *argv[])
             case SIGILL:
             case SIGXCPU:
             case SIGXFSZ:
-                 (*cv_report)(LOG_CRIT,"gld() aborted by signal %d---restarting",sig);
-                 abend = true;
-                 break;
-            case SIGTERM:
-            case SIGQUIT:
+            case SIGABRT:
+                 abend_now = time(NULL);
+                 if (difftime(abend_now,abend_last) < 5.0)
+                   abend_count++;
+                 else
+                 {
+                   abend_last  = abend_now;
+                   abend_count = 0;
+                 }
+                 
+                 if (abend_count > 20)
+                 {
+                   (*cv_report)(LOG_EMERG,"gld() repeatedly aborted (last time via signal %d)---stopping",sig);
+                   return EXIT_FAILURE;
+                 }
+                 else
+                 {
+                   (*cv_report)(LOG_CRIT,"gld() aborted by signal %d %lu times---restarting",sig,(unsigned long)abend_count);
+                   abend = true;
+                 }
+                 break; 
+            
+            case SIGTERM: 
+            case SIGQUIT: 
             case SIGINT:
                  (*cv_report)(LOG_INFO,"gld() shutdown by signal %d---stopping",sig);
                  return EXIT_SUCCESS;
+            
             default:
                  (*cv_report)(LOG_ERR,"gld() stopped by signal %d---restarting",sig);
                  abend = true;
