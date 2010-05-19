@@ -124,7 +124,7 @@ void sighandler_critical(int sig)
 
 /******************************************************************/
 
-void sighandler_critical_child(int sig __attribute((unused)))
+void sighandler_critical_child(int sig __attribute__((unused)))
 {
   /*----------------------------------------------
   ; just exit, no logging for now
