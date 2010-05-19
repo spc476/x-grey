@@ -35,6 +35,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <wait.h>
 
 #include "../../common/src/greylist.h"
 #include "../../common/src/globals.h"
@@ -54,9 +55,9 @@
 
 /********************************************************************/
 
+static void	 gld			(void);
 void 		 type_greylist		(struct request *,int);
 void		 type_tuple_remove	(struct request *);
-static void	 mainloop		(int);
 static void	 send_reply		(struct request *,int,int,int);
 static void	 send_packet		(struct request *,void *,size_t);
 static void	 cmd_mcp_report		(struct request *,void (*)(FILE *),int);
@@ -68,34 +69,108 @@ static void	 log_tuple		(struct tuple *,int,int);
 
 int main(int argc,char *argv[])
 {
-  int sock;
-  
-  GlobalsInit(argc,argv);
+  parse_cmdline(argc,argv);
+  openlog("gld-monitor",0,LOG_DAEMON);
 
-  sock = create_socket(c_host,c_port,SOCK_DGRAM);
-  if (sock == -1)
-    exit(EXIT_FAILURE); 
+  if (!cf_foreground)
+    daemon_init();
     
+  while(true)
   {
-    char *t = timetoa(c_starttime);
-    (*cv_report)(LOG_INFO,"start time: %s",t);
-    free(t);
+    pid_t child;
+    bool  abend;
+    
+    child = fork();
+    
+    if (child == (pid_t)-1)
+    {
+      (*cv_report)(LOG_CRIT,"monitor(): fork() = %s",strerror(errno));
+      return EXIT_FAILURE;
+    }
+    else if (child == 0)
+    {
+      gld();
+      assert(false);
+    }
+    
+    abend = false;
+    
+    while(!abend)
+    {
+      pid_t process;
+      int   status;
+    
+      process = waitpid(child,&status,0);
+    
+      if (process == (pid_t)-1)
+        (*cv_report)(LOG_CRIT,"monitor(): waitpid(%lu) = %s",(unsigned long)child,strerror(errno));
+      else if (process != child)
+      {
+        (*cv_report)(LOG_CRIT,"monitor(): waitpid(%lu) != %lu",(unsigned long)child,(unsigned long)process);
+        (*cv_report)(LOG_CRIT,"monitor(): how did this happen?");
+      }
+      else
+      {
+        if (WIFEXITED(status))
+        {
+          (*cv_report)(LOG_ERR,"gld() status %d---stopping",WEXITSTATUS(status));
+          return WEXITSTATUS(status);
+        }
+        else if (WIFSIGNALED(status))
+        {
+          int sig = WTERMSIG(status);
+          
+          switch(sig)
+          {
+            case SIGSEGV:
+            case SIGBUS:
+            case SIGFPE:
+            case SIGILL:
+            case SIGXCPU:
+            case SIGXFSZ:
+                 (*cv_report)(LOG_CRIT,"gld() aborted by signal %d---restarting",sig);
+                 abend = true;
+                 break;
+            case SIGTERM:
+            case SIGQUIT:
+            case SIGINT:
+                 (*cv_report)(LOG_INFO,"gld() shutdown by signal %d---stopping",sig);
+                 return EXIT_SUCCESS;
+            default:
+                 (*cv_report)(LOG_ERR,"gld() stopped by signal %d---restarting",sig);
+                 abend = true;
+                 break;
+          }
+        }
+        else if (WIFSTOPPED(status))
+          (*cv_report)(LOG_ERR,"gld() stopped by signal %d",WSTOPSIG(status));
+        else if (WIFCONTINUED(status))
+          (*cv_report)(LOG_ERR,"gld() resumed operation");
+      }
+    }
   }
-
-  mainloop(sock);
-  
-  return(EXIT_SUCCESS);
 }
 
-/********************************************************************/
-
-static void mainloop(int sock)
+/*************************************************************************/      
+      
+static void gld(void)
 {
   struct request req;
   ssize_t        rrc;
   CRC32          crc;
+  int            sock;
   
-  while(1)
+  GlobalsInit();
+  
+  sock = create_socket(c_host,c_port,SOCK_DGRAM);
+  if (sock == -1)
+    exit(EXIT_FAILURE);
+  
+  char *t = timetoa(c_starttime);
+  (*cv_report)(LOG_INFO,"start time: %s",t);
+  free(t);
+  
+  while(true)
   {
     check_signals();
 

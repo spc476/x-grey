@@ -75,8 +75,6 @@ enum
 /********************************************************************/
 
 static void	 dump_defaults	(void);
-static void	 parse_cmdline	(int,char *[]);
-static void	 daemon_init	(void);
 static void	 my_exit	(void);
 
 /*********************************************************************/
@@ -213,48 +211,17 @@ static const struct option mc_options[] =
 
 /********************************************************************/
 
-int (GlobalsInit)(int argc,char *argv[])
+int (GlobalsInit)(void)
 {
-  size_t i;
-  
-  assert(argc >  0);
-  assert(argv != NULL);
-
-  /*--------------------------------------------------------------
-  ; we save the arguments for possible later use.  What possible
-  ; later use?  When one of the worker threads unexpectantly dies,
-  ; we will inform the other remaining threads to finish up, then
-  ; they're killed and this program will then reexec itself to start
-  ; up.  This is what they do in Erlang to remain up and running.
-  ;--------------------------------------------------------------*/
-  
-  if (argv[0][0] == '/')
-    strcpy(g_argv0,argv[0]);
-  else
-  {
-    char  cwd[FILENAME_MAX];
-    char *path;
-    
-    path = getcwd(cwd,FILENAME_MAX);
-    if (path == NULL)
-    {
-      /* XXX - ERROR */
-      return ERR_ERR;
-    }
-    snprintf(g_argv0,sizeof(g_argv0),"%s/%s",path,argv[0]);
-  }
-  
-  g_argv      = argv;
-  c_starttime = g_time_savestate = time(NULL);
-  
-  parse_cmdline(argc,argv);
+  c_starttime = g_time_savestate = time(NULL);  
   openlog(c_log_id,0,c_log_facility);
 
   g_pool       = malloc(c_poolmax * sizeof(struct tuple));
   g_tuplespace = malloc(c_poolmax * sizeof(Tuple));
 
   memset(g_pool, 0,c_poolmax * sizeof(struct tuple));
-  for (i = 0 ; i < c_poolmax ; i++)
+
+  for (size_t i = 0 ; i < c_poolmax ; i++)
     g_tuplespace[i] = &g_pool[i];
 
   g_tree         = malloc(sizeof(struct ipnode));
@@ -274,10 +241,7 @@ int (GlobalsInit)(int argc,char *argv[])
   from_read();
   fromd_read();
   
-  if (!cf_foreground)
-    daemon_init();
-
-  atexit(my_exit);	/* used to be above daemon_init(), race condition */
+  atexit(my_exit);
 
   /*-------------------------------------------------------------
   ; yes, I don't bother checking the return code for thes calls.
@@ -380,7 +344,7 @@ static void dump_defaults(void)
 
 /********************************************************************/ 
 
-static void parse_cmdline(int argc,char *argv[])
+void parse_cmdline(int argc,char *argv[])
 {
   char *tmp;
   int   option = 0;
@@ -492,7 +456,7 @@ static void parse_cmdline(int argc,char *argv[])
 
 /*******************************************************************/
 
-static void daemon_init(void)
+void daemon_init(void)
 {
   pid_t pid;
   int   fh;
