@@ -247,7 +247,8 @@ static void handle_sigint(void)
 
   save_state();
   GlobalsDeinit();
-  exit(EXIT_SUCCESS);
+  set_signal(SIGINT,SIG_DFL);
+  raise(SIGINT);
 }
 
 /************************************************************/
@@ -258,7 +259,8 @@ static void handle_sigquit(void)
 
   save_state();
   GlobalsDeinit();
-  exit(EXIT_SUCCESS);
+  set_signal(SIGQUIT,SIG_DFL);
+  raise(SIGQUIT);
 }
 
 /**********************************************************/
@@ -269,7 +271,8 @@ static void handle_sigterm(void)
 
   save_state();
   GlobalsDeinit();
-  exit(EXIT_SUCCESS);
+  set_signal(SIGTERM,SIG_DFL);
+  raise(SIGTERM);
 }
 
 /************************************************************/
