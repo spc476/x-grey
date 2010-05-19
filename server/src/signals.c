@@ -101,16 +101,14 @@ void sighandler_critical(int sig)
   extern char **environ;
   sigset_t      sigset;
   
-  /*--------------------------------------------------------
-  ; we've got a signal that would normally terminate with a 
-  ; core dump.  Since this thing has to run, and keep running,
-  ; we log the problem, close all open files, and re-exec
-  ; ourselves.  Not the best thing, but better than getting a 
-  ; call at 5:00 am in the morning!
-  ;--------------------------------------------------------*/
+  /*-----------------------------------------------------------------------
+  ; we've got a signal that would normally terminate with a core dump. 
+  ; Since this thing has to run, and keep running, we log the problem, and
+  ; re-exec ourselves.  Not the best thing, but better than getting a call
+  ; at 5:00 am in the morning!
+  ;----------------------------------------------------------------------*/
   
-  (*cv_report)(LOG_ERR,"DANGER! %s - restarting program",sys_siglist[sig]);
-  save_state();
+  (*cv_report)(LOG_CRIT,"DANGER! %s - restarting program",sys_siglist[sig]);
 
   /*---------------------------------------------------------
   ; unblock all signals.
@@ -121,7 +119,7 @@ void sighandler_critical(int sig)
   
   execve(g_argv0,g_argv,environ);
   (*cv_report)(LOG_ERR,"execve(%s) = %s",g_argv0,strerror(errno));
-  exit(EXIT_FAILURE);	/* when all else fails! */
+  _exit(EXIT_FAILURE);	/* when all else fails! */
 }
 
 /******************************************************************/
