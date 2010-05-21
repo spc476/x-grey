@@ -96,34 +96,6 @@ void check_signals(void)
 
 /********************************************************************/
 
-void sighandler_critical(int sig)
-{
-  extern char **environ;
-  sigset_t      sigset;
-  
-  /*-----------------------------------------------------------------------
-  ; we've got a signal that would normally terminate with a core dump. 
-  ; Since this thing has to run, and keep running, we log the problem, and
-  ; re-exec ourselves.  Not the best thing, but better than getting a call
-  ; at 5:00 am in the morning!
-  ;----------------------------------------------------------------------*/
-  
-  (*cv_report)(LOG_CRIT,"DANGER! %s - restarting program",sys_siglist[sig]);
-
-  /*---------------------------------------------------------
-  ; unblock all signals.
-  ;--------------------------------------------------------*/
- 
-  sigfillset(&sigset);
-  sigprocmask(SIG_UNBLOCK,&sigset,NULL);
-  
-  execve(g_argv0,g_argv,environ);
-  (*cv_report)(LOG_ERR,"execve(%s) = %s",g_argv0,strerror(errno));
-  _exit(EXIT_FAILURE);	/* when all else fails! */
-}
-
-/******************************************************************/
-
 void sighandler_critical_child(int sig __attribute__((unused)))
 {
   /*----------------------------------------------

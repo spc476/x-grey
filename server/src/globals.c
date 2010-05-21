@@ -231,14 +231,6 @@ int (GlobalsInit)(void)
   set_signal(SIGALRM, sighandler_sigs);
   set_signal(SIGHUP,  sighandler_sigs);
 
-  set_signal(SIGSEGV ,sighandler_critical);
-  set_signal(SIGBUS  ,sighandler_critical);
-  set_signal(SIGFPE  ,sighandler_critical);
-  set_signal(SIGILL  ,sighandler_critical);
-  set_signal(SIGXCPU ,sighandler_critical);
-  set_signal(SIGXFSZ ,sighandler_critical);
-  set_signal(SIGABRT ,sighandler_critical); /* I don't know about this */
-
   write_pidfile(c_pidfile);
   alarm(c_time_cleanup);	/* start the countdown */
   return(ERR_OKAY);
