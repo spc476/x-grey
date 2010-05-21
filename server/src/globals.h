@@ -123,8 +123,11 @@ extern size_t              g_fromdomainc;
 
 /*****************************************************************/
 
-int	(GlobalsInit)	(int,char *[]);
+int	(GlobalsInit)	(void);
 int	(GlobalsDeinit)	(void);
+
+void	parse_cmdline	(int,char *[]);
+void	daemon_init	(void);
 
 #endif
 
