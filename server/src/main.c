@@ -130,13 +130,13 @@ int main(int argc,char *argv[])
           
           switch(sig)
           {
-            case SIGSEGV:
-            case SIGBUS:
-            case SIGFPE:
-            case SIGILL:
-            case SIGXCPU:
-            case SIGXFSZ:
-            case SIGABRT:
+            case SIGTERM: 
+            case SIGQUIT: 
+            case SIGINT:
+                 (*cv_report)(LOG_INFO,"gld() shutdown by signal %d---stopping",sig);
+                 return EXIT_SUCCESS;
+            
+            default:
                  abend_now = time(NULL);
                  if (difftime(abend_now,abend_last) < 5.0)
                    abend_count++;
@@ -148,7 +148,7 @@ int main(int argc,char *argv[])
                  
                  if (abend_count > 20)
                  {
-                   (*cv_report)(LOG_EMERG,"gld() repeatedly aborted (last time via signal %d)---stopping",sig);
+                   (*cv_report)(LOG_EMERG,"gld() repeatedly aborted (last signal: %d)---stopping",sig);
                    return EXIT_FAILURE;
                  }
                  else
@@ -157,17 +157,7 @@ int main(int argc,char *argv[])
                    abend = true;
                  }
                  break; 
-            
-            case SIGTERM: 
-            case SIGQUIT: 
-            case SIGINT:
-                 (*cv_report)(LOG_INFO,"gld() shutdown by signal %d---stopping",sig);
-                 return EXIT_SUCCESS;
-            
-            default:
-                 (*cv_report)(LOG_ERR,"gld() stopped by signal %d---restarting",sig);
-                 abend = true;
-                 break;
+
           }
         }
         else if (WIFSTOPPED(status))
