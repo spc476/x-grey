@@ -55,20 +55,8 @@
 
 enum
 {
-  OPT_LIST_WHITE = OPT_USER,
-  OPT_LIST_GREY,
-  OPT_MAX_TUPLES,
-  OPT_TIME_CLEANUP,
-  OPT_TIME_SAVESTATE,
-  OPT_TIMEOUT_EMBARGO,
-  OPT_TIMEOUT_GREY,
-  OPT_TIMEOUT_WHITE,
-  OPT_FILE_IPLIST,
-  OPT_REPORT_FORMAT,
-  OPT_TIME_FORMAT,  
-  OPT_FOREGROUND,
+  OPT_FOREGROUND = OPT_USER,
   OPT_STDERR,
-  OPT_OLDCOUNTS,
   OPT_MAX
 };
 
@@ -92,6 +80,7 @@ size_t         c_secretsize	 = SECRETSIZE;
 int            cf_debug          = 0;
 void         (*cv_report)(int,const char *, ...) = report_syslog;
 
+char          *c_conffile	 = SERVER_STATEDIR "/config.txt";
 char          *c_whitefile       = SERVER_STATEDIR "/whitelist.txt";
 char          *c_greyfile        = SERVER_STATEDIR "/greyfile.txt";	
 char          *c_dumpfile        = SERVER_STATEDIR "/dump.txt";
@@ -181,32 +170,14 @@ volatile int m_debug = 1;
 
 static const struct option mc_options[] =
 {
-  { "whitelist"      	, required_argument	, NULL	, OPT_LIST_WHITE	} ,	/* gone */
-  { "graylist"		, required_argument	, NULL	, OPT_LIST_GREY 	} ,	/* gone */
-  { "greylist"		, required_argument	, NULL	, OPT_LIST_GREY		} ,	/* gone */
   { "host"		, required_argument	, NULL	, OPT_HOST		} ,
   { "port"		, required_argument	, NULL	, OPT_PORT		} ,
-  { "max-tuples"	, required_argument	, NULL	, OPT_MAX_TUPLES	} ,	/* gone */
-  { "time-cleanup" 	, required_argument	, NULL	, OPT_TIME_CLEANUP	} ,	/* gone */
-  { "time-checkpoint"	, required_argument	, NULL	, OPT_TIME_SAVESTATE	} ,	/* gone */
-  { "timeout-embargo"	, required_argument	, NULL	, OPT_TIMEOUT_EMBARGO	} ,	/* gone */
-  { "timeout-grey"	, required_argument	, NULL	, OPT_TIMEOUT_GREY	} ,	/* gone */
-  { "timeout-grey"	, required_argument	, NULL	, OPT_TIMEOUT_GREY	} ,	/* gone */
-  { "timeout-white"	, required_argument	, NULL	, OPT_TIMEOUT_WHITE	} ,	/* gone */
-  { "iplist"		, required_argument	, NULL	, OPT_FILE_IPLIST	} ,	/* gone */
-  { "time-format"     	, required_argument 	, NULL	, OPT_TIME_FORMAT    	} ,	/* gone */
-  { "report-format"     , required_argument 	, NULL	, OPT_REPORT_FORMAT	} ,	/* gone --if foreground use stderr */
-  { "log-facility"   	, required_argument 	, NULL	, OPT_LOG_FACILITY	} ,	/* gone */
-  { "log-level"      	, required_argument 	, NULL	, OPT_LOG_LEVEL		} ,	/* gone */
-  { "log-id"      	, required_argument 	, NULL	, OPT_LOG_ID        	} ,	/* gone */
-  { "secret"		, required_argument	, NULL	, OPT_SECRET		} ,	/* gone */
-  { "debug"          	, no_argument       	, NULL	, OPT_DEBUG		} ,
-  { "foreground"     	, no_argument       	, NULL	, OPT_FOREGROUND   	} ,
-  { "old-counts"	, no_argument		, NULL	, OPT_OLDCOUNTS		} ,	/* gone */
-  { "stderr"	     	, no_argument       	, NULL	, OPT_STDERR       	} ,	/* gone */
+  { "debug"		, no_argument		, NULL	, OPT_DEBUG		} ,
+  { "foreground"	, no_argument		, NULL	, OPT_FOREGROUND	} ,
+  { "stderr"		, no_argument		, NULL	, OPT_STDERR		} ,  
   { "version"		, no_argument		, NULL	, OPT_VERSION		} ,
-  { "help"	     	, no_argument       	, NULL	, OPT_HELP         	} ,
-  { NULL	     	, 0		 	, NULL	, 0 			}
+  { "help"		, no_argument		, NULL	, OPT_HELP		} ,
+  { NULL		, 0			, NULL	, 0			}
 };
 
 /********************************************************************/
@@ -287,67 +258,28 @@ int (GlobalsDeinit)(void)
 
 static void dump_defaults(void)
 {
-  char *togrey;
-  char *towhite;
-  char *toclean;
-
-  togrey  = report_delta(c_timeout_grey);
-  towhite = report_delta(c_timeout_white);
-  toclean = report_delta(c_time_cleanup);
-  
   fprintf(
         stderr,
-        "\t--whitelist <file>\t\t(%s)\n"
-        "\t--greylist  <file>\t\t(%s)\n"
         "\t--host <hostname>\t\t(%s)\n"
         "\t--port <num>\t\t\t(%d)\n"
-        "\t--max-tuples <num>\t\t(%lu)\n"
-        "\t--time-cleanup <num>\t\t(%s)\n"
-        "\t--timeout-grey <timespec>\t(%s)\n"
-        "\t--timeout-white <timespec>\t(%s)\n"
-        "\t--iplist <file>\t\t\t(%s)\n"
-        "\t--time-format <strftime>\t(%s)\n"
-        "\t--report format syslog | stderr\t(%s)\n"
-        "\t--log-facility <facility>\t(%s)\n"
-        "\t--log-level <level>\t\t(%s)\n"
-        "\t--log-sysid <string>\t\t(%s)\n"
+        "\t--stderr\t\t\t(%s)\n"
         "\t--debug\t\t\t\t(%s)\n"
         "\t--foreground\t\t\t(%s)\n"
-        "\t--old-counts\t\t\t(%s)\n"
-        "\t--stderr\t\t\t(%s)\n"
         "\t--version\t\t\t(" PROG_VERSION ")\n"
         "\t--help\n"
         "\n",
-        c_whitefile,
-        c_greyfile,
         c_host,
         c_port,
-        (unsigned long)c_poolmax,
-        toclean,
-        togrey,
-        towhite,
-        c_iplistfile,
-        c_timeformat,
-        (cv_report == report_stderr) ? "stderr" : "syslog",
-        ci_map_chars(c_log_facility,c_facilities,C_FACILITIES),
-        ci_map_chars(c_log_level,   c_levels,    C_LEVELS),
-        c_log_id,
-        (cf_debug)                   ? "true" : "false" ,
-        (cf_foreground)              ? "true" : "false",
-        (cf_oldcounts)               ? "true" : "false",
-        (cv_report == report_stderr) ? "true" : "false"        
-  );
-
-  free(toclean);
-  free(towhite);
-  free(togrey);
+        (cv_report == report_stderr) ? "true" : "false",
+        (cf_debug)                   ? "true" : "false",
+        (cf_foreground)              ? "true" : "false"
+   );
 }
 
 /********************************************************************/ 
 
 void parse_cmdline(int argc,char *argv[])
 {
-  char *tmp;
   int   option = 0;
   
   assert(argc >  0);
@@ -361,87 +293,21 @@ void parse_cmdline(int argc,char *argv[])
            return;
       case OPT_NONE:
            break;
-      case OPT_LIST_WHITE:
-           c_whitefile = optarg;
-           break;
-      case OPT_LIST_GREY:
-           c_greyfile = optarg;
-           break;
       case OPT_HOST:
            c_host = optarg;
            break;
       case OPT_PORT:
            c_port = strtoul(optarg,NULL,10);
            break;
-      case OPT_MAX_TUPLES:
-           c_poolmax = strtoul(optarg,NULL,10);
-           break;
-      case OPT_TIME_CLEANUP:
-           c_time_cleanup = (int)read_dtime(optarg,c_time_cleanup);
-           break;
-      case OPT_TIME_SAVESTATE:
-           c_time_savestate = read_dtime(optarg,c_time_savestate);
-           break;
-      case OPT_TIMEOUT_EMBARGO:
-           c_timeout_embargo = read_dtime(optarg,c_timeout_embargo);
-           break;
-      case OPT_TIMEOUT_GREY:
-           c_timeout_grey = read_dtime(optarg,c_timeout_grey);
-           break;
-      case OPT_TIMEOUT_WHITE:
-           c_timeout_white = read_dtime(optarg,c_timeout_white);
-           break;
-      case OPT_FILE_IPLIST:
-           c_iplistfile = optarg;
-           break;
-      case OPT_TIME_FORMAT:
-           c_timeformat = optarg;
-           break;
-      case OPT_REPORT_FORMAT:
-           if (strcmp(optarg,"syslog") == 0)
-             cv_report = report_syslog;
-           else if (strcmp(optarg,"stdout") == 0)
-             cv_report = report_stderr;
-           else
-           {
-             fprintf(stderr,"format %s not supported\n",optarg);
-             exit(EXIT_FAILURE);
-           }
-           break;
-      case OPT_SECRET:
-           c_secret     = optarg;
-           c_secretsize = strlen(c_secret);
+      case OPT_STDERR:
+           cv_report = report_stderr;
            break;
       case OPT_DEBUG:
            cf_debug     = 1;
            c_log_level  = LOG_DEBUG;
-           fprintf(stderr,"using '--log-level debug'\n");
-           break;
-      case OPT_LOG_FACILITY:
-           {
-             tmp            = up_string(strdup(optarg));
-             c_log_facility = ci_map_int(tmp,c_facilities,C_FACILITIES);
-             free(tmp);
-           }
-           break;
-      case OPT_LOG_LEVEL:
-           {
-             tmp         = up_string(strdup(optarg));
-             c_log_level = ci_map_int(tmp,c_levels,C_LEVELS);
-             free(tmp);
-           }
-           break;
-      case OPT_LOG_ID:
-           c_log_id = optarg;
            break;
       case OPT_FOREGROUND:
            cf_foreground = 1;
-           break;
-      case OPT_OLDCOUNTS:
-           cf_oldcounts = 1;
-           break;
-      case OPT_STDERR:
-           cv_report = report_stderr;
            break;
       case OPT_VERSION:
            fputs("Version: " PROG_VERSION "\n",stderr);
