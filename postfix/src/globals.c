@@ -66,7 +66,7 @@ int                  c_timeout      = POSTFIX_TIMEOUT;
 int                  c_log_facility = POSTFIX_LOG_FACILITY;
 int                  c_log_level    = POSTFIX_LOG_LEVEL;
 char                *c_log_id	    = POSTFIX_LOG_ID;
-int                  cf_debug       = 0;
+bool                 cf_debug       = false;
 char                *c_secret       = SECRET;
 size_t               c_secretsize   = SECRETSIZE;
 void               (*cv_report)(int,const char *, ...) = report_syslog;
@@ -176,7 +176,7 @@ static void parse_cmdline(int argc,char *argv[])
            c_secretsize = strlen(c_secret);
            break;
       case OPT_DEBUG:
-           cf_debug = 1;
+           cf_debug = true;
            break;
       case OPT_VERSION:
            fputs("Version: " PROG_VERSION "\n",stdout);

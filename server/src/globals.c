@@ -77,7 +77,7 @@ int            c_log_level       = SERVER_LOG_LEVEL;
 char	      *c_log_id          = SERVER_LOG_ID;
 char	      *c_secret		 = SECRET;
 size_t         c_secretsize	 = SECRETSIZE;
-int            cf_debug          = 0;
+bool           cf_debug          = false;
 void         (*cv_report)(int,const char *, ...) = report_syslog;
 
 char          *c_conffile	 = SERVER_STATEDIR "/config.txt";
@@ -97,8 +97,8 @@ double	       c_timeout_embargo = SERVER_TIMEOUT_EMBARGO;
 double         c_timeout_grey    = SERVER_TIMEOUT_GREYLIST;
 double	       c_timeout_white   = SERVER_TIMEOUT_WHITELIST;
 time_t         c_starttime       = 0;
-int            cf_foreground     = 0;
-int            cf_oldcounts      = 0;
+bool           cf_foreground     = false;
+bool           cf_oldcounts      = false;
 
 	/*---------------------------------------------------*/
 	
@@ -165,8 +165,6 @@ size_t               g_fromc;
 size_t               g_fromdomainc;
 
 /*******************************************************************/
-
-volatile int m_debug = 1;
 
 static const struct option mc_options[] =
 {
@@ -295,11 +293,11 @@ void parse_cmdline(int argc,char *argv[])
            cv_report = report_stderr;
            break;
       case OPT_DEBUG:
-           cf_debug     = 1;
+           cf_debug     = true;
            c_log_level  = LOG_DEBUG;
            break;
       case OPT_FOREGROUND:
-           cf_foreground = 1;
+           cf_foreground = true;
            break;
       case OPT_VERSION:
            fputs("Version: " PROG_VERSION "\n",stderr);

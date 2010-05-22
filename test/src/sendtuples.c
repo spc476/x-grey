@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdbool.h>
+
 #include <getopt.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -59,8 +61,8 @@ char   *c_timeformat   = "%c";
 int     c_log_facility = 0;
 int     c_log_level    = 0;
 char   *c_log_id       = NULL;
-int     cf_debug       = 0;
-void  (*cv_report)(int,char *,char *,...) = report_syslog;
+bool    cf_debug       = false;
+void  (*cv_report)(int,const char *, ...) = report_syslog;
 
 	/*--------------------------
 	; our global variables

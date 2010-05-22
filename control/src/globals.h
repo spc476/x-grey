@@ -22,6 +22,8 @@
 #ifndef CONTROL_GLOBALS_H
 #define CONTROL_GLOBALS_H
 
+#include <stdbool.h>
+
 /**************************************************************/
 
 extern const char *const	  c_license;
@@ -36,7 +38,7 @@ extern const socklen_t            c_raddrsize;
 extern const int                  c_log_facility;
 extern const int                  c_log_levels;
 extern const char *const          c_log_id;
-extern const int                  cf_debug;
+extern const bool                 cf_debug;
 extern const char *const          c_timeformat;
 extern const char *const          c_pager;
 extern const char *const          c_secret;

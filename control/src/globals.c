@@ -65,7 +65,7 @@ socklen_t            c_raddrsize = sizeof(struct sockaddr_in);
 int                  c_log_facility = MCP_LOG_FACILITY;
 int                  c_log_level    = MCP_LOG_LEVEL;
 const char          *c_log_id       = MCP_LOG_ID;
-int                  cf_debug       = 0;
+bool                 cf_debug       = false;
 const char          *c_timeformat   = "%c";
 const char          *c_pager        = MCP_PAGER;
 char                *c_secret       = SECRET;
@@ -185,7 +185,7 @@ static int parse_cmdline(int argc,char *argv[])
            c_secretsize = strlen(c_secret);
            break;
       case OPT_DEBUG:
-           cf_debug    = 1;
+           cf_debug    = true;
            c_log_level = LOG_DEBUG;
            fputs("using '--log-facility debug'\n",stderr);
            break;

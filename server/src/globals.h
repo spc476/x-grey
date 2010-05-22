@@ -22,6 +22,8 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
+#include <stdbool.h>
+
 #include "tuple.h"
 #include "iplist.h"
 #include "emaildomain.h"
@@ -52,9 +54,9 @@ extern const char *const    c_sysid;
 extern const time_t         c_starttime;
 extern const char *const    c_secret;
 extern const size_t         c_secretsize;
-extern const int            cf_debug;
-extern const int            cf_foreground;
-extern const int            cf_oldcounts;
+extern const bool           cf_debug;
+extern const bool           cf_foreground;
+extern const bool           cf_oldcounts;
 extern void               (*cv_report)(int,const char *, ... );
 
 	/*---------------------------------------------*/

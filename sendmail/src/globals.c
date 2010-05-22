@@ -80,8 +80,8 @@ char                *c_log_id	     = SENDMAIL_LOG_ID;
 char                *c_secret        = SECRET;
 size_t               c_secretsize    = SECRETSIZE;
 char                *c_filterchannel = SENDMAIL_FILTERCHANNEL;
-int                  cf_foreground   = 0;
-int                  cf_debug        = 0;
+bool                 cf_foreground   = false;
+bool                 cf_debug        = false;
 size_t               c_maxstack      = (64uL * 1024uL);
 void               (*cv_report)(int,const char *, ...) = report_syslog;
 
@@ -259,14 +259,14 @@ static void parse_cmdline(int argc,char *argv[])
            c_log_id = optarg;
            break;
       case OPT_FOREGROUND:
-           cf_foreground = 1;
+           cf_foreground = true;
            break;
       case OPT_SECRET:
            c_secret     = optarg;
            c_secretsize = strlen(c_secret);
            break;
       case OPT_DEBUG:
-           cf_debug = 1;
+           cf_debug = true;
            break;
       case OPT_VERSION:
            fputs("Version: " PROG_VERSION "\n",stdout);

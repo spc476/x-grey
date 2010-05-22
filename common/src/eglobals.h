@@ -22,13 +22,15 @@
 #ifndef E_GLOBALS_COMMON_H
 #define E_GLOBALS_COMMON_H
 
+#include <stdbool.h>
+
 extern const char *const c_host;
 extern const int         c_port;
 extern const char *const c_timeformat;
 extern const int         c_log_facility;
 extern const int         c_log_level;
 extern const char *const c_log_id;
-extern const int         cf_debug;
+extern const bool        cf_debug;
 extern void            (*cv_report)(int,const char *, ... );
 
 #endif
