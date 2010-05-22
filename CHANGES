@@ -9,6 +9,12 @@ X.Y.Z
 
 	* GLD: faster cleanup of tuplespace
 
+	* GLD: better self-monitoring in case of segfault, etc.
+
+	* ALL: No more funky extra libraries to download and compile
+
+	* ALL: Now C99!
+
 1.0.12	2010-05-10
 
 	* Now you can uninstall the program!
