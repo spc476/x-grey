@@ -35,6 +35,7 @@
 #include <signal.h>
 #include <getopt.h>
 #include <netdb.h>
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -188,6 +189,9 @@ int (GlobalsInit)(void)
   g_pool       = malloc(c_poolmax * sizeof(struct tuple));
   g_tuplespace = malloc(c_poolmax * sizeof(Tuple));
 
+  madvise(g_pool,      c_poolmax * sizeof(struct tuple),MADV_RANDOM);
+  madvise(g_tuplespace,c_poolmax * sizeof(Tuple),       MADV_RANDOM);
+  
   memset(g_pool, 0,c_poolmax * sizeof(struct tuple));
 
   for (size_t i = 0 ; i < c_poolmax ; i++)
