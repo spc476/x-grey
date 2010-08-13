@@ -226,7 +226,7 @@ void tuple_expire(time_t Tao)
   
   for (i = 0 ; i < c_poolmax ; i++)
   {
-    if (g_tuplespace[i]->f & F_REMOVE)
+    if (g_pool[i].f & F_REMOVE)
     {
       g_tuplespace[j++] = &g_pool[i];
       assert(j < c_poolmax);
