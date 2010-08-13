@@ -389,6 +389,8 @@ void whitelist_load(void)
     if (empty_string(line)) 
       continue;
 
+    line = trim_space(line);
+    
     D(tuple.pad = 0xDECAFBAD;)
     tuple.ip[0] = strtoul(line,&p,10); p++;
     tuple.ip[1] = strtoul(p,&p,10);    p++;
