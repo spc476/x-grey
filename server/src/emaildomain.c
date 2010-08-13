@@ -435,7 +435,7 @@ static void tofrom_dump_stream(FILE *out,EDomain list,size_t size)
   for (i = 0 ; i < size ; i++)
   {
     cmd = ci_map_chars(list[i].cmd,c_ift,C_IFT);
-    fprintf(out,"%10lu %8.8s %s",(unsigned long)list[i].count,cmd,list[i].text);    
+    fprintf(out,"%10lu %8.8s %s\n",(unsigned long)list[i].count,cmd,list[i].text);    
   }
 }
 
