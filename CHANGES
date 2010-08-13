@@ -15,6 +15,13 @@ X.Y.Z
 
 	* ALL: Now C99!
 
+	* GLD: fixed a tuplespace corruption bug
+
+	* GLD: fixed a parsing bug when reading the whitelist on startup
+
+	* GLD: call madvise() to let kernel know we're hitting the tuple
+               space randomly
+
 1.0.12	2010-05-10
 
 	* Now you can uninstall the program!
