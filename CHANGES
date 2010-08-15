@@ -22,6 +22,8 @@ X.Y.Z
 	* GLD: call madvise() to let kernel know we're hitting the tuple
                space randomly
 
+	* GLD: fixed output bug
+
 1.0.12	2010-05-10
 
 	* Now you can uninstall the program!
