@@ -24,6 +24,8 @@ X.Y.Z
 
 	* GLD: fixed output bug
 
+	* ALL: New Makefiles.  
+
 1.0.12	2010-05-10
 
 	* Now you can uninstall the program!
