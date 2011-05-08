@@ -281,6 +281,10 @@ common/build/crc32.o: common/src/crc32.c	\
 		common/src/crc32.h
 	$(CC) $(CFLAGS) -c -o $@ common/src/crc32.c
 
+common/build/bisearch.o : common/src/bisearch.c	\
+		common/src/bisearch.h
+	$(CC) $(CFLAGS) -c -o $@ common/src/bisearch.c
+
 # =======================================================================
 
 tarball:
