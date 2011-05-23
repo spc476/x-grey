@@ -33,7 +33,7 @@ bisearch__t bisearch(
     
     half   = len / 2;
     middle = first + half;
-    pivot  = (const char *)base + (size * middle);
+    pivot  = (const char *)base + (middle * size);
     q      = (*compare)(key,pivot);
     
     if (q > 0)
