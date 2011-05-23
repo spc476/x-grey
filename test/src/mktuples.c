@@ -97,6 +97,7 @@ int main(int argc,char *argv[])
   
   while(getline(&line,&linesize,input) > 0)
   {
+    char   *nl;
     char   *from;
     char   *to;
     size_t  sfrom;
@@ -104,7 +105,9 @@ int main(int argc,char *argv[])
     size_t  packetsize;
     byte   *p;
     CRC32   crc;
-
+    
+    nl = strchr(line,'\n'); if (nl) *nl = '\0';
+    
     if (count == g_count)
     {
       char filename[BUFSIZ];
