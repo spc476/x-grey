@@ -95,7 +95,7 @@ server/build/signals.o : server/src/signals.c	\
 		server/src/globals.h		\
 		server/src/iplist.h		\
 		server/src/signals.h
-	$(CC) $(CLFAGS) -c -o $@ server/src/signals.c
+	$(CC) $(CFLAGS) -c -o $@ server/src/signals.c
 	
 server/build/iplist.o : server/src/iplist.c	\
 		common/src/globals.h		\
