@@ -53,7 +53,8 @@ bin/gld: server/build/main.o			\
 		server/build/tuple.o		\
 		common/build/globals.o		\
 		common/build/util.o		\
-		common/build/crc32.o
+		common/build/crc32.o		\
+		common/build/bisearch.o
 	$(CC) $(CFLAGS) -o $@			\
 		server/build/main.o		\
 		server/build/globals.o		\
@@ -64,6 +65,7 @@ bin/gld: server/build/main.o			\
 		common/build/globals.o		\
 		common/build/util.o		\
 		common/build/crc32.o		\
+		common/build/bisearch.o		\
 		-lcgi6
 		
 server/build/main.o : server/src/main.c 	\
@@ -114,6 +116,7 @@ server/build/emaildomain.o : server/src/emaildomain.c	\
 server/build/tuple.o : server/src/tuple.c	\
 		common/src/greylist.h		\
 		common/src/util.h		\
+		common/src/bisearch.h		\
 		server/src/tuple.h		\
 		server/src/globals.h
 	$(CC) $(CFLAGS) -c -o $@ server/src/tuple.c

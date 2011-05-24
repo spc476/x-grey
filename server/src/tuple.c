@@ -32,6 +32,7 @@
 
 #include "../../common/src/greylist.h"
 #include "../../common/src/util.h"
+#include "../../common/src/bisearch.h"
 #include "tuple.h"
 #include "globals.h"
 
@@ -41,77 +42,52 @@
 
 /**********************************************************************/
 
-int tuple_cmp_ift(const void *left,const void *right)
+int tuple_look_ift(const void *restrict key,const void *restrict values)
 {
-  const struct tuple *l = left;
-  const struct tuple *r = right;
+  const struct tuple *k;
+  const struct tuple *v;
+  size_t              len;
   int                 rc;
+
+  k  = key;
+  v  = *(struct tuple *const *)values;
   
-  assert(left   != NULL);
-  assert(right  != NULL);
-  assert(l->pad == 0xDECAFBAD);
-  assert(r->pad == 0xDECAFBAD);
+  if ((rc = memcmp(k->ip,v->ip,sizeof(k->ip))) != 0) return rc;
   
-  if ((rc = memcmp(l->ip,r->ip,sizeof(l->ip))) != 0) return(rc);
+  len = (k->fromsize < v->fromsize) ? k->fromsize : v->fromsize;
+  if ((rc = memcmp(k->from,v->from,len)) != 0) return rc;
   
-  if (l->fromsize < r->fromsize)
-    return(-1);
-  else if (l->fromsize > r->fromsize)
-    return(1);
+  if (k->fromsize < v->fromsize)
+    return -1;
+  else if (k->fromsize > v->fromsize)
+    return 1;
   
-  if ((rc = memcmp(l->from,r->from,l->fromsize)) != 0) return(rc);
+  len = (k->tosize < v->tosize) ? k->tosize : v->tosize;
+  if ((rc = memcmp(k->to,v->to,len)) != 0) return rc;
   
-  if (l->tosize < r->tosize)
-    return(-1);
-  else if (l->tosize > r->tosize)
-    return(1);
-  
-  rc = memcmp(l->to,r->to,l->tosize);
-  return(rc);
+  if (k->tosize < v->tosize)
+    return -1;
+  else if (k->tosize > v->tosize)
+    return 1;
+  else
+    return 0;
 }
 
-/**************************************************************************/
+/************************************************************************/
 
 Tuple tuple_search(Tuple key,size_t *pidx)
 {
-  size_t first;
-  size_t len;
-  size_t middle;
-  size_t half;
-  int    q;
+  bisearch__t item;
   
-  assert(key      != NULL);
-  assert(pidx     != NULL);
-  assert(key->pad == 0xDECAFBAD);
+  assert(key  != NULL);
+  assert(pidx != NULL);
   
   g_tuples_read++;
   g_tuples_read_cucurrent++;
   
-  first = 0;
-  len   = g_poolnum;
-  
-  while(len > 0)
-  {
-    half   = len / 2;
-    middle = first + half;
-    q      = tuple_cmp_ift(key,g_tuplespace[middle]);
-    
-    if (q > 0)
-    {
-      first = middle + 1;
-      len   = len - half - 1;
-    }
-    else if (q == 0)
-    {
-      *pidx = middle;
-      return g_tuplespace[middle];
-    }
-    else
-      len = half;
-  }
-  
-  *pidx = first;
-  return NULL;  
+  item  = bisearch(key,g_tuplespace,g_poolnum,sizeof(Tuple),tuple_look_ift);
+  *pidx = item.idx;
+  return (item.datum == NULL) ? NULL : *(Tuple *)item.datum;
 }
 
 /******************************************************************/
