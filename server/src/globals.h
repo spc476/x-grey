@@ -57,6 +57,7 @@ extern const size_t         c_secretsize;
 extern const bool           cf_debug;
 extern const bool           cf_foreground;
 extern const bool           cf_oldcounts;
+extern const bool           cf_nomonitor;
 extern void               (*cv_report)(int,const char *, ... );
 
 	/*---------------------------------------------*/

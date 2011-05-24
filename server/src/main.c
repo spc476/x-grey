@@ -82,6 +82,12 @@ int main(int argc,char *argv[])
   abend_last = time(NULL);
   abend_count = 0;
   
+  if (cf_nomonitor)
+  {
+    gld();
+    return EXIT_SUCCESS;
+  }
+  
   while(true)
   {
     pid_t  child;

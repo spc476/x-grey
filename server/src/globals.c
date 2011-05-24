@@ -58,6 +58,7 @@ enum
 {
   OPT_FOREGROUND = OPT_USER,
   OPT_STDERR,
+  OPT_NOMONITOR,
   OPT_MAX
 };
 
@@ -100,6 +101,7 @@ double	       c_timeout_white   = SERVER_TIMEOUT_WHITELIST;
 time_t         c_starttime       = 0;
 bool           cf_foreground     = false;
 bool           cf_oldcounts      = false;
+bool           cf_nomonitor      = false;
 
 	/*---------------------------------------------------*/
 	
@@ -173,7 +175,8 @@ static const struct option mc_options[] =
   { "port"		, required_argument	, NULL	, OPT_PORT		} ,
   { "debug"		, no_argument		, NULL	, OPT_DEBUG		} ,
   { "foreground"	, no_argument		, NULL	, OPT_FOREGROUND	} ,
-  { "stderr"		, no_argument		, NULL	, OPT_STDERR		} ,  
+  { "stderr"		, no_argument		, NULL	, OPT_STDERR		} ,
+  { "nomonitor"		, no_argument		, NULL	, OPT_NOMONITOR		} ,
   { "version"		, no_argument		, NULL	, OPT_VERSION		} ,
   { "help"		, no_argument		, NULL	, OPT_HELP		} ,
   { NULL		, 0			, NULL	, 0			}
@@ -259,6 +262,7 @@ static void dump_defaults(void)
         "\t--stderr\t\t\t(%s)\n"
         "\t--debug\t\t\t\t(%s)\n"
         "\t--foreground\t\t\t(%s)\n"
+        "\t--nomonitor\t\t\t(%s)\n"
         "\t--version\t\t\t(" PROG_VERSION ")\n"
         "\t--help\n"
         "\n",
@@ -266,7 +270,8 @@ static void dump_defaults(void)
         c_port,
         (cv_report == report_stderr) ? "true" : "false",
         (cf_debug)                   ? "true" : "false",
-        (cf_foreground)              ? "true" : "false"
+        (cf_foreground)              ? "true" : "false",
+        (cf_nomonitor)               ? "true" : "false"
    );
 }
 
@@ -302,6 +307,9 @@ void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_FOREGROUND:
            cf_foreground = true;
+           break;
+      case OPT_NOMONITOR:
+           cf_nomonitor = true;
            break;
       case OPT_VERSION:
            fputs("Version: " PROG_VERSION "\n",stderr);
