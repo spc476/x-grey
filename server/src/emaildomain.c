@@ -31,6 +31,7 @@
 
 #include "../../common/src/globals.h"
 #include "../../common/src/util.h"
+#include "../../common/src/bisearch.h"
 #include "emaildomain.h"
 #include "globals.h"
 
@@ -66,12 +67,29 @@ int edomain_cmp(EDomain key,EDomain node)
 
 /*********************************************************************/
 
+static int edomain_look(const void *restrict key,const void *restrict values)
+{
+  const struct emaildomain *k;
+  const struct emaildomain *v;
+  
+  k = key;
+  v = *(struct emaildomain *const *)values;
+  
+  return strcmp(k->text,v->text);
+}
+
+/*********************************************************************/
+
 EDomain edomain_search_to(EDomain key,size_t *pidx)
 {
+  bisearch__t item;
+  
   assert(key  != NULL);
   assert(pidx != NULL);
   
-  return edomain_search(key,pidx,g_to,g_sto);
+  item  = bisearch(key,g_to,g_sto,sizeof(struct emaildomain),edomain_look);
+  *pidx = item.idx;
+  return (item.datum == NULL) ? NULL : *(EDomain *)item.datum;
 }
 
 /***********************************************************************/
