@@ -61,13 +61,14 @@ const struct chars_int c_levels[7] =
   { "WARNING"   , LOG_WARNING   }
 };
 
-const struct chars_int c_ift[5] =
+const struct chars_int c_ift[6] =
 {
   { "GREYLIST"	, IFT_GREYLIST	} ,
   { "GRAYLIST"	, IFT_GREYLIST	} ,
   { "ACCEPT"	, IFT_ACCEPT	} ,
   { "REJECT"	, IFT_REJECT	} ,
   { "REMOVE"	, IFT_REMOVE	} ,
+  { "EXPIRE"	, IFT_EXPIRE	}
 };  
 
 const struct chars_int c_reason[8] =

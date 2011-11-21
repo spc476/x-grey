@@ -193,6 +193,7 @@ enum
   IFT_ACCEPT,
   IFT_REJECT,
   IFT_REMOVE,
+  IFT_EXPIRE,
   IFT_NONE
 };
 

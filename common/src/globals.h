@@ -26,7 +26,7 @@
 
 #define C_FACILITIES	20
 #define C_LEVELS	 7
-#define C_IFT		 5
+#define C_IFT		 6
 #define C_REASONS	 8
 
 extern const struct chars_int c_facilities[C_FACILITIES];
