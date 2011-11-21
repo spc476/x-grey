@@ -69,11 +69,8 @@ int edomain_cmp(EDomain key,EDomain node)
 
 static int edomain_look(const void *restrict key,const void *restrict values)
 {
-  const struct emaildomain *k;
-  const struct emaildomain *v;
-  
-  k = key;
-  v = *(struct emaildomain *const *)values;
+  const struct emaildomain *k = key;
+  const struct emaildomain *v = values;
   
   return strcmp(k->text,v->text);
 }
@@ -82,20 +79,10 @@ static int edomain_look(const void *restrict key,const void *restrict values)
 
 EDomain edomain_search_to(EDomain key,size_t *pidx)
 {
-  bisearch__t item;
-  
   assert(key  != NULL);
   assert(pidx != NULL);
-  
-  if (g_to == NULL)
-  {
-    *pidx = 0;
-    return NULL;
-  }
-  
-  item  = bisearch(key,g_to,g_sto,sizeof(struct emaildomain),edomain_look);
-  *pidx = item.idx;
-  return (item.datum == NULL) ? NULL : *(EDomain *)item.datum;
+
+  return edomain_search(key,pidx,g_to,g_sto);
 }
 
 /***********************************************************************/
@@ -132,38 +119,17 @@ EDomain edomain_search_fromd(EDomain key,size_t *pidx)
 
 EDomain edomain_search(EDomain key,size_t *pidx,EDomain array,size_t len)
 {
-  size_t first;
-  size_t middle;
-  size_t half;
-  int    q;
+  bisearch__t item;
   
-  assert(key  != NULL);
-  assert(pidx != NULL);
-  
-  first = 0;
-  
-  while(len > 0)
+  if (array == NULL)
   {
-    half   = len / 2;
-    middle = first + half;
-    q      = edomain_cmp(key,&array[middle]);
-    
-    if (q > 0)
-    {
-      first = middle + 1;
-      len   = len - half - 1;
-    }
-    else if (q == 0)
-    {
-      *pidx = middle;
-      return &array[middle];
-    }
-    else
-      len = half;
+    *pidx = 0;
+    return NULL;
   }
   
-  *pidx = first;
-  return NULL;
+  item = bisearch(key,array,len,sizeof(struct emaildomain),edomain_look);
+  *pidx = item.idx;
+  return (item.datum == NULL) ? NULL : *(EDomain *)item.datum;
 }
 
 /*****************************************************************/

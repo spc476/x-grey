@@ -1,6 +1,7 @@
 2011-11-21
 
 	* GLD: rewrite edomain_search() to use bisearch().
+		DONE 2011-11-21
 
 2010-05-14
 

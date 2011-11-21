@@ -9,6 +9,10 @@
 		Patched code for now.  I need to fix edomain_search() to
 		use bisearch().
 
+		UPDATE 2011-11-21
+
+		Code updated.
+
 2009-12-01	(update 2010-04-26)
 
 	* Under OpenBSD, bulk transfers (via TCP) sometimes fail.
