@@ -455,3 +455,21 @@ void whitelist_load(void)
 }
 
 /**********************************************************************/
+
+void log_tuple(Tuple tuple,int rc,int why)
+{
+  (*cv_report)(  
+        LOG_INFO,
+        "tuple: [%s , %s , %s]%s%s %s %s",
+        ipv4(tuple->ip),
+        tuple->from,
+        tuple->to,
+        (tuple->f & F_TRUNCFROM) ? " Tf" : "",
+        (tuple->f & F_TRUNCTO)   ? " Tt" : "",
+        ci_map_chars(rc, c_ift,   C_IFT),
+        ci_map_chars(why,c_reason,C_REASONS)
+  );
+}
+
+/************************************************************************/
+

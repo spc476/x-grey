@@ -115,6 +115,7 @@ server/build/emaildomain.o : server/src/emaildomain.c	\
 	
 server/build/tuple.o : server/src/tuple.c	\
 		common/src/greylist.h		\
+		common/src/globals.h		\
 		common/src/util.h		\
 		common/src/bisearch.h		\
 		server/src/tuple.h		\

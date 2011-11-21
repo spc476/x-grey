@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "../../common/src/greylist.h"
+#include "../../common/src/globals.h"
 #include "server.h"
 
 /**********************************************************/
@@ -43,6 +44,7 @@ void	 tuple_all_dump_stream	(FILE *);
 void	 whitelist_dump		(void);
 void	 whitelist_dump_stream	(FILE *);
 void	 whitelist_load		(void);
+void	 log_tuple		(Tuple,int,int);
 
 #endif
 

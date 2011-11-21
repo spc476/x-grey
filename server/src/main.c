@@ -64,7 +64,6 @@ static void	 send_packet		(struct request *,void *,size_t);
 static void	 cmd_mcp_report		(struct request *,void (*)(FILE *),int);
 static void	 cmd_mcp_tofrom		(struct request *,int,int);
 static int	 greylist_sanitize_req	(struct tuple *,struct request *);
-static void	 log_tuple		(struct tuple *,int,int);
 
 /********************************************************************/
 
@@ -1035,21 +1034,4 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
 }
 
 /*************************************************************************/
-
-static void log_tuple(struct tuple *tuple,int rc,int why)
-{
-  (*cv_report)(
-        LOG_INFO,
-        "tuple: [%s , %s , %s]%s%s %s %s",
-  	ipv4(tuple->ip),
-  	tuple->from,
-  	tuple->to,
-  	(tuple->f & F_TRUNCFROM) ? " Tf" : "",
-  	(tuple->f & F_TRUNCTO)   ? " Tt" : "",
-  	ci_map_chars(rc, c_ift,   C_IFT),
-  	ci_map_chars(why,c_reason,C_REASONS)
-  );
-}
-
-/************************************************************************/
 
