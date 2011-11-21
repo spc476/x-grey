@@ -1,6 +1,9 @@
 2011-11-21
 	* log "cu-expire: n" doesn't log what I think it logs.
 
+	* GLD receives SIGABRT when reading from-domain.txt, from.txt,
+	      to-domain.txt and to.txt.  Need to check the code for this.
+
 2009-12-01	(update 2010-04-26)
 
 	* Under OpenBSD, bulk transfers (via TCP) sometimes fail.
