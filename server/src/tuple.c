@@ -147,11 +147,14 @@ void tuple_add(Tuple rec,size_t index)
 
 void tuple_expire(time_t Tao)
 {
+  size_t gle;
+  size_t wle;
   size_t i;
   size_t j;
 
   g_tuples_write++;
   g_tuples_write_cucurrent++;
+  gle = wle = 0;
   
   for (i = j = 0 ; i < g_poolnum ; i++)
   {
@@ -186,11 +189,13 @@ void tuple_expire(time_t Tao)
       {
         g_whitelisted--;
         g_whitelist_expired++;
+        wle++;
         log_tuple(g_tuplespace[i],IFT_EXPIRE,REASON_WHITELIST);
       }
       else
       {
         g_greylist_expired++;
+        gle++;
         log_tuple(g_tuplespace[i],IFT_EXPIRE,REASON_GREYLIST);
       }
     }
@@ -212,6 +217,13 @@ void tuple_expire(time_t Tao)
       assert(j < c_poolmax);
     }
   }
+  
+  (*cv_report)(
+  	LOG_INFO,
+  	"greylist-expired: %lu whitelist-expired: %lu",
+  	(unsigned long)gle,
+  	(unsigned long)wle
+  );
   
   if (g_poolnum < g_tuples_low)  g_tuples_low  = g_poolnum;
   if (g_poolnum > g_tuples_high) g_tuples_high = g_poolnum;  
