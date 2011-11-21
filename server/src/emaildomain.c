@@ -121,13 +121,7 @@ EDomain edomain_search(EDomain key,size_t *pidx,EDomain array,size_t len)
 {
   bisearch__t item;
   
-  if (array == NULL)
-  {
-    *pidx = 0;
-    return NULL;
-  }
-  
-  item = bisearch(key,array,len,sizeof(struct emaildomain),edomain_look);
+  item  = bisearch(key,array,len,sizeof(struct emaildomain),edomain_look);
   *pidx = item.idx;
   return (item.datum == NULL) ? NULL : *(EDomain *)item.datum;
 }
