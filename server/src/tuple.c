@@ -186,9 +186,13 @@ void tuple_expire(time_t Tao)
       {
         g_whitelisted--;
         g_whitelist_expired++;
+        log_tuple(g_tuplespace[i],IFT_EXPIRE,REASON_WHITELIST);
       }
       else
+      {
         g_greylist_expired++;
+        log_tuple(g_tuplespace[i],IFT_EXPIRE,REASON_GREYLIST);
+      }
     }
     else
       g_tuplespace[j++] = g_tuplespace[i];
