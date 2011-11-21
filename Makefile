@@ -12,7 +12,7 @@ STATEDIR = /var/state/gld
 HELPDIR  = /usr/local/share/gld
 
 CC     = gcc
-CFLAGS = -std=c99 -Wall -Wextra -pedantic -g
+CFLAGS += -std=c99 -Wall -Wextra -pedantic -g
 
 #----------------------------------------------------
 # Abandon all hope ye who hack here ... 
