@@ -63,8 +63,8 @@ const struct chars_int c_levels[7] =
 
 const struct chars_int c_ift[5] =
 {
-  { "GRAYLIST"	, IFT_GREYLIST	} ,
   { "GREYLIST"	, IFT_GREYLIST	} ,
+  { "GRAYLIST"	, IFT_GREYLIST	} ,
   { "ACCEPT"	, IFT_ACCEPT	} ,
   { "REJECT"	, IFT_REJECT	} ,
   { "REMOVE"	, IFT_REMOVE	} ,
