@@ -3,6 +3,11 @@
 
 	* GLD receives SIGABRT when reading from-domain.txt, from.txt,
 	      to-domain.txt and to.txt.  Need to check the code for this.
+	
+		CLOSED 2011-11-21
+
+		Patched code for now.  I need to fix edomain_search() to
+		use bisearch().
 
 2009-12-01	(update 2010-04-26)
 

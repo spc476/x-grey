@@ -1,3 +1,7 @@
+2011-11-21
+
+	* GLD: rewrite edomain_search() to use bisearch().
+
 2010-05-14
 
 	* ALL: port to CGILib6

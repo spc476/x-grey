@@ -87,6 +87,12 @@ EDomain edomain_search_to(EDomain key,size_t *pidx)
   assert(key  != NULL);
   assert(pidx != NULL);
   
+  if (g_to == NULL)
+  {
+    *pidx = 0;
+    return NULL;
+  }
+  
   item  = bisearch(key,g_to,g_sto,sizeof(struct emaildomain),edomain_look);
   *pidx = item.idx;
   return (item.datum == NULL) ? NULL : *(EDomain *)item.datum;
