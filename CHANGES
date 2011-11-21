@@ -24,7 +24,31 @@ X.Y.Z
 
 	* GLD: fixed output bug
 
-	* ALL: New Makefiles.  
+	* ALL: New Makefiles.  No longer do we use recursive Makefiles.
+
+	* GLD: Removed the following command line arguments as they were
+	       very seldom used:
+
+			--whitelist
+			--greylist / --graylist
+			--max-tuples
+			--time-cleanup
+			--time-checkpoint
+			--timeout-embargo
+			--timeout-grey / --timeout-gray
+			--timeout-white
+			--iplist
+			--time-format
+			--report-format
+			--log-facility
+			--log-level
+			--log-id
+			--secret
+			--old-counts
+
+	* GLD: added command line option "--nomonitor"
+
+	* GLD: expired tuples logged via syslog
 
 1.0.12	2010-05-10
 
