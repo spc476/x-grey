@@ -280,8 +280,6 @@ static void handle_sigalrm(void)
   if (g_tuples_write_cu > g_tuples_write_cumax)
     g_tuples_write_cumax = g_tuples_write_cu;
 
-  (*cv_report)(LOG_INFO,"cu-expire: %lu",(unsigned long)g_req_cu);
-
   tuple_expire(now);
 
   if (difftime(now,g_time_savestate) >= c_time_savestate)
