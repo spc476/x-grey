@@ -123,7 +123,7 @@ EDomain edomain_search(EDomain key,size_t *pidx,EDomain array,size_t len)
   
   item  = bisearch(key,array,len,sizeof(struct emaildomain),edomain_look);
   *pidx = item.idx;
-  return (item.datum == NULL) ? NULL : *(EDomain *)item.datum;
+  return (item.datum == NULL) ? NULL : item.datum;
 }
 
 /*****************************************************************/
