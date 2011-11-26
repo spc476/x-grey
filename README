@@ -38,6 +38,15 @@ Features:
 	* Boundable.  It consumes a predictable amount of memory and disk
 	  space.  Expired tuples are automatically purged from the system.
 
+Note:
+
+	You'll need to run "scripts/post-commit" (written in Lua, but it's
+	clear what it does in case you don't have Lua installed) to generate
+	the "version.h" file in the top level directory.
+
+	You can add this script to the ".git/hooks/post-commit" file to have
+	the version number generated after each commit (which is what I do).
+
 Acknowledgements:
 
 	I would like to thank Pick Internet <http://www.pickint.net/> and
