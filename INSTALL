@@ -27,6 +27,7 @@ Extraction:
 
 Compilation:
 
+
 	Edit both the top level Makefile and conf.h to reflect your system's
 	layout and preferences.  Once you are satisified with the parameter
 	settings, you can then compile the program.  One setting you may
