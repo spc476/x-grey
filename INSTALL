@@ -3,9 +3,10 @@ To install the greylist daemon:
 
 Dependencies:
 
-	All programs require the CGILIB library I wrote.  The latest version
-	is available at:
+	The test programs require the CGILib library I wrote.  The latest
+	version is available at:
 
+		git://github.com/spc476/CGILib.git
 		http://www.conman.org/software/cgilib/cgilib.tar.gz
 
 	All programs require the GNU getopt library, or an equivilent
@@ -17,7 +18,7 @@ Dependencies:
 		http://tiswww.case.edu/php/chet/readline/rltop.html
 
 	The "smc" (sendmail client) requires the milter and pthreads
-	library.  You are on your own for installing milter and pthreads.
+	library.  You are on your own for installing milter and pthreads. 
 	Sorry.
 
 Extraction:
@@ -26,7 +27,6 @@ Extraction:
 	Congratulations!
 
 Compilation:
-
 
 	Edit both the top level Makefile and conf.h to reflect your system's
 	layout and preferences.  Once you are satisified with the parameter

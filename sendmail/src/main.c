@@ -39,8 +39,6 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-#include <cgilib6/util.h>
-
 #include <libmilter/mfapi.h>
 
 #include "../../common/src/greylist.h"

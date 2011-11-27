@@ -65,8 +65,7 @@ bin/gld: server/build/main.o			\
 		common/build/globals.o		\
 		common/build/util.o		\
 		common/build/crc32.o		\
-		common/build/bisearch.o		\
-		-lcgi6
+		common/build/bisearch.o
 		
 server/build/main.o : server/src/main.c 	\
 		common/src/greylist.h		\
@@ -135,7 +134,7 @@ bin/gld-mcp: control/build/main.o		\
 		common/build/globals.o		\
 		common/build/util.o		\
 		common/build/crc32.o		\
-		-lcgi6 -lreadline -lcurses
+		-lreadline -lcurses
 		
 control/build/main.o : control/src/main.c	\
 		common/src/greylist.h		\
@@ -169,8 +168,7 @@ bin/pfc: postfix/build/main.o			\
 		postfix/build/globals.o		\
 		common/build/globals.o		\
 		common/build/util.o		\
-		common/build/crc32.o		\
-		-lcgi6
+		common/build/crc32.o
 		
 postfix/build/main.o : postfix/src/main.c	\
 		common/src/greylist.h		\
@@ -205,7 +203,7 @@ bin/smc: sendmail/build/main.o			\
 		common/build/globals.o		\
 		common/build/util.o		\
 		common/build/crc32.o		\
-		-lmilter -lpthread -lcgi6
+		-lmilter -lpthread
 
 sendmail/build/main.o : sendmail/src/main.c	\
 		common/src/greylist.h		\

@@ -36,8 +36,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <cgilib6/util.h>
-
 #include "../../common/src/greylist.h"
 #include "../../common/src/globals.h"
 #include "../../common/src/util.h"
