@@ -75,28 +75,7 @@ String	   *split			(size_t *,char *);
 void	    write_pidfile		(const char *);
 int	    parse_ip			(byte *,int *,char *);
 
-char	   *up_string			(char *);
-bool	    empty_string		(const char *);
-char	   *remove_char			(char *,int (*)(int));
-char	   *trim_lspace			(char *);
-char	   *trim_tspace			(char *);
-
 /***************************************************************/
-
-static inline bool emptynull_string(const char *s)
-{
-  return ((s == NULL) || empty_string(s));
-}
-
-/*------------------------------------------------------------*/
-
-static inline char *trim_space(char *s)
-{
-  assert(s != NULL);
-  return trim_space(trim_lspace(s));
-}
-
-/*-----------------------------------------------------------*/
 
 #endif
 

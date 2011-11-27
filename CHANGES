@@ -1,3 +1,8 @@
+1.0.14
+
+	* ALL: Fixed core dump from old code that should have been removed
+	       before release.
+
 1.0.13	2011-11-27
 
 	* GLD: new metrics, such as:
@@ -10,8 +15,6 @@
 	* GLD: faster cleanup of tuplespace
 
 	* GLD: better self-monitoring in case of segfault, etc.
-
-	* ALL: No more funky extra libraries to download and compile
 
 	* ALL: Now C99!
 

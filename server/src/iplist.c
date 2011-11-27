@@ -29,6 +29,8 @@
 
 #include <syslog.h>
 
+#include <cgilib6/util.h>
+
 #include "../../common/src/globals.h"
 #include "../../common/src/util.h"
 #include "globals.h"

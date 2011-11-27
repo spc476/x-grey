@@ -41,6 +41,8 @@
 
 #include <libmilter/mfapi.h>
 
+#include <cgilib6/util.h>
+
 #include "../../common/src/greylist.h"
 #include "../../common/src/util.h"
 #include "../../common/src/crc32.h"
