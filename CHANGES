@@ -1,7 +1,6 @@
 1.0.14
 
-	* ALL: Fixed core dump from old code that should have been removed
-	       before release.
+	* GLD: don't write PID file if using --nomonitor
 
 1.0.13	2011-11-27
 

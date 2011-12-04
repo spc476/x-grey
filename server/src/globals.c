@@ -234,7 +234,8 @@ int (GlobalsInit)(void)
   set_signal(SIGALRM, sighandler_sigs);
   set_signal(SIGHUP,  sighandler_sigs);
 
-  write_pidfile(c_pidfile);
+  if (!cf_nomonitor)
+    write_pidfile(c_pidfile);
   alarm(c_time_cleanup);	/* start the countdown */
   return(ERR_OKAY);
 }
