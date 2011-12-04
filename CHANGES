@@ -1,4 +1,7 @@
-1.0.14
+1.0.14	2011-12-04
+
+	* ALL: Fixed core dump because of code I should have removed but
+               didn't.
 
 	* GLD: don't write PID file if using --nomonitor
 
