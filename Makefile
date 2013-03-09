@@ -12,7 +12,8 @@ STATEDIR = /var/state/gld
 HELPDIR  = /usr/local/share/gld
 
 CC      = gcc -std=c99
-CFLAGS += -Wall -Wextra -pedantic -g
+CFLAGS  = -Wall -Wextra -pedantic -g
+LDFLAGS = -g
 
 #----------------------------------------------------
 # Abandon all hope ye who hack here ... 
@@ -55,18 +56,7 @@ bin/gld: server/build/main.o			\
 		common/build/util.o		\
 		common/build/crc32.o		\
 		common/build/bisearch.o
-	$(CC) $(CFLAGS) -o $@			\
-		server/build/main.o		\
-		server/build/globals.o		\
-		server/build/signals.o		\
-		server/build/iplist.o		\
-		server/build/emaildomain.o	\
-		server/build/tuple.o		\
-		common/build/globals.o		\
-		common/build/util.o		\
-		common/build/crc32.o		\
-		common/build/bisearch.o		\
-		-lcgi6
+	$(CC) $(LDFLAGS) -o $@ $^ -lcgi6
 		
 server/build/main.o : server/src/main.c 	\
 		common/src/greylist.h		\
@@ -79,7 +69,7 @@ server/build/main.o : server/src/main.c 	\
 		server/src/server.h		\
 		server/src/iplist.h		\
 		server/src/emaildomain.h
-	$(CC) $(CFLAGS) -c -o $@ server/src/main.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 server/build/globals.o : server/src/globals.c	\
 		common/src/greylist.h		\
@@ -90,28 +80,28 @@ server/build/globals.o : server/src/globals.c	\
 		server/src/signals.h		\
 		server/src/iplist.h		\
 		server/src/emaildomain.h
-	$(CC) $(CFLAGS) -c -o $@ server/src/globals.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 server/build/signals.o : server/src/signals.c	\
 		common/src/util.h		\
 		server/src/globals.h		\
 		server/src/iplist.h		\
 		server/src/signals.h
-	$(CC) $(CFLAGS) -c -o $@ server/src/signals.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 server/build/iplist.o : server/src/iplist.c	\
 		common/src/globals.h		\
 		common/src/util.h		\
 		server/src/globals.h		\
 		server/src/iplist.h
-	$(CC) $(CFLAGS) -c -o $@ server/src/iplist.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 server/build/emaildomain.o : server/src/emaildomain.c	\
 		common/src/globals.h		\
 		common/src/util.h		\
 		server/src/emaildomain.h	\
 		server/src/globals.h
-	$(CC) $(CFLAGS) -c -o $@ server/src/emaildomain.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 server/build/tuple.o : server/src/tuple.c	\
 		common/src/greylist.h		\
@@ -120,7 +110,7 @@ server/build/tuple.o : server/src/tuple.c	\
 		common/src/bisearch.h		\
 		server/src/tuple.h		\
 		server/src/globals.h
-	$(CC) $(CFLAGS) -c -o $@ server/src/tuple.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 # =====================================================================
 
@@ -129,13 +119,7 @@ bin/gld-mcp: control/build/main.o		\
 		common/build/globals.o		\
 		common/build/util.o		\
 		common/build/crc32.o
-	$(CC) $(CFLAGS) -o $@ 			\
-		control/build/main.o		\
-		control/build/globals.o		\
-		common/build/globals.o		\
-		common/build/util.o		\
-		common/build/crc32.o		\
-		-lreadline -lcurses -lcgi6
+	$(CC) $(LDFLAGS) -o $@ $^ -lreadline -lcurses -lcgi6
 		
 control/build/main.o : control/src/main.c	\
 		common/src/greylist.h		\
@@ -143,14 +127,14 @@ control/build/main.o : control/src/main.c	\
 		common/src/util.h		\
 		common/src/crc32.h		\
 		control/src/globals.h
-	$(CC) $(CFLAGS) -c -o $@ control/src/main.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 control/build/globals.o : control/src/globals.c	\
 		common/src/greylist.h		\
 		common/src/util.h		\
 		common/src/globals.h		\
 		conf.h
-	$(CC) $(CFLAGS) -c -o $@ control/src/globals.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 # ===================================================================
 
@@ -164,13 +148,7 @@ bin/pfc: postfix/build/main.o			\
 		common/build/globals.o		\
 		common/build/util.o		\
 		common/build/crc32.o
-	$(CC) $(CFLAGS) -o $@			\
-		postfix/build/main.o		\
-		postfix/build/globals.o		\
-		common/build/globals.o		\
-		common/build/util.o		\
-		common/build/crc32.o		\
-		-lcgi6
+	$(CC) $(LDFLAGS) -o $@ $^ -lcgi6
 		
 postfix/build/main.o : postfix/src/main.c	\
 		common/src/greylist.h		\
@@ -178,14 +156,14 @@ postfix/build/main.o : postfix/src/main.c	\
 		common/src/crc32.h		\
 		common/src/globals.h		\
 		postfix/src/globals.h
-	$(CC) $(CFLAGS) -c -o $@ postfix/src/main.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 postfix/build/globals.o : postfix/src/globals.c	\
 		common/src/greylist.h		\
 		common/src/globals.h		\
 		common/src/util.h		\
 		conf.h
-	$(CC) $(CFLAGS) -c -o $@ postfix/src/globals.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 # =====================================================================
 
@@ -199,13 +177,7 @@ bin/smc: sendmail/build/main.o			\
 		common/build/globals.o		\
 		common/build/util.o		\
 		common/build/crc32.o
-	$(CC) $(CFLAGS) -o $@			\
-		sendmail/build/main.o		\
-		sendmail/build/globals.o	\
-		common/build/globals.o		\
-		common/build/util.o		\
-		common/build/crc32.o		\
-		-lmilter -lpthread -lcgi6
+	$(CC) $(LDFLAGS) -o $@ $^ -lmilter -lpthread -lcgi6
 
 sendmail/build/main.o : sendmail/src/main.c	\
 		common/src/greylist.h		\
@@ -213,14 +185,14 @@ sendmail/build/main.o : sendmail/src/main.c	\
 		common/src/crc32.h		\
 		common/src/globals.h		\
 		sendmail/src/globals.h
-	$(CC) $(CFLAGS) -c -o $@ sendmail/src/main.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 sendmail/build/globals.o : sendmail/src/globals.c	\
 		common/src/greylist.h		\
 		common/src/globals.h		\
 		common/src/util.h		\
 		conf.h
-	$(CC) $(CFLAGS) -c -o $@ sendmail/src/globals.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 # ========================================================================
 
@@ -230,39 +202,33 @@ test-clean:
 	
 test/build/mktuples: test/build/mktuples.o	\
 		common/build/crc32.o
-	$(CC) $(CFLAGS) -o $@			\
-		test/build/mktuples.o		\
-		common/build/crc32.o		\
-		-lcgi6
+	$(CC) $(LDFLAGS) -o $@ $^ -lcgi6
 
 test/build/sendtuples: test/build/sendtuples.o	\
 		common/build/util.o
-	$(CC) $(CFLAGS) -o $@			\
-		test/build/sendtuples.o		\
-		common/build/util.o		\
-		-lcgi6
+	$(CC) $(LDFLAGS) -o $@ $^ -lcgi6
 
 test/build/pcrc: test/build/pcrc.o
-	$(CC) $(CFLAGS) -o $@ test/build/pcrc.o -lcgi6
+	$(CC) $(LDFLAGS) -o $@ $^ -lcgi6
 	
 test/build/sendtuples.o : test/src/sendtuples.c	\
 		common/src/greylist.h		\
 		common/src/crc32.h		\
 		common/src/util.h		\
 		conf.h
-	$(CC) $(CFLAGS) -c -o $@ test/src/sendtuples.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 test/build/mktuples.o: test/src/mktuples.c	\
 		common/src/greylist.h		\
 		common/src/crc32.h
-	$(CC) $(CFLAGS) -c -o $@ test/src/mktuples.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 test/build/pcrc.o: test/src/pcrc.c		\
 		common/src/greylist.h		\
 		common/src/crc32.h		\
 		common/src/util.h		\
 		conf.h
-	$(CC) $(CFLAGS) -c -o $@ test/src/pcrc.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 # ======================================================================
 
@@ -273,21 +239,21 @@ common-clean:
 common/build/globals.o : common/src/globals.c	\
 		common/src/greylist.h		\
 		common/src/util.h
-	$(CC) $(CFLAGS) -c -o $@ common/src/globals.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 common/build/util.o: common/src/util.c		\
 		common/src/eglobals.h		\
 		common/src/util.h
-	$(CC) $(CFLAGS) -c -o $@ common/src/util.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 common/build/crc32.o: common/src/crc32.c	\
 		common/src/greylist.h		\
 		common/src/crc32.h
-	$(CC) $(CFLAGS) -c -o $@ common/src/crc32.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 common/build/bisearch.o : common/src/bisearch.c	\
 		common/src/bisearch.h
-	$(CC) $(CFLAGS) -c -o $@ common/src/bisearch.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 # =======================================================================
 
