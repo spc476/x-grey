@@ -28,8 +28,8 @@ start() {
 }
 
 stop() {
-	kill `cat /var/run/smc.pid`
-	kill `cat /var/run/gld.pid`
+	kill `cat /usr/local/var/run/smc.pid`
+	kill `cat /usr/local/var/run/gld.pid`
 	return $RETVAL
 }
 

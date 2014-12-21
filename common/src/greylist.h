@@ -25,8 +25,6 @@
 #include <time.h>
 #include <limits.h>
 
-#include "../../version.h"
-
 	/*----------------------------------------------------------------
 	; PROG_VERSION (in version.h) defines the actual program version. 
 	; VERSION is the protocol version.  The names are this way for

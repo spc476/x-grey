@@ -1,4 +1,7 @@
 
+PROG_VERSION   = $(shell git describe --tag)
+COPYRIGHT_YEAR = $(shell date +%Y)
+
 INSTALL         = /usr/bin/install
 INSTALL_PROGRAM = $(INSTALL)
 INSTALL_DATA    = $(INSTALL) -m 644
@@ -19,7 +22,7 @@ CC      = gcc -std=c99
 CFLAGS  = -Wall -Wextra -pedantic -g
 LDFLAGS = -g
 
-override CFLAGS += -DSERVER_STATEDIR='"$(SERVER_STATEDIR)"' -DMCP_HELPDIR='"$(MCP_HELPDIR)"' -DSENDMAIL_FILTERCHANNEL='"$(SENDMAIL_FILTERCHANNEL)"' -DSERVER_PIDFILE='"$(runstatedir)/gld.pid"' -DSENDMAIL_PIDFILE='"$(runstatedir)/smc.pid"'
+override CFLAGS += -DSERVER_STATEDIR='"$(SERVER_STATEDIR)"' -DMCP_HELPDIR='"$(MCP_HELPDIR)"' -DSENDMAIL_FILTERCHANNEL='"$(SENDMAIL_FILTERCHANNEL)"' -DSERVER_PIDFILE='"$(runstatedir)/gld.pid"' -DSENDMAIL_PIDFILE='"$(runstatedir)/smc.pid"' -DPROG_VERSION='"$(PROG_VERSION)"' -DCOPYRIGHT_YEAR='"$(COPYRIGHT_YEAR)"'
 
 #----------------------------------------------------
 # Abandon all hope ye who hack here ... 
