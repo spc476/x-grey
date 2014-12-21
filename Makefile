@@ -1,19 +1,25 @@
 
-#--------------------------------------------------
-#
-# change the following to reflect your system's layout.
-# Make sure they match what's defined in conf.h
-#
-#----------------------------------------------------
+INSTALL         = /usr/bin/install
+INSTALL_PROGRAM = $(INSTALL)
+INSTALL_DATA    = $(INSTALL) -m 644
 
-PIDDIR   = /var/run
-BINDIR   = /usr/local/bin
-STATEDIR = /var/state/gld
-HELPDIR  = /usr/local/share/gld
+prefix		= /usr/local
+exec_prefix	= $(prefix)
+bindir		= $(exec_prefix)/bin
+datarootdir	= $(prefix)/share
+datadir		= $(datarootdir)
+localstatedir	= $(prefix)/var
+runstatedir	= $(localstatedir)/run
+
+SERVER_STATEDIR        = $(localstatedir)/state/gld
+MCP_HELPDIR            = $(datarootdir)/gld
+SENDMAIL_FILTERCHANNEL = $(localstatedir)/state/gld/milter
 
 CC      = gcc -std=c99
 CFLAGS  = -Wall -Wextra -pedantic -g
 LDFLAGS = -g
+
+override CFLAGS += -DSERVER_STATEDIR='"$(SERVER_STATEDIR)"' -DMCP_HELPDIR='"$(MCP_HELPDIR)"' -DSENDMAIL_FILTERCHANNEL='"$(SENDMAIL_FILTERCHANNEL)"' -DSERVER_PIDFILE='"$(runstatedir)/gld.pid"' -DSENDMAIL_PIDFILE='"$(runstatedir)/smc.pid"'
 
 #----------------------------------------------------
 # Abandon all hope ye who hack here ... 
@@ -262,40 +268,42 @@ tarball:
 
 install:
 	@echo "make (install-server | install-postfix | install-sendmail)"
+
+install-all: install-server install-postfix install-sendmail
 	
-remove:
-	@echo "make (remove-server | remove-postfix | remove-sendmail)"
+uninstall:
+	@echo "make (uninstall-server | uninstall-postfix | uninstall-sendmail)"
 
-install-server:
-	install -d $(PIDDIR)
-	install -d $(BINDIR)
-	install -d $(STATEDIR)
-	install -d $(HELPDIR)
-	install bin/gld $(BINDIR)
-	install bin/gld-mcp $(BINDIR)
-	install COMMANDS $(HELPDIR)
-	install LICENSE  $(HELPDIR)
+uninstall-all: uninstall-server uninstall-postfix uninstall-sendmail
 
-remove-server:
-	/bin/rm -rf $(BINDIR)/gld
-	/bin/rm -rf $(BINDIR)/gld-mcp
-	/bin/rm -rf $(HELPDIR)/COMMANDS
-	/bin/rm -rf $(HELPDIR)/LICENSE
-	@echo "You may also want to remove $(STATEDIR) and $(HELPDIR)"
+install-server: bin/gld bin/gld-mcp
+	$(INSTALL) -d $(DESTDIR)$(runstatedir)
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL) -d $(DESTDIR)$(localstatedir)/state/gld
+	$(INSTALL) -d $(DESTDIR)$(datarootdir)/gld
+	$(INSTALL_PROGRAM) bin/gld $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) bin/gld-mcp $(DESTDIR)$(bindir)
+	$(INSTALL_DATA) COMMANDS $(DESTDIR)$(datarootdir)/gld
+	$(INSTALL_DATA) LICENSE $(DESTDIR)$(datarootdir)/gld
+
+uninstall-server:
+	$(RM) $(DESTDIR)$(bindir)/gld
+	$(RM) $(DESTDIR)$(bindir)/gld-mcp
+	$(RM) -r $(DESTDIR)$(datarootdir)/gld
+	$(RM) -r $(DESTDIR)$(localstatedir)/state/gld
+
+install-postfix: bin/pfc
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) bin/pfc $(DESTDIR)$(bindir)
+
+uninstall-postfix:
+	$(RM) $(DESTDIR)$(bindir)/pfc
+
+install-sendmail: bin/smc
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL) -d $(DESTDIR)$(localstatedir)/state/gld
+	$(INSTALL_PROGRAM) bin/smc $(DESTDIR)$(bindir)
 	
-install-postfix:
-	install -d $(BINDIR)
-	install bin/pfc $(BINDIR)
-
-remove-postfix:
-	/bin/rm -rf $(BINDIR)/pfc
-
-install-sendmail:
-	install -d $(BINDIR)
-	install -d $(STATEDIR)
-	install bin/smc $(BINDIR)
-	
-remove-sendmail:
-	/bin/rm -rf $(BINDIR)/smc
-	@echo "You may also want to remove $(STATEDIR)"
+uninstall-sendmail:
+	$(RM) $(DESTDIR)$(bindir)/smc
 	

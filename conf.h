@@ -58,21 +58,6 @@
 	
 #define SERVER_PORT 9990
 
-	/*------------------------------------------------
-	; The file the server will write its PID to.
-	;------------------------------------------------*/
-	
-#define SERVER_PIDFILE "/var/run/gld.pid"
-
-	/*----------------------------------------------
-	; The directory the server will use to save its
-	; state (and reload if restarted).  The SENDMAIL
-	; client will also use this directory for its
-	; pipe to sendmail.
-	;----------------------------------------------*/
-	
-#define SERVER_STATEDIR "/var/state/gld"
-
 	/*-----------------------------------------------
 	; Information used when logging to syslog.  Any messages
 	; at a lower priority than SERVER_LOG_LEVEL are not
@@ -135,12 +120,6 @@
 *
 **************************************************************************/
 
-	/*-------------------------------------------
-	; Various help files are stored here
-	;------------------------------------------*/
-	
-#define MCP_HELPDIR	"/usr/local/share/gld"
-
 	/*----------------------------------------
 	; Default pager program.  Can be overriden
 	; with the PAGER environment variable.
@@ -202,19 +181,6 @@
 * Configuration parameters for SMC (the SENDMAIL CLIENT)
 *
 ***********************************************************************/
-
-	/*-------------------------------------------------------
-	; Since SMC is an actual daemon, it records it PID in
-	; a file.
-	;-----------------------------------------------------*/
-	
-#define SENDMAIL_PIDFILE	"/var/run/smc.pid"
-
-	/*--------------------------------------------------------
-	; the pipe SMC uses to communicate to sendmail.
-	;---------------------------------------------------------*/
-	
-#define SENDMAIL_FILTERCHANNEL	"unix:" SERVER_STATEDIR "/milter"
 
 	/*----------------------------------------------------------
 	; The local interface that SMC will communicate with.  To
