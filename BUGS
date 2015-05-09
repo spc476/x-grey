@@ -28,6 +28,15 @@
 		port along with the UDP response, but that would require
 		an update of the communications protocol.
 
+		CLOSED 2015-05-09
+
+		I haven't heard back on this issue, and I've checked the
+		code.  It's not a catastraphic failure, just a transient
+		(unless something is sitting on TCP:9990).  
+
+		I think this finally marks the end of v1.0.  Anything past
+		this will be a radical redesign.
+
 2009-05-29
 
 	* when removing tuples, the counts might not be adjusted properly
@@ -53,7 +62,7 @@
 		FIXED	2007-11-13
 
 	* INSTALL file does not mention changes needed to postfix/mail.cf
-	  (Mark Grosbert)
+	  (Mark Grosber)
 		FIXED	2007-11-13
 
 2007-11-05
