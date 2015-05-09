@@ -1,3 +1,18 @@
+1.0.17	2015-05-09
+
+	* MCP: Fix logging message (was using an obsolete form)
+
+	* PFC: Fix logging message (was using an obsolete form)
+
+	* GLD: Fix logging message (was using an obsolete form)
+
+	* ALL: Closed out last bug as "won't fix".  I haven't heard
+	       back on it in six years and I've yet to sucessfully
+	       reproduce it.
+
+	* ALL: Official announcement:  this is the LAST 1.0 release.
+	       This may be the last release, period.
+
 1.0.16	2015-05-09
 
 	* ALL: More changes to the Makefile.
