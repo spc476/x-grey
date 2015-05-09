@@ -1,3 +1,16 @@
+1.0.16	2015-05-09
+
+	* ALL: More changes to the Makefile.
+
+		* Version information is generated during make from
+		  the revision control software.
+
+		* Follow GNU advice about building with $(prefix) and
+		  $(DESTDIR).
+
+		* Directories that used to be defined in conf.h now set
+		  in Makefile.
+
 1.0.15	2013-05-08
 
 	* ALL: Changes to the Makefile.  No functional changes.
