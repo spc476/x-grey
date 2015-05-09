@@ -174,7 +174,7 @@ pid_t gld_fork(void)
   pid = fork();
   if (pid == (pid_t)-1)
   {
-    (*cv_report)(LOG_CRIT,"$","fork() = %a",strerror(errno));
+    (*cv_report)(LOG_CRIT,"fork() = %s",strerror(errno));
     return(pid);
   }
   else if (pid > (pid_t)0)	/* parent returns immediately */

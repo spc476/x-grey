@@ -349,7 +349,7 @@ int check_greylist(int sock,char *ip,char *from,char *to)
 
   if (ntohs(glr->MTA) != MTA_POSTFIX)
   {
-    (*cv_report)(LOG_ERR,"","are we running another MTA here?");
+    (*cv_report)(LOG_ERR,"are we running another MTA here?");
     return(IFT_ACCEPT);
   }
   

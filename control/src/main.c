@@ -295,7 +295,7 @@ static int send_request(
   	);
   if (rrc == -1)
   {
-    (*cv_report)(LOG_ERR,"$","sendto() = %a",strerror(errno));
+    (*cv_report)(LOG_ERR,"sendto() = %s",strerror(errno));
     return(ERR_ERR);
   }
   
