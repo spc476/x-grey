@@ -121,13 +121,13 @@ uninstall:
 
 uninstall-all: uninstall-server uninstall-postfix uninstall-sendmail
 
-install-server: bin/gld bin/gld-mcp
+install-server: server/gld control/gld-mcp
 	$(INSTALL) -d $(DESTDIR)$(runstatedir)
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(localstatedir)/state/gld
 	$(INSTALL) -d $(DESTDIR)$(datarootdir)/gld
-	$(INSTALL_PROGRAM) bin/gld $(DESTDIR)$(bindir)
-	$(INSTALL_PROGRAM) bin/gld-mcp $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) server/gld $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) control/gld-mcp $(DESTDIR)$(bindir)
 	$(INSTALL_DATA) COMMANDS $(DESTDIR)$(datarootdir)/gld
 	$(INSTALL_DATA) LICENSE $(DESTDIR)$(datarootdir)/gld
 
@@ -137,17 +137,17 @@ uninstall-server:
 	$(RM) -r $(DESTDIR)$(datarootdir)/gld
 	$(RM) -r $(DESTDIR)$(localstatedir)/state/gld
 
-install-postfix: bin/pfc
+install-postfix: postfix/pfc
 	$(INSTALL) -d $(DESTDIR)$(bindir)
-	$(INSTALL_PROGRAM) bin/pfc $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) postfix/pfc $(DESTDIR)$(bindir)
 
 uninstall-postfix:
 	$(RM) $(DESTDIR)$(bindir)/pfc
 
-install-sendmail: bin/smc
+install-sendmail: sendmail/smc
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(localstatedir)/state/gld
-	$(INSTALL_PROGRAM) bin/smc $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) sendmail/smc $(DESTDIR)$(bindir)
 	
 uninstall-sendmail:
 	$(RM) $(DESTDIR)$(bindir)/smc
