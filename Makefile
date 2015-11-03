@@ -22,9 +22,10 @@ SERVER_STATEDIR        = $(localstatedir)/state/gld
 MCP_HELPDIR            = $(datarootdir)/gld
 SENDMAIL_FILTERCHANNEL = $(localstatedir)/state/gld/milter
 
-CC      = gcc -std=c99
-CFLAGS  = -Wall -Wextra -pedantic -g
+CC      = gcc -std=c99 -Wall -Wextra -pedantic
+CFLAGS  = -g
 LDFLAGS = -g
+LDLIBS  = -lcgi6
 
 override CFLAGS += -DSERVER_STATEDIR='"$(SERVER_STATEDIR)"' -DMCP_HELPDIR='"$(MCP_HELPDIR)"' -DSENDMAIL_FILTERCHANNEL='"$(SENDMAIL_FILTERCHANNEL)"' -DSERVER_PIDFILE='"$(runstatedir)/gld.pid"' -DSENDMAIL_PIDFILE='"$(runstatedir)/smc.pid"' -DPROG_VERSION='"$(PROG_VERSION)"' -DCOPYRIGHT_YEAR='"$(COPYRIGHT_YEAR)"'
 
@@ -32,243 +33,75 @@ override CFLAGS += -DSERVER_STATEDIR='"$(SERVER_STATEDIR)"' -DMCP_HELPDIR='"$(MC
 # Abandon all hope ye who hack here ... 
 #----------------------------------------------------
 
+.PHONY: all depend clean server postfix sendmail test
+
 all:
 	@echo "make (server | postfix | sendmail | test)"
 
-server: 	bin/gld bin/gld-mcp
+depend:
+	makedepend -Y -- $(CFLAGS) -- `find . -name '*.c'` 2>/dev/null
 
-postfix:	bin/pfc
+server:   server/src/gld control/src/gld-mcp
+postfix:  postfix/src/pfc
+sendmail: sendmail/src/smc
+test:	  test/build/mktuples test/build/sendtuples test/build/pcrc
 
-sendmail:	bin/smc
+clean:
+	$(RM) `find . -name '*.o'`
+	$(RM) server/src/gld
+	$(RM) control/src/gld-mcp
+	$(RM) postfix/src/pfc
+	$(RM) sendmail/src/smc
 
-test:	test/build/mktuples test/build/sendtuples test/build/pcrc
-
-clean:	server-clean		\
-		postfix-clean	\
-		sendmail-clean	\
-		test-clean	\
-		common-clean
-	/bin/rm -rf *~
+% :
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 # ===================================================
 
-server-clean:
-	/bin/rm -rf bin/gld bin/gld-mcp
-	/bin/rm -rf server/build/*
-	/bin/rm -rf server/src/*~
-	/bin/rm -rf control/build/*
-	/bin/rm -rf control/src/*~
+server/src/gld: server/src/main.o		\
+		server/src/globals.o		\
+		server/src/signals.o		\
+		server/src/iplist.o		\
+		server/src/emaildomain.o	\
+		server/src/tuple.o		\
+		common/src/globals.o		\
+		common/src/util.o		\
+		common/src/crc32.o		\
+		common/src/bisearch.o
 
-bin/gld: server/build/main.o			\
-		server/build/globals.o		\
-		server/build/signals.o		\
-		server/build/iplist.o		\
-		server/build/emaildomain.o	\
-		server/build/tuple.o		\
-		common/build/globals.o		\
-		common/build/util.o		\
-		common/build/crc32.o		\
-		common/build/bisearch.o
-	$(CC) $(LDFLAGS) -o $@ $^ -lcgi6
-		
-server/build/main.o : server/src/main.c 	\
-		common/src/greylist.h		\
-		common/src/globals.h		\
-		common/src/util.h		\
-		common/src/crc32.h		\
-		server/src/tuple.h		\
-		server/src/globals.h		\
-		server/src/signals.h		\
-		server/src/server.h		\
-		server/src/iplist.h		\
-		server/src/emaildomain.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
-server/build/globals.o : server/src/globals.c	\
-		common/src/greylist.h		\
-		common/src/globals.h		\
-		common/src/util.h		\
-		conf.h				\
-		server/src/tuple.h		\
-		server/src/signals.h		\
-		server/src/iplist.h		\
-		server/src/emaildomain.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
-server/build/signals.o : server/src/signals.c	\
-		common/src/util.h		\
-		server/src/globals.h		\
-		server/src/iplist.h		\
-		server/src/signals.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
-server/build/iplist.o : server/src/iplist.c	\
-		common/src/globals.h		\
-		common/src/util.h		\
-		server/src/globals.h		\
-		server/src/iplist.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
-server/build/emaildomain.o : server/src/emaildomain.c	\
-		common/src/globals.h		\
-		common/src/util.h		\
-		server/src/emaildomain.h	\
-		server/src/globals.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
-server/build/tuple.o : server/src/tuple.c	\
-		common/src/greylist.h		\
-		common/src/globals.h		\
-		common/src/util.h		\
-		common/src/bisearch.h		\
-		server/src/tuple.h		\
-		server/src/globals.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
 # =====================================================================
 
-bin/gld-mcp: control/build/main.o		\
-		control/build/globals.o		\
-		common/build/globals.o		\
-		common/build/util.o		\
-		common/build/crc32.o
-	$(CC) $(LDFLAGS) -o $@ $^ -lreadline -lcurses -lcgi6
-		
-control/build/main.o : control/src/main.c	\
-		common/src/greylist.h		\
-		common/src/globals.h		\
-		common/src/util.h		\
-		common/src/crc32.h		\
-		control/src/globals.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
-control/build/globals.o : control/src/globals.c	\
-		common/src/greylist.h		\
-		common/src/util.h		\
-		common/src/globals.h		\
-		conf.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
+control/src/gld-mcp: control/src/main.o		\
+		control/src/globals.o		\
+		common/src/globals.o		\
+		common/src/util.o		\
+		common/src/crc32.o
+control/src/gld-mcp: override LDLIBS += -lreadline -lcurses
+
 # ===================================================================
 
-postfix-clean:
-	/bin/rm -rf bin/pfc
-	/bin/rm -rf postfix/build/*
-	/bin/rm -rf postfix/src/*~
-	
-bin/pfc: postfix/build/main.o			\
-		postfix/build/globals.o		\
-		common/build/globals.o		\
-		common/build/util.o		\
-		common/build/crc32.o
-	$(CC) $(LDFLAGS) -o $@ $^ -lcgi6
-		
-postfix/build/main.o : postfix/src/main.c	\
-		common/src/greylist.h		\
-		common/src/util.h		\
-		common/src/crc32.h		\
-		common/src/globals.h		\
-		postfix/src/globals.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
-postfix/build/globals.o : postfix/src/globals.c	\
-		common/src/greylist.h		\
-		common/src/globals.h		\
-		common/src/util.h		\
-		conf.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+postfix/src/pfc: postfix/src/main.o	\
+		postfix/src/globals.o	\
+		common/src/globals.o	\
+		common/src/util.o	\
+		common/src/crc32.o
 
 # =====================================================================
 
-sendmail-clean:
-	/bin/rm -rf bin/smc
-	/bin/rm -rf sendmail/build/*
-	/bin/rm -rf sendmail/src/*~
-	
-bin/smc: sendmail/build/main.o			\
-		sendmail/build/globals.o	\
-		common/build/globals.o		\
-		common/build/util.o		\
-		common/build/crc32.o
-	$(CC) $(LDFLAGS) -o $@ $^ -lmilter -lpthread -lcgi6
+sendmail/src/smc: sendmail/src/main.o	\
+		sendmail/src/globals.o	\
+		common/src/globals.o	\
+		common/src/util.o	\
+		common/src/crc32.o
+sendmail/src/smc: override LDLIBS += -lmilter -lpthread
 
-sendmail/build/main.o : sendmail/src/main.c	\
-		common/src/greylist.h		\
-		common/src/util.h		\
-		common/src/crc32.h		\
-		common/src/globals.h		\
-		sendmail/src/globals.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
-sendmail/build/globals.o : sendmail/src/globals.c	\
-		common/src/greylist.h		\
-		common/src/globals.h		\
-		common/src/util.h		\
-		conf.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
 # ========================================================================
 
-test-clean:
-	/bin/rm -rf test/build/*
-	/bin/rm -rf test/src/*~
-	
-test/build/mktuples: test/build/mktuples.o	\
-		common/build/crc32.o
-	$(CC) $(LDFLAGS) -o $@ $^ -lcgi6
+test/src/mktuples: test/src/mktuples.o common/src/crc32.o
+test/src/sendtuples: test/src/sendtuples.o common/src/util.o
+test/src/pcrc:       test/src/pcrc.o
 
-test/build/sendtuples: test/build/sendtuples.o	\
-		common/build/util.o
-	$(CC) $(LDFLAGS) -o $@ $^ -lcgi6
-
-test/build/pcrc: test/build/pcrc.o
-	$(CC) $(LDFLAGS) -o $@ $^ -lcgi6
-	
-test/build/sendtuples.o : test/src/sendtuples.c	\
-		common/src/greylist.h		\
-		common/src/crc32.h		\
-		common/src/util.h		\
-		conf.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
-test/build/mktuples.o: test/src/mktuples.c	\
-		common/src/greylist.h		\
-		common/src/crc32.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-test/build/pcrc.o: test/src/pcrc.c		\
-		common/src/greylist.h		\
-		common/src/crc32.h		\
-		common/src/util.h		\
-		conf.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
 # ======================================================================
-
-common-clean:
-	/bin/rm -rf common/build/*
-	/bin/rm -rf common/src/*~
-
-common/build/globals.o : common/src/globals.c	\
-		common/src/greylist.h		\
-		common/src/util.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
-common/build/util.o: common/src/util.c		\
-		common/src/eglobals.h		\
-		common/src/util.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-	
-common/build/crc32.o: common/src/crc32.c	\
-		common/src/greylist.h		\
-		common/src/crc32.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-common/build/bisearch.o : common/src/bisearch.c	\
-		common/src/bisearch.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-# =======================================================================
 
 tarball:
 	(cd .. ; tar czvf /tmp/x-grey.tar.gz -X x-grey/.exclude x-grey/ )
@@ -314,3 +147,63 @@ install-sendmail: bin/smc
 uninstall-sendmail:
 	$(RM) $(DESTDIR)$(bindir)/smc
 	
+# DO NOT DELETE
+
+./postfix/src/main.o: ./common/src/greylist.h ./common/src/util.h
+./postfix/src/main.o: ./common/src/greylist.h ./common/src/crc32.h
+./postfix/src/main.o: ./common/src/globals.h ./common/src/util.h
+./postfix/src/main.o: ./postfix/src/globals.h
+./postfix/src/globals.o: ./common/src/greylist.h ./common/src/globals.h
+./postfix/src/globals.o: ./common/src/util.h ./common/src/util.h
+./postfix/src/globals.o: ./common/src/greylist.h ./conf.h
+./common/src/crc32.o: ./common/src/greylist.h ./common/src/crc32.h
+./common/src/util.o: ./common/src/eglobals.h ./common/src/util.h
+./common/src/bisearch.o: ./common/src/bisearch.h
+./common/src/globals.o: ./common/src/greylist.h ./common/src/util.h
+./control/src/main.o: ./common/src/greylist.h ./common/src/globals.h
+./control/src/main.o: ./common/src/util.h ./common/src/util.h
+./control/src/main.o: ./common/src/greylist.h ./common/src/crc32.h
+./control/src/main.o: ./postfix/src/globals.h
+./control/src/globals.o: ./common/src/greylist.h ./common/src/util.h
+./control/src/globals.o: ./common/src/greylist.h ./common/src/globals.h
+./control/src/globals.o: ./common/src/util.h ./conf.h
+./sendmail/src/main.o: ./common/src/greylist.h ./common/src/util.h
+./sendmail/src/main.o: ./common/src/greylist.h ./common/src/crc32.h
+./sendmail/src/main.o: ./common/src/globals.h ./common/src/util.h
+./sendmail/src/main.o: ./postfix/src/globals.h
+./sendmail/src/globals.o: ./common/src/greylist.h ./common/src/globals.h
+./sendmail/src/globals.o: ./common/src/util.h ./common/src/util.h
+./sendmail/src/globals.o: ./common/src/greylist.h ./conf.h
+./server/src/main.o: ./common/src/greylist.h ./common/src/globals.h
+./server/src/main.o: ./common/src/util.h ./common/src/util.h
+./server/src/main.o: ./common/src/greylist.h ./common/src/crc32.h
+./server/src/main.o: ./server/src/tuple.h ./server/src/server.h
+./server/src/main.o: ./postfix/src/globals.h ./server/src/signals.h
+./server/src/main.o: ./server/src/iplist.h ./server/src/emaildomain.h
+./server/src/tuple.o: ./common/src/greylist.h ./common/src/util.h
+./server/src/tuple.o: ./common/src/greylist.h ./common/src/bisearch.h
+./server/src/tuple.o: ./server/src/tuple.h ./common/src/globals.h
+./server/src/tuple.o: ./common/src/util.h ./server/src/server.h
+./server/src/tuple.o: ./postfix/src/globals.h
+./server/src/iplist.o: ./common/src/globals.h ./common/src/util.h
+./server/src/iplist.o: ./common/src/util.h ./common/src/greylist.h
+./server/src/iplist.o: ./postfix/src/globals.h ./server/src/iplist.h
+./server/src/iplist.o: ./common/src/greylist.h
+./server/src/emaildomain.o: ./common/src/globals.h ./common/src/util.h
+./server/src/emaildomain.o: ./common/src/util.h ./common/src/greylist.h
+./server/src/emaildomain.o: ./common/src/bisearch.h
+./server/src/emaildomain.o: ./server/src/emaildomain.h
+./server/src/emaildomain.o: ./postfix/src/globals.h
+./server/src/signals.o: ./common/src/util.h ./common/src/greylist.h
+./server/src/signals.o: ./postfix/src/globals.h ./server/src/iplist.h
+./server/src/signals.o: ./common/src/greylist.h ./server/src/signals.h
+./server/src/globals.o: ./common/src/greylist.h ./common/src/globals.h
+./server/src/globals.o: ./common/src/util.h ./common/src/util.h
+./server/src/globals.o: ./common/src/greylist.h ./conf.h ./server/src/tuple.h
+./server/src/globals.o: ./server/src/server.h ./server/src/signals.h
+./server/src/globals.o: ./server/src/iplist.h ./server/src/emaildomain.h
+./test/src/sendtuples.o: ./common/src/greylist.h ./common/src/crc32.h
+./test/src/sendtuples.o: ./common/src/util.h ./common/src/greylist.h ./conf.h
+./test/src/pcrc.o: ./common/src/greylist.h ./common/src/crc32.h
+./test/src/pcrc.o: ./common/src/util.h ./common/src/greylist.h ./conf.h
+./test/src/mktuples.o: ./common/src/greylist.h ./common/src/crc32.h
