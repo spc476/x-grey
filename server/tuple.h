@@ -24,8 +24,8 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "../../common/src/greylist.h"
-#include "../../common/src/globals.h"
+#include "../common/greylist.h"
+#include "../common/globals.h"
 #include "server.h"
 
 /**********************************************************/

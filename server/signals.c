@@ -44,7 +44,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include "../../common/src/util.h"
+#include "../common/util.h"
 #include "globals.h"
 #include "iplist.h"
 #include "signals.h"

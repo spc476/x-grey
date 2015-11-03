@@ -42,10 +42,10 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 
-#include "../../common/src/greylist.h"
-#include "../../common/src/globals.h"
-#include "../../common/src/util.h"
-#include "../../conf.h"
+#include "../common/greylist.h"
+#include "../common/globals.h"
+#include "../common/util.h"
+#include "../conf.h"
 
 #include "tuple.h"
 #include "signals.h"

@@ -31,8 +31,8 @@
 
 #include <cgilib6/util.h>
 
-#include "../../common/src/globals.h"
-#include "../../common/src/util.h"
+#include "../common/globals.h"
+#include "../common/util.h"
 #include "globals.h"
 #include "iplist.h"
 

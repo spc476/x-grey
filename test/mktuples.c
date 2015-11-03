@@ -35,8 +35,8 @@
 
 #include <cgilib6/util.h>
 
-#include "../../common/src/greylist.h"
-#include "../../common/src/crc32.h"
+#include "../common/greylist.h"
+#include "../common/crc32.h"
 
 #define min(a,b)	((a) < (b)) ? (a) : (b)
 

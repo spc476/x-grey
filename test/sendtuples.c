@@ -35,10 +35,10 @@
 #include <netinet/in.h>
 #include <signal.h>
 
-#include "../../common/src/greylist.h"
-#include "../../common/src/crc32.h"
-#include "../../common/src/util.h"
-#include "../../conf.h"
+#include "../common/greylist.h"
+#include "../common/crc32.h"
+#include "../common/util.h"
+#include "../conf.h"
 
 #define min(a,b)	((a) < (b)) ? (a) : (b)
 

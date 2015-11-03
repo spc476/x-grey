@@ -29,9 +29,9 @@
 
 #include <cgilib6/util.h>
 
-#include "../../common/src/globals.h"
-#include "../../common/src/util.h"
-#include "../../common/src/bisearch.h"
+#include "../common/globals.h"
+#include "../common/util.h"
+#include "../common/bisearch.h"
 #include "emaildomain.h"
 #include "globals.h"
 

@@ -46,10 +46,10 @@
 
 #include <cgilib6/util.h>
 
-#include "../../common/src/greylist.h"
-#include "../../common/src/globals.h"
-#include "../../common/src/util.h"
-#include "../../common/src/crc32.h"
+#include "../common/greylist.h"
+#include "../common/globals.h"
+#include "../common/util.h"
+#include "../common/crc32.h"
 
 #include "globals.h"
 

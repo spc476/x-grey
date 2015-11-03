@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 #include <stddef.h>
-#include "../../common/src/greylist.h"
+#include "../common/greylist.h"
 
 struct ipblock
 {
