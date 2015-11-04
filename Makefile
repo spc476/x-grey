@@ -77,32 +77,32 @@ server/gld: server/main.o		\
 # =====================================================================
 
 control/gld-mcp: control/main.o		\
-		control/globals.o		\
-		common/globals.o		\
+		control/globals.o	\
+		common/globals.o	\
 		common/util.o		\
 		common/crc32.o
 control/gld-mcp: override LDLIBS += -lreadline -lcurses
 
 # ===================================================================
 
-postfix/pfc: postfix/main.o	\
+postfix/pfc: postfix/main.o		\
 		postfix/globals.o	\
 		common/globals.o	\
-		common/util.o	\
+		common/util.o		\
 		common/crc32.o
 
 # =====================================================================
 
-sendmail/smc: sendmail/main.o	\
+sendmail/smc: sendmail/main.o		\
 		sendmail/globals.o	\
 		common/globals.o	\
-		common/util.o	\
+		common/util.o		\
 		common/crc32.o
 sendmail/smc: override LDLIBS += -lmilter -lpthread
 
 # ========================================================================
 
-test/mktuples: test/mktuples.o common/crc32.o
+test/mktuples:   test/mktuples.o common/crc32.o
 test/sendtuples: test/sendtuples.o common/util.o
 test/pcrc:       test/pcrc.o
 
