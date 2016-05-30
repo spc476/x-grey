@@ -1,3 +1,17 @@
+1.0.18	2016-05-30
+
+	* ALL:  Code reorganization---the code is no longer
+                built in a different directory.
+
+	* ALL: Update the code to remove custom integer types
+               and use C99 standard ints instead, to better clarify   
+               intent.
+
+	* ALL: Official announcement:  ignore any pleas that this
+               is the last release of this version.  Also ignore any pleas
+               that this is the last release, period.  Obviously, I can't 
+               make up my mind on this.
+
 1.0.17	2015-05-09
 
 	* MCP: Fix logging message (was using an obsolete form)
