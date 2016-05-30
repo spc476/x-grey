@@ -83,7 +83,6 @@ char                *c_filterchannel = SENDMAIL_FILTERCHANNEL;
 bool                 cf_foreground   = false;
 bool                 cf_debug        = false;
 size_t               c_maxstack      = (64uL * 1024uL);
-void               (*cv_report)(int,const char *, ...) = report_syslog;
 
 int                  gl_sock;
 
@@ -133,10 +132,10 @@ int (GlobalsInit)(int argc,char *argv[])
   rc = getrlimit(RLIMIT_STACK,&limit);
   
   if (rc != 0)
-    (*cv_report)(LOG_WARNING,"getrlimit(RLIMIT_STACK) = %s, can't modify stack size",strerror(errno));
+    syslog(LOG_WARNING,"getrlimit(RLIMIT_STACK) = %s, can't modify stack size",strerror(errno));
   else 
   {
-    (*cv_report)(
+    syslog(
     	LOG_DEBUG,
     	"stack current: %ul max: %ul",
     	(unsigned long)limit.rlim_cur,
@@ -151,7 +150,7 @@ int (GlobalsInit)(int argc,char *argv[])
       rc = setrlimit(RLIMIT_STACK,&limit);
   
       if (rc != 0)
-        (*cv_report)(LOG_WARNING,"setrlimit(RLIMIT_STACK) = %s, can't modify stack size",strerror(errno));
+        syslog(LOG_WARNING,"setrlimit(RLIMIT_STACK) = %s, can't modify stack size",strerror(errno));
       else
       {
         extern char **environ;
@@ -168,7 +167,7 @@ int (GlobalsInit)(int argc,char *argv[])
         ; because what's the point?  
         ;-------------------------------------------*/
       
-        (*cv_report)(LOG_DEBUG,"running with a smaller stack");
+        syslog(LOG_DEBUG,"running with a smaller stack");
         execve(argv[0],argv,environ);
       }
     }
@@ -177,7 +176,7 @@ int (GlobalsInit)(int argc,char *argv[])
   remote = gethostbyname(c_rhost);
   if (remote == NULL)
   {
-    (*cv_report)(LOG_ERR,"gethostbyname(%s) = %s",c_rhost,strerror(errno));
+    syslog(LOG_ERR,"gethostbyname(%s) = %s",c_rhost,strerror(errno));
     return(EXIT_FAILURE);
   }
   
@@ -333,7 +332,7 @@ static void daemon_init(void)
   pid = fork();
   if (pid == (pid_t)-1)
   {
-    (*cv_report)(LOG_EMERG,"daemon_init(): fork() = %s",strerror(errno));
+    syslog(LOG_EMERG,"daemon_init(): fork() = %s",strerror(errno));
     exit(EXIT_FAILURE);
   }
   else if (pid != 0)	/* parent goes bye bye */
@@ -345,7 +344,7 @@ static void daemon_init(void)
   pid = fork();
   if (pid == (pid_t)-1)
   {
-    (*cv_report)(LOG_EMERG,"daemon_init(): fork(2) = %s",strerror(errno));
+    syslog(LOG_EMERG,"daemon_init(): fork(2) = %s",strerror(errno));
     _exit(EXIT_FAILURE);
   }
   else if (pid != 0)
@@ -357,7 +356,7 @@ static void daemon_init(void)
   fh = open("/dev/null",O_RDWR);
   if (fh == -1)
   {
-    (*cv_report)(LOG_EMERG,"daemon_init(): open(/dev/null) = %s",strerror(errno));
+    syslog(LOG_EMERG,"daemon_init(): open(/dev/null) = %s",strerror(errno));
     _exit(EXIT_FAILURE);
   }
   

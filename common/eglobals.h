@@ -31,7 +31,6 @@ extern const int         c_log_facility;
 extern const int         c_log_level;
 extern const char *const c_log_id;
 extern const bool        cf_debug;
-extern void            (*cv_report)(int,const char *, ... );
 
 #endif
 

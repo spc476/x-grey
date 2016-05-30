@@ -43,7 +43,6 @@ extern const char *const          c_timeformat;
 extern const char *const          c_pager;
 extern const char *const          c_secret;
 extern const size_t               c_secretsize;
-extern void                     (*cv_report)(int,const char *, ... );
 extern void                     (*cv_pager) (int);
 
 /*************************************************************/

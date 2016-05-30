@@ -48,7 +48,6 @@ extern const char *const          c_filterchannel;
 extern const bool                 cf_foreground;
 extern const bool                 cf_debug;
 extern const size_t               c_maxstack;
-extern void                     (*cv_report)(int,const char *, ...);
 
 extern int                        gl_sock;
 

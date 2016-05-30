@@ -262,7 +262,7 @@ static int check_greylist(int sock,byte *ip,char *from,char *to)
   	);
   if (rrc == -1)
   {
-    (*cv_report)(LOG_ERR,"sendto() = %s",strerror(errno));
+    syslog(LOG_ERR,"sendto() = %s",strerror(errno));
     return(IFT_ACCEPT);
   }
   
@@ -294,9 +294,9 @@ static int check_greylist(int sock,byte *ip,char *from,char *to)
     ;---------------------------------------------------*/
     
     if (errno != EINTR)
-      (*cv_report)(LOG_ERR,"recvfrom() = %s",strerror(errno));
+      syslog(LOG_ERR,"recvfrom() = %s",strerror(errno));
     else
-      (*cv_report)(LOG_DEBUG,"timeout");
+      syslog(LOG_DEBUG,"timeout");
     return(IFT_ACCEPT);
   }
   
@@ -305,30 +305,30 @@ static int check_greylist(int sock,byte *ip,char *from,char *to)
   
   if (crc != ntohl(glr->crc))
   {
-    (*cv_report)(LOG_ERR,"received bad packet");
+    syslog(LOG_ERR,"received bad packet");
     return(IFT_ACCEPT);
   }
   
   if (ntohs(glr->version) > VERSION)
   {
-    (*cv_report)(LOG_ERR,"received response from wrong version");
+    syslog(LOG_ERR,"received response from wrong version");
     return(IFT_ACCEPT);
   }
 
   if (ntohs(glr->MTA) != MTA_POSTFIX)
   {
-    (*cv_report)(LOG_ERR,"are we running another MTA here?");
+    syslog(LOG_ERR,"are we running another MTA here?");
     return(IFT_ACCEPT);
   }
   
   if (ntohs(glr->type) != CMD_GREYLIST_RESP)
   {
-    (*cv_report)(LOG_ERR,"received error %d",ntohs(glr->response));
+    syslog(LOG_ERR,"received error %d",ntohs(glr->response));
     return(IFT_ACCEPT);
   }
   
   glr->response = ntohs(glr->response);
-  (*cv_report)(LOG_DEBUG,"received %s",ci_map_chars(glr->response,c_ift,C_IFT));
+  syslog(LOG_DEBUG,"received %s",ci_map_chars(glr->response,c_ift,C_IFT));
   return glr->response;
 }
 

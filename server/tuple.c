@@ -100,13 +100,13 @@ Tuple tuple_allocate(void)
   
   if (g_poolnum == c_poolmax)
   {
-    (*cv_report)(LOG_ERR,"too many requests-attempting to clean house");
+    syslog(LOG_ERR,"too many requests-attempting to clean house");
     tuple_expire(time(NULL));
     if (g_poolnum == c_poolmax)
     {
       size_t i;
       
-      (*cv_report)(LOG_ERR,"too many requests-cleaning house failed-starting over");
+      syslog(LOG_ERR,"too many requests-cleaning house failed-starting over");
       g_poolnum    = 0;
       g_tuples_low = 0;	/* reset the low count automatically */
       
@@ -220,7 +220,7 @@ void tuple_expire(time_t Tao)
     }
   }
   
-  (*cv_report)(
+  syslog(
   	LOG_INFO,
   	"greylist-expired: %lu whitelist-expired: %lu",
   	(unsigned long)gle,
@@ -244,7 +244,7 @@ void whitelist_dump(void)
     fclose(out);
   }
   else
-    (*cv_report)(LOG_ERR,"whitelist_dump(): fopen(%s,WRITE) = %s",c_whitefile,strerror(errno));
+    syslog(LOG_ERR,"whitelist_dump(): fopen(%s,WRITE) = %s",c_whitefile,strerror(errno));
 }
 
 /******************************************************************/
@@ -281,7 +281,7 @@ void tuple_dump(void)
     fclose(out);
   }
   else
-    (*cv_report)(LOG_ERR,"tuple_dump(): fopen(%s,WRITE) = %s",c_dumpfile,strerror(errno));
+    syslog(LOG_ERR,"tuple_dump(): fopen(%s,WRITE) = %s",c_dumpfile,strerror(errno));
 }
 
 /*******************************************************************/
@@ -325,7 +325,7 @@ void tuple_all_dump(void)
     fclose(out);
   }
   else
-    (*cv_report)(LOG_ERR,"tuple_all_dump(): fopen(%s,WRITE) = %s",c_dumpfile,strerror(errno));
+    syslog(LOG_ERR,"tuple_all_dump(): fopen(%s,WRITE) = %s",c_dumpfile,strerror(errno));
 }
 
 /******************************************************************/
@@ -427,7 +427,7 @@ void whitelist_load(void)
 
     tuple.ctime    = tuple.atime = now;
 
-    (*cv_report)(
+    syslog(
         LOG_DEBUG,
         "Adding [%s , %s , %s]",
 	ipv4(tuple.ip),
@@ -447,7 +447,7 @@ void whitelist_load(void)
     }
     else
     {
-      (*cv_report)(LOG_DEBUG,"FOUND!");
+      syslog(LOG_DEBUG,"FOUND!");
       stored->atime = now;
       
       if ((stored->f & F_WHITELIST) == 0)
@@ -476,7 +476,7 @@ void whitelist_load(void)
 
 void log_tuple(Tuple tuple,int rc,int why)
 {
-  (*cv_report)(  
+  syslog(  
         LOG_INFO,
         "tuple: [%s , %s , %s]%s%s %s %s",
         ipv4(tuple->ip),

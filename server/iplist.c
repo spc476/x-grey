@@ -72,7 +72,7 @@ int iplist_read(const char *fname)
   in = fopen(fname,"r");
   if (in == NULL)
   {
-    (*cv_report)(LOG_ERR,"iplist_read(): fopen(%s,READ) = %s",fname,strerror(errno));
+    syslog(LOG_ERR,"iplist_read(): fopen(%s,READ) = %s",fname,strerror(errno));
     return ERR_ERR;
   }
   
@@ -93,7 +93,7 @@ int iplist_read(const char *fname)
     tokens = split(&numtoks,line);
     if (!isdigit(tokens[0].d[0]))
     {
-      (*cv_report)(LOG_ERR,"%s(%lu): syntax error---needs to be an IPv4 address",fname,(unsigned long)lcount);
+      syslog(LOG_ERR,"%s(%lu): syntax error---needs to be an IPv4 address",fname,(unsigned long)lcount);
       free(tokens);
       free(linebuff);
       fclose(in);
@@ -109,7 +109,7 @@ int iplist_read(const char *fname)
       if (tline[0] == '/') break;
       if (tline[0] != '.')
       {
-        (*cv_report)(LOG_ERR,"%s(%lu): syntax error---needs to be an IPv4 address",fname,(unsigned long)lcount);
+        syslog(LOG_ERR,"%s(%lu): syntax error---needs to be an IPv4 address",fname,(unsigned long)lcount);
         free(tokens);
         free(linebuff);
         fclose(in);
@@ -127,7 +127,7 @@ int iplist_read(const char *fname)
     
     if (mask > 32)
     {
-      (*cv_report)(LOG_ERR,"%s(%lu): syntax error---bad mask value %d",fname,(unsigned long)lcount,mask);
+      syslog(LOG_ERR,"%s(%lu): syntax error---bad mask value %d",fname,(unsigned long)lcount,mask);
       free(tokens);
       free(linebuff);
       fclose(in);
@@ -137,7 +137,7 @@ int iplist_read(const char *fname)
     cmd = ci_map_int(tokens[1].d,c_ift,C_IFT);
     if (cmd == -1)
     {
-      (*cv_report)(LOG_ERR,"%s(%lu): syntax error---needs to be ACCEPT or REJECT but not %s",fname,(unsigned long)lcount,tokens[1].d);
+      syslog(LOG_ERR,"%s(%lu): syntax error---needs to be ACCEPT or REJECT but not %s",fname,(unsigned long)lcount,tokens[1].d);
       free(tokens);
       free(linebuff);
       fclose(in);
@@ -165,7 +165,7 @@ int iplist_read(const char *fname)
       strcpy(tip  ,ipv4(iplist[i].addr));
       strcpy(tmask,ipv4(iplist[i].mask));
 
-      (*cv_report)(
+      syslog(
           LOG_DEBUG,
           "%8.8s %15.15s %15.15s",
           ci_map_chars(iplist[i].cmd,c_ift,C_IFT),
@@ -192,7 +192,7 @@ void iplist_dump(void)
     fclose(out);
   }
   else
-    (*cv_report)(LOG_ERR,"iplist_dump(): fopen(%s,WRITE) = %s",(char *)c_iplistfile,strerror(errno));
+    syslog(LOG_ERR,"iplist_dump(): fopen(%s,WRITE) = %s",(char *)c_iplistfile,strerror(errno));
 }
 
 /*****************************************************************/
@@ -409,7 +409,7 @@ struct ipblock *ip_table(size_t *ps)
   if (g_tree->one)
     rc = ip_collect(addr,mask,4,g_tree->one, 0,0x80,0x80,array,rc);
 
-  (*cv_report)(LOG_DEBUG,"g: %lu rc: %lu",(unsigned long)g_ipcnt,(unsigned long)rc);
+  syslog(LOG_DEBUG,"g: %lu rc: %lu",(unsigned long)g_ipcnt,(unsigned long)rc);
   *ps = rc;
   return(array);
 }

@@ -55,7 +55,6 @@
 enum
 {
   OPT_FOREGROUND = OPT_USER,
-  OPT_STDERR,
   OPT_NOMONITOR,
   OPT_MAX
 };
@@ -78,7 +77,6 @@ char	      *c_log_id          = SERVER_LOG_ID;
 char	      *c_secret		 = SECRET;
 size_t         c_secretsize	 = SECRETSIZE;
 bool           cf_debug          = false;
-void         (*cv_report)(int,const char *, ...) = report_syslog;
 
 char          *c_conffile	 = SERVER_STATEDIR "/config.txt";
 char          *c_whitefile       = SERVER_STATEDIR "/whitelist.txt";
@@ -173,7 +171,6 @@ static const struct option mc_options[] =
   { "port"		, required_argument	, NULL	, OPT_PORT		} ,
   { "debug"		, no_argument		, NULL	, OPT_DEBUG		} ,
   { "foreground"	, no_argument		, NULL	, OPT_FOREGROUND	} ,
-  { "stderr"		, no_argument		, NULL	, OPT_STDERR		} ,
   { "nomonitor"		, no_argument		, NULL	, OPT_NOMONITOR		} ,
   { "version"		, no_argument		, NULL	, OPT_VERSION		} ,
   { "help"		, no_argument		, NULL	, OPT_HELP		} ,
@@ -258,7 +255,6 @@ static void dump_defaults(void)
         stderr,
         "\t--host <hostname>\t\t(%s)\n"
         "\t--port <num>\t\t\t(%d)\n"
-        "\t--stderr\t\t\t(%s)\n"
         "\t--debug\t\t\t\t(%s)\n"
         "\t--foreground\t\t\t(%s)\n"
         "\t--nomonitor\t\t\t(%s)\n"
@@ -267,7 +263,6 @@ static void dump_defaults(void)
         "\n",
         c_host,
         c_port,
-        (cv_report == report_stderr) ? "true" : "false",
         (cf_debug)                   ? "true" : "false",
         (cf_foreground)              ? "true" : "false",
         (cf_nomonitor)               ? "true" : "false"
@@ -296,9 +291,6 @@ void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_PORT:
            c_port = strtoul(optarg,NULL,10);
-           break;
-      case OPT_STDERR:
-           cv_report = report_stderr;
            break;
       case OPT_DEBUG:
            cf_debug     = true;
@@ -332,7 +324,7 @@ void daemon_init(void)
   pid = fork();
   if (pid == (pid_t)-1)
   {
-    (*cv_report)(LOG_EMERG,"daemon_init(): fork() = %s",strerror(errno));
+    syslog(LOG_EMERG,"daemon_init(): fork() = %s",strerror(errno));
     exit(EXIT_FAILURE);
   }
   else if (pid != 0)	/* parent goes bye bye */
@@ -344,7 +336,7 @@ void daemon_init(void)
   pid = fork();
   if (pid == (pid_t)-1)
   {
-    (*cv_report)(LOG_EMERG,"daemon_init(): fork(2) = %s",strerror(errno));
+    syslog(LOG_EMERG,"daemon_init(): fork(2) = %s",strerror(errno));
     exit(EXIT_FAILURE);
   }
   else if (pid != 0)
@@ -356,7 +348,7 @@ void daemon_init(void)
   fh = open("/dev/null",O_RDWR);
   if (fh == -1)
   {
-    (*cv_report)(LOG_EMERG,"daemon_init(): open(/dev/null) = %s",strerror(errno));
+    syslog(LOG_EMERG,"daemon_init(): open(/dev/null) = %s",strerror(errno));
     exit(EXIT_FAILURE);
   }
   

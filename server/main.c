@@ -99,7 +99,7 @@ int main(int argc,char *argv[])
     
     if (child == (pid_t)-1)
     {
-      (*cv_report)(LOG_CRIT,"monitor(): fork() = %s",strerror(errno));
+      syslog(LOG_CRIT,"monitor(): fork() = %s",strerror(errno));
       return EXIT_FAILURE;
     }
     else if (child == 0)
@@ -118,17 +118,17 @@ int main(int argc,char *argv[])
       process = waitpid(child,&status,0);
     
       if (process == (pid_t)-1)
-        (*cv_report)(LOG_CRIT,"monitor(): waitpid(%lu) = %s",(unsigned long)child,strerror(errno));
+        syslog(LOG_CRIT,"monitor(): waitpid(%lu) = %s",(unsigned long)child,strerror(errno));
       else if (process != child)
       {
-        (*cv_report)(LOG_CRIT,"monitor(): waitpid(%lu) != %lu",(unsigned long)child,(unsigned long)process);
-        (*cv_report)(LOG_CRIT,"monitor(): how did this happen?");
+        syslog(LOG_CRIT,"monitor(): waitpid(%lu) != %lu",(unsigned long)child,(unsigned long)process);
+        syslog(LOG_CRIT,"monitor(): how did this happen?");
       }
       else
       {
         if (WIFEXITED(status))
         {
-          (*cv_report)(LOG_ERR,"gld() status %d---stopping",WEXITSTATUS(status));
+          syslog(LOG_ERR,"gld() status %d---stopping",WEXITSTATUS(status));
           return WEXITSTATUS(status);
         }
         else if (WIFSIGNALED(status))
@@ -140,7 +140,7 @@ int main(int argc,char *argv[])
             case SIGTERM: 
             case SIGQUIT: 
             case SIGINT:
-                 (*cv_report)(LOG_INFO,"gld() shutdown by signal %d---stopping",sig);
+                 syslog(LOG_INFO,"gld() shutdown by signal %d---stopping",sig);
                  return EXIT_SUCCESS;
             
             default:
@@ -155,12 +155,12 @@ int main(int argc,char *argv[])
                  
                  if (abend_count > 20)
                  {
-                   (*cv_report)(LOG_EMERG,"gld() repeatedly aborted (last signal: %d)---stopping",sig);
+                   syslog(LOG_EMERG,"gld() repeatedly aborted (last signal: %d)---stopping",sig);
                    return EXIT_FAILURE;
                  }
                  else
                  {
-                   (*cv_report)(LOG_CRIT,"gld() aborted by signal %d %lu times---restarting",sig,(unsigned long)abend_count);
+                   syslog(LOG_CRIT,"gld() aborted by signal %d %lu times---restarting",sig,(unsigned long)abend_count);
                    abend = true;
                  }
                  break; 
@@ -168,9 +168,9 @@ int main(int argc,char *argv[])
           }
         }
         else if (WIFSTOPPED(status))
-          (*cv_report)(LOG_ERR,"gld() stopped by signal %d",WSTOPSIG(status));
+          syslog(LOG_ERR,"gld() stopped by signal %d",WSTOPSIG(status));
         else if (WIFCONTINUED(status))
-          (*cv_report)(LOG_ERR,"gld() resumed operation");
+          syslog(LOG_ERR,"gld() resumed operation");
       }
     }
   }
@@ -192,7 +192,7 @@ static void gld(void)
     exit(EXIT_FAILURE);
   
   char *t = timetoa(c_starttime);
-  (*cv_report)(LOG_INFO,"start time: %s",t);
+  syslog(LOG_INFO,"start time: %s",t);
   free(t);
   
   while(true)
@@ -214,7 +214,7 @@ static void gld(void)
     if (rrc == -1)
     {
       if (errno != EINTR)
-        (*cv_report)(LOG_ERR,"mainloop(): recvfrom() = %s",strerror(errno));
+        syslog(LOG_ERR,"mainloop(): recvfrom() = %s",strerror(errno));
       continue;
     }
     
@@ -228,13 +228,13 @@ static void gld(void)
     
     if (crc != ntohl(req.glr->crc))
     {
-      (*cv_report)(LOG_DEBUG,"bad CRC %08lX---skipping packet",(unsigned long)crc);
+      syslog(LOG_DEBUG,"bad CRC %08lX---skipping packet",(unsigned long)crc);
       continue;
     }
     
     if (ntohs(req.glr->version) > VERSION)
     {
-      (*cv_report)(LOG_DEBUG,"received bad version");
+      syslog(LOG_DEBUG,"received bad version");
       send_reply(&req,CMD_NONE_RESP,GLERR_VERSION_NOT_SUPPORTED,REASON_NONE);
       continue;
     }
@@ -368,7 +368,7 @@ static void gld(void)
                break;
              }
 
-	     (*cv_report)(LOG_DEBUG,"about to add %s/%d %d",ipv4(pip->data),mask,cmd);
+	     syslog(LOG_DEBUG,"about to add %s/%d %d",ipv4(pip->data),mask,cmd);
              ip_add_sm(pip->data,4,mask,cmd);
              send_reply(&req,CMD_MCP_IPLIST_RESP,0,REASON_NONE);
            }
@@ -696,7 +696,7 @@ static int greylist_sanitize_req(struct tuple *tuple,struct request *req)
 
   if (rsize > req->size)
   {
-    (*cv_report)(LOG_DEBUG,"bad size, expected %lu got %lu",(unsigned long)req->size,(unsigned long)rsize);
+    syslog(LOG_DEBUG,"bad size, expected %lu got %lu",(unsigned long)req->size,(unsigned long)rsize);
     send_reply(req,CMD_NONE_RESP,GLERR_BAD_DATA,REASON_NONE);
     return(ERR_ERR);
   }
@@ -773,7 +773,7 @@ static void send_packet(struct request *req,void *packet,size_t size)
     {
       if (errno == EINTR)
         continue;
-      (*cv_report)(LOG_ERR,"send_packet(): sendto() = %s",strerror(errno));
+      syslog(LOG_ERR,"send_packet(): sendto() = %s",strerror(errno));
       if (errno == EINVAL)
         break;
       sleep(1);
@@ -800,7 +800,7 @@ static void cmd_mcp_report(struct request *req,void (*cb)(FILE *),int resp)
   if (tcp == -1)
   {
     send_reply(req,CMD_NONE_RESP,GLERR_CANT_GENERATE_REPORT,REASON_NONE);
-    (*cv_report)(LOG_ERR,"could not create socket for report");
+    syslog(LOG_ERR,"could not create socket for report");
     return;
   }
 
@@ -834,7 +834,7 @@ static void cmd_mcp_report(struct request *req,void (*cb)(FILE *),int resp)
 
   if (conn == -1)
   {
-    (*cv_report)(LOG_ERR,"cmd_mcp_report(): accept() = %s",strerror(errno));
+    syslog(LOG_ERR,"cmd_mcp_report(): accept() = %s",strerror(errno));
     _exit(0);
   }
   
@@ -851,7 +851,7 @@ static void cmd_mcp_report(struct request *req,void (*cb)(FILE *),int resp)
   }
   else
   {
-    (*cv_report)(LOG_ERR,"cmd_mcp_report(): fdopen() = %s",strerror(errno));
+    syslog(LOG_ERR,"cmd_mcp_report(): fdopen() = %s",strerror(errno));
     close(conn);
     _exit(EXIT_FAILURE);
   }
@@ -888,7 +888,7 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
     def = false;
   }
   
-  (*cv_report)(LOG_DEBUG,"adding %s as %d",edkey.text,edkey.cmd);
+  syslog(LOG_DEBUG,"adding %s as %d",edkey.text,edkey.cmd);
   
   /*-------------------------------------------------------
   ; basically, if the command is IFT_REMOVE and the context

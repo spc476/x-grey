@@ -70,7 +70,6 @@ const char          *c_timeformat   = "%c";
 const char          *c_pager        = MCP_PAGER;
 char                *c_secret       = SECRET;
 size_t               c_secretsize   = SECRETSIZE;
-void               (*cv_report)(int,const char *, ... ) = report_stderr;
 void               (*cv_pager) (int)                    = pager_interactive;
 
 /**********************************************************/
@@ -109,7 +108,7 @@ int (GlobalsInit)(int argc,char *argv[])
   rc = access(c_pager,X_OK);
   if (rc != 0)
   {
-    (*cv_report)(LOG_DEBUG,"pager %s not found-using internal one",c_pager);
+    syslog(LOG_DEBUG,"pager %s not found-using internal one",c_pager);
     cv_pager = pager_batch;
   }
   
@@ -118,7 +117,7 @@ int (GlobalsInit)(int argc,char *argv[])
   remote = gethostbyname(c_rhost);
   if (remote == NULL)
   {
-    (*cv_report)(LOG_ERR,"gethostbyname(%s) = %s",c_rhost,strerror(errno));
+    syslog(LOG_ERR,"gethostbyname(%s) = %s",c_rhost,strerror(errno));
     return(-1);
   }
   

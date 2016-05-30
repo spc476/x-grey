@@ -324,7 +324,7 @@ static void file_dump(const char *fname,void (*function)(FILE *))
     fclose(fpout);
   }
   else
-    (*cv_report)(LOG_ERR,"fopen(%s,WRITE) = %s",(char *)fname,strerror(errno));
+    syslog(LOG_ERR,"fopen(%s,WRITE) = %s",(char *)fname,strerror(errno));
 }
 
 /**********************************************************************/
@@ -476,7 +476,7 @@ static void tofrom_read(
     fclose(in);
   }
   else
-    (*cv_report)(LOG_ERR,"fopen(%s,READ) = %s",(char *)fname,strerror(errno));
+    syslog(LOG_ERR,"fopen(%s,READ) = %s",(char *)fname,strerror(errno));
 }
 
 /*******************************************************************/
@@ -531,7 +531,7 @@ static void tofrom_read_stream(
     fields = split(&fsize,line);
     if (fsize < 3)
     {
-      (*cv_report)(LOG_ERR,"%s(%lu): bad input",(char *)fname,linecnt);
+      syslog(LOG_ERR,"%s(%lu): bad input",(char *)fname,linecnt);
       continue;
     }
     
@@ -556,7 +556,7 @@ static void tofrom_read_stream(
       ed.count = 0;
     ed.cmd   = ci_map_int(fields[1].d,c_ift,C_IFT);
     
-    (*cv_report)(LOG_DEBUG,"adding %s as %d",ed.text,ed.cmd);
+    syslog(LOG_DEBUG,"adding %s as %d",ed.text,ed.cmd);
 
     value = (*search)(&ed,&idx);
 

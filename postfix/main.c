@@ -136,14 +136,14 @@ static int process_request(int sock)
     {
       if (bufsiz == BUFSIZ)
       {
-        (*cv_report)(LOG_ERR,"buffer overflow-aborting");
+        syslog(LOG_ERR,"buffer overflow-aborting");
         return(0);
       }
       
       rrc = read(STDIN_FILENO,&buffer[bufsiz],BUFSIZ - bufsiz);
       if (rrc == -1)
       {
-        (*cv_report)(LOG_DEBUG,"process_request(): read() = %s",strerror(errno));
+        syslog(LOG_DEBUG,"process_request(): read() = %s",strerror(errno));
 	return(0);
       }
       if (rrc ==  0) return(0);
@@ -164,7 +164,7 @@ static int process_request(int sock)
     {
       int response;
       
-      (*cv_report)(LOG_INFO,"tuple: [%s , %s , %s]",ip,from,to);
+      syslog(LOG_INFO,"tuple: [%s , %s , %s]",ip,from,to);
       response = check_greylist(sock,ip,from,to);
       
       switch(response)
@@ -200,14 +200,14 @@ static int process_request(int sock)
 
     if (v == NULL)
     {
-      (*cv_report)(LOG_ERR,"bad input format");
+      syslog(LOG_ERR,"bad input format");
       return(0);
     }
 
     *p++ = '\0';
     *v++ = '\0';
 
-    (*cv_report)(LOG_DEBUG,"request: %s = %s",buffer,v);
+    syslog(LOG_DEBUG,"request: %s = %s",buffer,v);
 
     if (strcmp(buffer,"request") == 0)
     {
@@ -294,7 +294,7 @@ int check_greylist(int sock,char *ip,char *from,char *to)
   	);
   if (rrc == -1)
   {
-    (*cv_report)(LOG_ERR,"check_greylist(): sendto() = %s",strerror(errno));
+    syslog(LOG_ERR,"check_greylist(): sendto() = %s",strerror(errno));
     return(IFT_ACCEPT);
   }
   
@@ -326,9 +326,9 @@ int check_greylist(int sock,char *ip,char *from,char *to)
     ;---------------------------------------------------*/
     
     if (errno != EINTR)
-      (*cv_report)(LOG_ERR,"check_greylist(): recvfrom() = %s",strerror(errno));
+      syslog(LOG_ERR,"check_greylist(): recvfrom() = %s",strerror(errno));
     else
-      (*cv_report)(LOG_WARNING,"timeout");
+      syslog(LOG_WARNING,"timeout");
     return(IFT_ACCEPT);
   }
   
@@ -337,30 +337,30 @@ int check_greylist(int sock,char *ip,char *from,char *to)
   
   if (crc != ntohl(glr->crc))
   {
-    (*cv_report)(LOG_ERR,"received back packet");
+    syslog(LOG_ERR,"received back packet");
     return(IFT_ACCEPT);
   }
   
   if (ntohs(glr->version) != VERSION)
   {
-    (*cv_report)(LOG_ERR,"received response from wrong version");
+    syslog(LOG_ERR,"received response from wrong version");
     return(IFT_ACCEPT);
   }
 
   if (ntohs(glr->MTA) != MTA_POSTFIX)
   {
-    (*cv_report)(LOG_ERR,"are we running another MTA here?");
+    syslog(LOG_ERR,"are we running another MTA here?");
     return(IFT_ACCEPT);
   }
   
   if (ntohs(glr->type) != CMD_GREYLIST_RESP)
   {
-    (*cv_report)(LOG_ERR,"received error %d",ntohs(glr->response));
+    syslog(LOG_ERR,"received error %d",ntohs(glr->response));
     return(IFT_ACCEPT);
   }
   
   glr->response = ntohs(glr->response);
-  (*cv_report)(LOG_DEBUG,"received %s",ci_map_chars(glr->response,c_ift,C_IFT));
+  syslog(LOG_DEBUG,"received %s",ci_map_chars(glr->response,c_ift,C_IFT));
   return(glr->response);
 }
 

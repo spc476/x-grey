@@ -69,7 +69,6 @@ char                *c_log_id	    = POSTFIX_LOG_ID;
 bool                 cf_debug       = false;
 char                *c_secret       = SECRET;
 size_t               c_secretsize   = SECRETSIZE;
-void               (*cv_report)(int,const char *, ...) = report_syslog;
 
   /*----------------------------------------------------*/
 
@@ -103,7 +102,7 @@ int (GlobalsInit)(int argc,char *argv[])
   remote = gethostbyname(c_rhost);
   if (remote == NULL)
   {
-    (*cv_report)(LOG_ERR,"gethostbyname(%s) = %s",c_rhost,strerror(errno));
+    syslog(LOG_ERR,"gethostbyname(%s) = %s",c_rhost,strerror(errno));
     return EXIT_FAILURE;
   }
   

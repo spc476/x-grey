@@ -62,7 +62,6 @@ int     c_log_facility = 0;
 int     c_log_level    = 0;
 char   *c_log_id       = NULL;
 bool    cf_debug       = false;
-void  (*cv_report)(int,const char *, ...) = report_syslog;
 
 	/*--------------------------
 	; our global variables

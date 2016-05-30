@@ -295,7 +295,7 @@ static int send_request(
   	);
   if (rrc == -1)
   {
-    (*cv_report)(LOG_ERR,"sendto() = %s",strerror(errno));
+    syslog(LOG_ERR,"sendto() = %s",strerror(errno));
     return(ERR_ERR);
   }
   
@@ -316,7 +316,7 @@ static int send_request(
   if (rrc == -1)
   {
     if (errno != EINTR)
-      (*cv_report)(LOG_ERR,"recvfrom() = %s",strerror(errno));
+      syslog(LOG_ERR,"recvfrom() = %s",strerror(errno));
     return ERR_ERR;
   }
   
@@ -325,25 +325,25 @@ static int send_request(
   
   if (crc != ntohl(gr->crc))
   {
-    (*cv_report)(LOG_ERR,"bad packet");
+    syslog(LOG_ERR,"bad packet");
     return ERR_ERR;
   }
 
   if (ntohs(gr->version) > VERSION)
   {
-    (*cv_report)(LOG_ERR,"received response from wrong version");
+    syslog(LOG_ERR,"received response from wrong version");
     return ERR_ERR;
   }
   
   if (ntohs(gr->MTA) != MTA_MCP)
   {
-    (*cv_report)(LOG_ERR,"we got a reponse for something else");
+    syslog(LOG_ERR,"we got a reponse for something else");
     return ERR_ERR;
   }
   
   if (ntohs(gr->type) != expected_response)
   {
-    (*cv_report)(LOG_ERR,"received wrong response");
+    syslog(LOG_ERR,"received wrong response");
     return ERR_ERR;
   }
   
@@ -632,12 +632,12 @@ void pager_interactive(int fh)
   
   pid = fork();
   if (pid == -1)	/* error */
-    (*cv_report)(LOG_ERR,"fork() = %s",strerror(errno));
+    syslog(LOG_ERR,"fork() = %s",strerror(errno));
   else if (pid > 0)	/* parent */
   {
     child = waitpid(pid,&status,0);
     if (child == (pid_t)-1)
-      (*cv_report)(LOG_ERR,"waitpid() = %s",strerror(errno));
+      syslog(LOG_ERR,"waitpid() = %s",strerror(errno));
   }
   else			/* child */
   {

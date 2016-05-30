@@ -89,7 +89,7 @@ void check_signals(void)
   if (mf_sighup)   handle_sighup();
   if (mf_stupid)
   {
-    (*cv_report)(LOG_ERR,"set a signal handler,but forgot to write code to handle it");
+    syslog(LOG_ERR,"set a signal handler,but forgot to write code to handle it");
     mf_stupid = 0;
   }
 }
@@ -132,7 +132,7 @@ void handle_sigchld(void)
   int   ret;
   int   status;
   
-  (*cv_report)(LOG_DEBUG,"child process ended");
+  syslog(LOG_DEBUG,"child process ended");
   mf_sigchld = 0;
 
   while(1)
@@ -143,24 +143,24 @@ void handle_sigchld(void)
     {
       if (errno == ECHILD) return;
       if (errno == EINTR) continue;
-      (*cv_report)(LOG_ERR,"waitpid() = %s",strerror(errno));
+      syslog(LOG_ERR,"waitpid() = %s",strerror(errno));
       return;
     }
   
     if (WIFEXITED(status))
     {
       ret = WEXITSTATUS(status);
-      (*cv_report)(LOG_DEBUG,"Child process returned %d",ret);
+      syslog(LOG_DEBUG,"Child process returned %d",ret);
     }
     else if (WIFSIGNALED(status))
     {
       ret = WTERMSIG(status);
-      (*cv_report)(LOG_ERR,"Process %lu terminated by signal(%d)",(unsigned long)child,ret);
+      syslog(LOG_ERR,"Process %lu terminated by signal(%d)",(unsigned long)child,ret);
     }
     else if(WIFSTOPPED(status))
     {
       ret = WSTOPSIG(status);
-      (*cv_report)(LOG_ERR,"Process %lu stopped by signal(%d)",(unsigned long)child,ret);
+      syslog(LOG_ERR,"Process %lu stopped by signal(%d)",(unsigned long)child,ret);
     }
   }
 }
@@ -174,7 +174,7 @@ pid_t gld_fork(void)
   pid = fork();
   if (pid == (pid_t)-1)
   {
-    (*cv_report)(LOG_CRIT,"fork() = %s",strerror(errno));
+    syslog(LOG_CRIT,"fork() = %s",strerror(errno));
     return(pid);
   }
   else if (pid > (pid_t)0)	/* parent returns immediately */
@@ -213,7 +213,7 @@ void save_state(void)
  
 static void handle_sigint(void)
 {
-  (*cv_report)(LOG_DEBUG,"Interrupt Signal");
+  syslog(LOG_DEBUG,"Interrupt Signal");
 
   save_state();
   GlobalsDeinit();
@@ -225,7 +225,7 @@ static void handle_sigint(void)
 
 static void handle_sigquit(void)
 {
-  (*cv_report)(LOG_DEBUG,"Quit signal");
+  syslog(LOG_DEBUG,"Quit signal");
 
   save_state();
   GlobalsDeinit();
@@ -237,7 +237,7 @@ static void handle_sigquit(void)
 
 static void handle_sigterm(void)
 {
-  (*cv_report)(LOG_DEBUG,"Terminate Signal");
+  syslog(LOG_DEBUG,"Terminate Signal");
 
   save_state();
   GlobalsDeinit();
@@ -249,7 +249,7 @@ static void handle_sigterm(void)
 
 static void handle_sigpipe(void)
 {
-  (*cv_report)(LOG_DEBUG,"one side closed their connection");
+  syslog(LOG_DEBUG,"one side closed their connection");
   mf_sigpipe = 0;
 }
 
@@ -259,7 +259,7 @@ static void handle_sigalrm(void)
 {
   time_t now;
   
-  (*cv_report)(LOG_DEBUG,"Alarm-time for house cleaning!");
+  syslog(LOG_DEBUG,"Alarm-time for house cleaning!");
 
   mf_sigalrm      = 0;
   now             = time(NULL);
@@ -286,7 +286,7 @@ static void handle_sigalrm(void)
   {
     pid_t child;
   
-    (*cv_report)(LOG_DEBUG,"saving state");
+    syslog(LOG_DEBUG,"saving state");
   
     g_time_savestate = now;
     child            = gld_fork();
@@ -307,7 +307,7 @@ static void handle_sigusr1(void)
 {
   pid_t  child;
 
-  (*cv_report)(LOG_DEBUG,"User 1 Signal");
+  syslog(LOG_DEBUG,"User 1 Signal");
   mf_sigusr1 = 0;
 
   child = gld_fork();
@@ -323,7 +323,7 @@ static void handle_sigusr1(void)
 
 static void handle_sigusr2(void)
 {
-  (*cv_report)(LOG_DEBUG,"User 2 Signal");
+  syslog(LOG_DEBUG,"User 2 Signal");
   mf_sigusr2 = 0;
   tuple_expire(time(NULL));
 }
@@ -334,15 +334,15 @@ static void handle_sighup(void)
 {
   char *t;
 
-  (*cv_report)(LOG_DEBUG,"Sighup");
+  syslog(LOG_DEBUG,"Sighup");
   mf_sighup = 0;
   t = report_time(c_starttime,time(NULL));
-  (*cv_report)(LOG_INFO,"%s",t);
-  (*cv_report)(LOG_INFO,"tuples:            %10lu",(unsigned long)g_poolnum);
-  (*cv_report)(LOG_INFO,"greylisted:        %10lu",(unsigned long)g_greylisted);
-  (*cv_report)(LOG_INFO,"whitelisted:       %10lu",(unsigned long)g_whitelisted);
-  (*cv_report)(LOG_INFO,"greylist expired:  %10lu",(unsigned long)g_greylist_expired);
-  (*cv_report)(LOG_INFO,"whitelist expired: %10lu",(unsigned long)g_whitelist_expired);
+  syslog(LOG_INFO,"%s",t);
+  syslog(LOG_INFO,"tuples:            %10lu",(unsigned long)g_poolnum);
+  syslog(LOG_INFO,"greylisted:        %10lu",(unsigned long)g_greylisted);
+  syslog(LOG_INFO,"whitelisted:       %10lu",(unsigned long)g_whitelisted);
+  syslog(LOG_INFO,"greylist expired:  %10lu",(unsigned long)g_greylist_expired);
+  syslog(LOG_INFO,"whitelist expired: %10lu",(unsigned long)g_whitelist_expired);
   free(t);
 }
 

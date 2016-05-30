@@ -44,7 +44,6 @@ extern const char *const          c_log_id;
 extern const bool                 cf_debug;
 extern const char *const          c_secret;
 extern const size_t               c_secretsize;
-extern void                     (*cv_report)(int,const char *, ...);
 
 /***********************************************************/
 

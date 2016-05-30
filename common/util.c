@@ -68,7 +68,7 @@ int create_socket(const char *host,int port,int type)
     localhost = gethostbyname(host);
     if (localhost == NULL)
     {
-      (*cv_report)(LOG_ERR,"gethostbyname(%s) = %s",c_host,strerror(errno));
+      syslog(LOG_ERR,"gethostbyname(%s) = %s",c_host,strerror(errno));
       return -1;
     }
     memcpy(&sin.sin_addr.s_addr,localhost->h_addr,localhost->h_length);
@@ -82,20 +82,20 @@ int create_socket(const char *host,int port,int type)
   s = socket(AF_INET,type,0);
   if (s < -1)
   {
-    (*cv_report)(LOG_ERR,"socket() = %s",strerror(errno));
+    syslog(LOG_ERR,"socket() = %s",strerror(errno));
     return -1;
   }
   
   rc = setsockopt(s,SOL_SOCKET,SO_REUSEADDR,&reuse,sizeof(reuse));
   if (rc == -1)
   {
-    (*cv_report)(LOG_ERR,"setsockopt(SO_REUSEADDR) = %s",strerror(errno));
+    syslog(LOG_ERR,"setsockopt(SO_REUSEADDR) = %s",strerror(errno));
     return -1;
   }
   
   if (bind(s,(struct sockaddr *)&sin,sizeof(sin)))
   {
-    (*cv_report)(LOG_ERR,"bind() = %s",strerror(errno));
+    syslog(LOG_ERR,"bind() = %s",strerror(errno));
     return -1;
   }
   
@@ -141,65 +141,19 @@ const char *ci_map_chars(int value,const struct chars_int list[],size_t size)
 
 /***********************************************************************/
 
-void report_syslog(int level,const char *msg, ... )
-{
-  assert(level >= 0);
-  assert(level <  8);
-  assert(msg   != NULL);
-  
-  if (level <= c_log_level)
-  {
-    va_list arg;
-    char    buffer[BUFSIZ + 1];
-    size_t  bytes;
-    
-    va_start(arg,msg);
-    bytes = snprintf(buffer,BUFSIZ,"[%lu] ",++m_logseq);
-    vsnprintf(&buffer[bytes],BUFSIZ - bytes,msg,arg);
-    syslog(level,"%s",buffer);
-    va_end(arg);
-  }
-}
-
-/********************************************************************/
-
-void report_stderr(int level,const char *msg, ... )
-{
-  assert(level >= 0);
-  assert(level <  8);
-  assert(msg   != NULL);
-  
-  if (level <= c_log_level)
-  {
-    va_list arg;
-    char    buffer[BUFSIZ + 2];
-    size_t  bytes;
-    
-    va_start(arg,msg);
-    bytes            = snprintf(buffer,BUFSIZ,"[%lu] ",++m_logseq);
-    bytes           += vsnprintf(&buffer[bytes],BUFSIZ - bytes,msg,arg);
-    buffer[bytes++]  = '\n';
-    buffer[bytes]    = '\0';
-    write(STDERR_FILENO,buffer,bytes);
-    va_end(arg);
-  }    
-}
-
-/*******************************************************************/
-
 void log_address(struct sockaddr *pin)
 {
   struct sockaddr_in *pi;
   
   if (pin->sa_family != AF_INET)
   {
-    (*cv_report)(LOG_INFO,"wrong family of packet: %d",pin->sa_family);
+    syslog(LOG_INFO,"wrong family of packet: %d",pin->sa_family);
     return;
   }
   
   pi = (struct sockaddr_in *)pin;
   
-  (*cv_report)(
+  syslog(
         LOG_DEBUG,
         "Address: %s:%d",
         ipv4((const byte *)&pi->sin_addr.s_addr),
@@ -242,7 +196,7 @@ int set_signal(int sig,void (*handler)(int))
   
   rc = sigaction(sig,&act,&oact);
   if (rc == -1)
-    (*cv_report)(LOG_ERR,"sigaction() = %s",strerror(errno));
+    syslog(LOG_ERR,"sigaction() = %s",strerror(errno));
   
   return rc;
 }
@@ -475,7 +429,7 @@ String *split(size_t *pnum,char *txt)
     
     *p++ = '\0';
     txt  = p;
-    (*cv_report)(
+    syslog(
         LOG_DEBUG,
         "%lu '%s' %lu %lu",
         (unsigned long)num - 1,
@@ -485,7 +439,7 @@ String *split(size_t *pnum,char *txt)
       );
   }
   
-  (*cv_report)(
+  syslog(
         LOG_DEBUG,
         "%lu '%s' %lu %lu",
         (unsigned long)num - 1,
@@ -512,7 +466,7 @@ void write_pidfile(const char *fname)
     fclose(fp);
   }
   else
-    (*cv_report)(LOG_ERR,"fopen(%s,WRITE) = %s",fname,strerror(errno));    
+    syslog(LOG_ERR,"fopen(%s,WRITE) = %s",fname,strerror(errno));    
 }
 
 /*********************************************************************/
