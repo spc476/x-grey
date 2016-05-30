@@ -79,7 +79,7 @@ int main(int argc,char *argv[])
   int                      out       = -1;
   int                      filecount = 1;
   size_t                   count;
-  byte                     outpacket[1500];
+  uint8_t                  outpacket[1500];
   struct greylist_request *glq;
   char                    *line;
   size_t                   linesize;
@@ -97,14 +97,14 @@ int main(int argc,char *argv[])
   
   while(getline(&line,&linesize,input) > 0)
   {
-    char   *nl;
-    char   *from;
-    char   *to;
-    size_t  sfrom;
-    size_t  sto;
-    size_t  packetsize;
-    byte   *p;
-    CRC32   crc;
+    char    *nl;
+    char    *from;
+    char    *to;
+    size_t   sfrom;
+    size_t   sto;
+    size_t   packetsize;
+    uint8_t *p;
+    CRC32    crc;
     
     nl = strchr(line,'\n'); if (nl) *nl = '\0';
     

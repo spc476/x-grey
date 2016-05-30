@@ -187,7 +187,7 @@ int main(int argc,char *argv[])
 
 #if 1
       {
-        byte inpacket[1500];
+        uint8_t inpacket[1500];
         struct sockaddr_in sip;
         socklen_t          sipsize;
        
@@ -209,7 +209,7 @@ int main(int argc,char *argv[])
   }
   else			/* child */
   {
-    byte               inpacket[1500];
+    uint8_t            inpacket[1500];
     struct sockaddr_in sip;
     socklen_t          sipsize;
     ssize_t            rrc;

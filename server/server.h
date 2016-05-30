@@ -49,7 +49,7 @@ typedef struct tuple
   size_t       tosize;
   unsigned int pad;
   flags        f;
-  byte         ip  [16];
+  uint8_t      ip  [16];
   char         from[108];
   char         to  [108];
 } *Tuple;

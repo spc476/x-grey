@@ -694,7 +694,7 @@ static void iplist(String *cmdline,size_t cmds)
   
   ipr.cmd = ci_map_int(up_string(cmdline[1].d),c_ift,C_IFT);
 
-  if (ipr.cmd == (unet16)-1)
+  if (ipr.cmd == (uint16_t)-1)
   {
     fputs("bad command\n",stdout);
     return;
@@ -784,7 +784,7 @@ static void iplist_file(char *fname)
     up_string(p);
     ipr.cmd = ci_map_int(p,c_ift,C_IFT);
 
-    if (ipr.cmd == (unet16)-1)
+    if (ipr.cmd == (uint16_t)-1)
     {
       printf("%s(%d): syntax error",fname,linecnt);
       return;
@@ -952,7 +952,7 @@ static void tofrom(String *cmdline,size_t cmds,int cmd,int resp,int domain)
   }
   
   ptfr->cmd = ci_map_int(up_string(cmdline[1].d),c_ift,C_IFT);
-  if (ptfr->cmd == (unet16)-1)
+  if (ptfr->cmd == (uint16_t)-1)
     return;
    
   ptfr->crc     = htons(0);
@@ -1038,7 +1038,7 @@ static void tuple(String *cmdline,size_t cmds)
   size_t                      packetsize;
   size_t                      sfrom;
   size_t                      sto;
-  byte                       *p;
+  uint8_t                    *p;
   int                         rc;
   
   assert(cmdline != NULL);

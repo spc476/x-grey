@@ -54,7 +54,7 @@
 struct mfprivate
 {
   size_t  sip;
-  byte    ip    [16];
+  uint8_t ip    [16];
   char    sender[200];
 };
 
@@ -65,7 +65,7 @@ static sfsistat		mf_mail_from	(SMFICTX *,char **);
 static sfsistat		mf_rcpt_to	(SMFICTX *,char **);
 static sfsistat		mf_close	(SMFICTX *);
 
-static int		check_greylist	(int,byte *,char *,char *);	
+static int		check_greylist	(int,uint8_t *,char *,char *);	
 static void		handler_sigalrm	(int);
 static int		isbracket	(int);
 
@@ -211,7 +211,7 @@ static sfsistat mf_close(SMFICTX *ctx)
 
 /****************************************************************/
 
-static int check_greylist(int sock,byte *ip,char *from,char *to)
+static int check_greylist(int sock,uint8_t *ip,char *from,char *to)
 {
   union greylist_all_packets  outpacket;
   union greylist_all_packets  inpacket;
@@ -221,7 +221,7 @@ static int check_greylist(int sock,byte *ip,char *from,char *to)
   socklen_t                   sipsize;
   size_t                      sfrom;
   size_t                      sto;
-  byte                       *p;
+  uint8_t                    *p;
   ssize_t                     rrc;
   size_t                      packetsize;
   CRC32                       crc;
@@ -300,7 +300,7 @@ static int check_greylist(int sock,byte *ip,char *from,char *to)
     return(IFT_ACCEPT);
   }
   
-  crc = crc32(INIT_CRC32,&glr->version,rrc - sizeof(unet32));
+  crc = crc32(INIT_CRC32,&glr->version,rrc - sizeof(uint32_t));
   crc = crc32(crc,c_secret,c_secretsize);
   
   if (crc != ntohl(glr->crc))

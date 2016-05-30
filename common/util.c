@@ -156,14 +156,14 @@ void log_address(struct sockaddr *pin)
   syslog(
         LOG_DEBUG,
         "Address: %s:%d",
-        ipv4((const byte *)&pi->sin_addr.s_addr),
+        ipv4((const uint8_t *)&pi->sin_addr.s_addr),
         ntohs(pi->sin_port)
   );
 }
 
 /***********************************************************************/
 
-char *ipv4(const byte *ip)
+char *ipv4(const uint8_t *ip)
 {
   static char buffer[20];
   
@@ -471,7 +471,7 @@ void write_pidfile(const char *fname)
 
 /*********************************************************************/
 
-int parse_ip(byte *ip,int *mask,char *text)
+int parse_ip(uint8_t *ip,int *mask,char *text)
 {
   size_t octetcount = 0;
   

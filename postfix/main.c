@@ -248,7 +248,7 @@ int check_greylist(int sock,char *ip,char *from,char *to)
   socklen_t                   sipsize;
   size_t                      sfrom;
   size_t                      sto;
-  byte                       *p;
+  uint8_t                    *p;
   char                       *d;
   ssize_t                     rrc;
   size_t                      packetsize; 
@@ -332,7 +332,7 @@ int check_greylist(int sock,char *ip,char *from,char *to)
     return(IFT_ACCEPT);
   }
   
-  crc = crc32(INIT_CRC32,&glr->version,rrc - sizeof(unet32));
+  crc = crc32(INIT_CRC32,&glr->version,rrc - sizeof(uint32_t));
   crc = crc32(crc,c_secret,c_secretsize);
   
   if (crc != ntohl(glr->crc))

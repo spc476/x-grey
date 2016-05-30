@@ -669,7 +669,7 @@ type_greylist_check_tuple:
 static int greylist_sanitize_req(struct tuple *tuple,struct request *req)
 {
   struct greylist_request *glr;
-  byte                    *p;
+  uint8_t                    *p;
   size_t                   rsize;
   
   assert(tuple != NULL);
@@ -754,7 +754,7 @@ static void send_packet(struct request *req,void *packet,size_t size)
   assert(packet != NULL);
   assert(size   >  0);
   
-  crc      = crc32(INIT_CRC32,&glr->version,size - sizeof(unet32));
+  crc      = crc32(INIT_CRC32,&glr->version,size - sizeof(uint32_t));
   crc      = crc32(crc,c_secret,c_secretsize);
   glr->crc = htonl(crc);
   

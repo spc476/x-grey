@@ -59,7 +59,7 @@ const char *ci_map_chars		(int,const struct chars_int [],size_t);
 void	    report_syslog		(int,const char *, ... );
 void	    report_stderr		(int,const char *, ... );
 void	    log_address			(struct sockaddr *);
-char	   *ipv4			(const byte *);
+char	   *ipv4			(const uint8_t *);
 int	    set_signal			(int,void (*)(int));
 double	    read_dtime			(char *,double);
 size_t	    read_size			(char *);
@@ -73,7 +73,7 @@ char       *report_delta		(double);
 String	   *split			(size_t *,char *);
 
 void	    write_pidfile		(const char *);
-int	    parse_ip			(byte *,int *,char *);
+int	    parse_ip			(uint8_t *,int *,char *);
 
 /***************************************************************/
 

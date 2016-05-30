@@ -98,7 +98,7 @@ static const CRC32 m_crc32_table[] =
 
 CRC32 crc32(CRC32 crc,const void *data,size_t size)
 {
-  const byte *p = data;
+  const uint8_t *p = data;
   
   assert(data != NULL);
   assert(size >  0);

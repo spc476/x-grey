@@ -22,6 +22,7 @@
 #ifndef GREYLIST_COMMON_H
 #define GREYLIST_COMMON_H
 
+#include <stdint.h>
 #include <time.h>
 #include <limits.h>
 
@@ -35,44 +36,9 @@
 
 /********************************************************************/
 
-#if (UCHAR_MAX == 255U)
-  typedef unsigned char byte;
-#else
-#  error No integral type is 8 bits on this platform
-#endif
-
-#if (UINT_MAX == 65535U)
-  typedef unsigned int unet16;
-  typedef unsigned int Port;
-#elif (USHRT_MAX == 65535U)
-  typedef unsigned short unet16;
-  typedef unsigned short Port;
-#elif (UCHAR_MAX == 65535U)
-  typedef unsigned char unet16;
-  typedef unsigned char Port;
-#else
-# error No integral type is 16 bits on this platform.
-#endif
-
-#if (UINT_MAX == 4294967295UL)
-  typedef unsigned int unet32;
-  typedef unsigned int IP;
-  typedef unsigned int flags;
-#elif (ULONG_MAX == 4294967295UL)
-  typedef unsigned long unet32;
-  typedef unsigned long IP;
-  typedef unsigned long flags;
-#elif (USHORT_MAX == 4294967295UL)
-  typedef unsigned short unet32;
-  typedef unsigned short IP;
-  typedef unsigned short flags;
-#elif (UCHAR_MAX == 4294967295UL)
-  typedef unsigned char unet32;
-  typedef unsigned char IP;
-  typedef unsigned char flags;
-#else
-# error No integral type is 32 bits on this platform.
-#endif
+typedef uint16_t Port;
+typedef uint32_t IP;
+typedef uint32_t flags;
 
 #define ERR_OKAY	0
 #define ERR_ERR		1
@@ -197,132 +163,132 @@ enum
 
 struct greylist_response
 {
-  unet32 crc;
-  unet16 version;
-  unet16 MTA;
-  unet16 type;
-  unet16 response;
-  unet16 why;
+  uint32_t crc;
+  uint16_t version;
+  uint16_t MTA;
+  uint16_t type;
+  uint16_t response;
+  uint16_t why;
 };
 
 struct greylist_request
 {
-  unet32 crc;
-  unet16 version;
-  unet16 MTA;
-  unet16 type;
-  unet16 ipsize;
-  unet16 fromsize;
-  unet16 tosize;
-  byte   data[1];
+  uint32_t crc;
+  uint16_t version;
+  uint16_t MTA;
+  uint16_t type;
+  uint16_t ipsize;
+  uint16_t fromsize;
+  uint16_t tosize;
+  uint8_t   data[1];
 };
 
 struct glmcp_request
 {
-  unet32 crc;
-  unet16 version;
-  unet16 MTA;
-  unet16 type;
+  uint32_t crc;
+  uint16_t version;
+  uint16_t MTA;
+  uint16_t type;
 };
 
 struct glmcp_response
 {
-  unet32 crc;
-  unet16 version;
-  unet16 MTA;
-  unet16 type;
+  uint32_t crc;
+  uint16_t version;
+  uint16_t MTA;
+  uint16_t type;
 };
 
 struct glmcp_response_show_stats
 {
-  unet32 crc;
-  unet16 version;
-  unet16 MTA;
-  unet16 type;
-  unet16 pad;
-  unet32 starttime;
-  unet32 nowtime;
-  unet32 tuples;
-  unet32 ips;
-  unet32 ip_greylist;
-  unet32 ip_accept;
-  unet32 ip_reject;
-  unet32 greylisted;
-  unet32 whitelisted;
-  unet32 greylist_expired;
-  unet32 whitelist_expired;
-  unet32 requests;
-  unet32 requests_cu;
-  unet32 requests_cu_max;
-  unet32 requests_cu_ave;
-  unet32 from;
-  unet32 from_greylist;
-  unet32 from_accept;
-  unet32 from_reject;
-  unet32 fromd;
-  unet32 fromd_greylist;
-  unet32 fromd_accept;
-  unet32 fromd_reject;
-  unet32 to;
-  unet32 to_greylist;
-  unet32 to_accept;
-  unet32 to_reject;
-  unet32 tod;
-  unet32 tod_greylist;
-  unet32 tod_accept;
-  unet32 tod_reject;
+  uint32_t crc;
+  uint16_t version;
+  uint16_t MTA;
+  uint16_t type;
+  uint16_t pad;
+  uint32_t starttime;
+  uint32_t nowtime;
+  uint32_t tuples;
+  uint32_t ips;
+  uint32_t ip_greylist;
+  uint32_t ip_accept;
+  uint32_t ip_reject;
+  uint32_t greylisted;
+  uint32_t whitelisted;
+  uint32_t greylist_expired;
+  uint32_t whitelist_expired;
+  uint32_t requests;
+  uint32_t requests_cu;
+  uint32_t requests_cu_max;
+  uint32_t requests_cu_ave;
+  uint32_t from;
+  uint32_t from_greylist;
+  uint32_t from_accept;
+  uint32_t from_reject;
+  uint32_t fromd;
+  uint32_t fromd_greylist;
+  uint32_t fromd_accept;
+  uint32_t fromd_reject;
+  uint32_t to;
+  uint32_t to_greylist;
+  uint32_t to_accept;
+  uint32_t to_reject;
+  uint32_t tod;
+  uint32_t tod_greylist;
+  uint32_t tod_accept;
+  uint32_t tod_reject;
   
   /*-------------------------------------------------
   ; new data for protocol v1.1
   ;-------------------------------------------------*/
 
-  unet32 tuples_read;
-  unet32 tuples_read_cu;
-  unet32 tuples_read_cu_max;
-  unet32 tuples_read_cu_ave;
-  unet32 tuples_write;
-  unet32 tuples_write_cu;
-  unet32 tuples_write_cu_max;
-  unet32 tuples_write_cu_ave;
-  unet32 tuples_low;
-  unet32 tuples_high;
+  uint32_t tuples_read;
+  uint32_t tuples_read_cu;
+  uint32_t tuples_read_cu_max;
+  uint32_t tuples_read_cu_ave;
+  uint32_t tuples_write;
+  uint32_t tuples_write_cu;
+  uint32_t tuples_write_cu_max;
+  uint32_t tuples_write_cu_ave;
+  uint32_t tuples_low;
+  uint32_t tuples_high;
 };
 
 struct glmcp_response_show_config
 {
-  unet32 crc;
-  unet16 version;
-  unet16 MTA;
-  unet16 type;
-  unet16 pad;
-  unet32 max_tuples;
-  unet32 timeout_cleanup;
-  unet32 timeout_embargo;
-  unet32 timeout_grey;
-  unet32 timeout_white;
+  uint32_t crc;
+  uint16_t version;
+  uint16_t MTA;
+  uint16_t type;
+  uint16_t pad;
+  uint32_t max_tuples;
+  uint32_t timeout_cleanup;
+  uint32_t timeout_embargo;
+  uint32_t timeout_grey;
+  uint32_t timeout_white;
 };
 
 struct glmcp_request_iplist
 {
-  unet32 crc;
-  unet16 version;
-  unet16 MTA;
-  unet16 type;
-  unet16 cmd;
-  unet16 ipsize;
-  unet16 mask;	/* the "/X" part of A.B.C.D/X */
-  byte   data[16];
+  uint32_t crc;
+  uint16_t version;
+  uint16_t MTA;
+  uint16_t type;
+  uint16_t cmd;
+  uint16_t ipsize;
+  uint16_t mask;	/* the "/X" part of A.B.C.D/X */
+  uint8_t  data[16];
 };
 
 struct glmcp_request_tofrom
 {
-  unet32 crc;
-  unet16 version;
-  unet16 MTA;
-  unet16 type;
-  unet16 cmd;
-  unet16 size;
-  byte   data[1];
+  uint32_t crc;
+  uint16_t version;
+  uint16_t MTA;
+  uint16_t type;
+  uint16_t cmd;
+  uint16_t size;
+  uint8_t  data[1];
 };
 
 union greylist_all_packets
@@ -335,7 +301,7 @@ union greylist_all_packets
   struct glmcp_response_show_config mcp_show_config;
   struct glmcp_request_iplist       mcp_iplist;
   struct glmcp_request_tofrom       mcp_tofrom;
-  byte                              data[1500];
+  uint8_t                           data[1500];
 };
 
 /***************************************************************/

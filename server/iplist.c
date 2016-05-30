@@ -39,8 +39,8 @@
 /*****************************************************************/
 
 static size_t	         ip_collect	(
-				  	  byte *,
-				  	  byte *,
+				  	  uint8_t *,
+				  	  uint8_t *,
 				  	  size_t,
 				  	  struct ipnode *,
 				  	  int,
@@ -55,7 +55,7 @@ static size_t	         ip_collect	(
 int iplist_read(const char *fname)
 {
   FILE   *in;
-  byte    ip[16];
+  uint8_t    ip[16];
   char   *linebuff;
   char   *line;
   char   *tline;
@@ -217,7 +217,7 @@ void iplist_dump_stream(FILE *out)
 
 /*************************************************************/
 
-int ip_match(byte *ip,size_t size __attribute__((unused)))
+int ip_match(uint8_t *ip,size_t size __attribute__((unused)))
 {
   struct ipnode *match = g_tree;
   struct ipnode *p     = g_tree;
@@ -257,7 +257,7 @@ int ip_match(byte *ip,size_t size __attribute__((unused)))
 
 /******************************************************************/
 
-int ip_add_sm(byte *ip,size_t size __attribute__((unused)),int mask,int cmd)
+int ip_add_sm(uint8_t *ip,size_t size __attribute__((unused)),int mask,int cmd)
 {
   struct ipnode *new;
   struct ipnode *p     = g_tree;
@@ -382,8 +382,8 @@ void ip_print(FILE *out)
 struct ipblock *ip_table(size_t *ps)
 {
   struct ipblock *array;
-  byte            addr[16];
-  byte            mask[16];
+  uint8_t            addr[16];
+  uint8_t            mask[16];
   size_t          rc;
 
   assert(ps != NULL);
@@ -417,8 +417,8 @@ struct ipblock *ip_table(size_t *ps)
 /*******************************************************************/
 
 static size_t ip_collect(
-                   byte           *ip,
-                   byte           *mask,
+                   uint8_t        *ip,
+                   uint8_t        *mask,
                    size_t          size,
                    struct ipnode  *p,
                    int             off,

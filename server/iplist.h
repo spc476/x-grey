@@ -28,12 +28,12 @@
 
 struct ipblock
 {
-  size_t size;
-  byte   addr[16];
-  byte   mask[16];
-  int    smask;
-  size_t count;
-  int    cmd;
+  size_t  size;
+  uint8_t addr[16];
+  uint8_t mask[16];
+  int     smask;
+  size_t  count;
+  int     cmd;
 };
 
 struct ipnode
@@ -48,12 +48,12 @@ struct ipnode
 /******************************************************/
 
 int		 iplist_read		(const char *);
-int		 iplist_check		(byte *,size_t);
+int		 iplist_check		(uint8_t *,size_t);
 void		 iplist_dump		(void);
 void		 iplist_dump_stream	(FILE *);
 struct ipblock	*ip_table		(size_t *);
-int		 ip_match		(byte *,size_t);
-int		 ip_add_sm		(byte *,size_t,int,int);
+int		 ip_match		(uint8_t *,size_t);
+int		 ip_add_sm		(uint8_t *,size_t,int,int);
 void		 ip_print		(FILE *);
 
 #endif
