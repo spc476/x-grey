@@ -137,7 +137,7 @@ int (GlobalsInit)(int argc,char *argv[])
   {
     syslog(
     	LOG_DEBUG,
-    	"stack current: %ul max: %ul",
+    	"stack current: %lu max: %lu",
     	(unsigned long)limit.rlim_cur,
     	(unsigned long)limit.rlim_max
     );
