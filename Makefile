@@ -3,7 +3,7 @@ COPYRIGHT_YEAR = $(shell date +%Y)
 PROG_VERSION   = $(shell git describe --tag)
 
 ifeq ($(PROG_VERSION),)
-	PROG_VERSION = 1.0.18
+	PROG_VERSION = 1.0.19
 endif
 
 INSTALL         = /usr/bin/install

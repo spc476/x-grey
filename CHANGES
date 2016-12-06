@@ -1,3 +1,9 @@
+1.0.19	2016-12-05
+
+	* GLD: Use calloc() over malloc(n * s) to avoid overflow
+
+	* MCP: Use calloc() over malloc(n * s) to avoid overflow
+
 1.0.18	2016-05-30
 
 	* ALL:  Code reorganization---the code is no longer

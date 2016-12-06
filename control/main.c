@@ -119,7 +119,7 @@ int main(int argc,char *argv[])
   if (cmd < argc)
   {
     size_t  cmds  = argc - cmd;
-    String *what  = malloc(cmds * sizeof(String));
+    String *what  = calloc(cmds,sizeof(String));
     size_t  i;
     
     for (i = 0 ; cmd < argc ; i++,cmd++)

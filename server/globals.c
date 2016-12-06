@@ -184,14 +184,12 @@ int (GlobalsInit)(void)
   c_starttime = g_time_savestate = time(NULL);  
   openlog(c_log_id,0,c_log_facility);
 
-  g_pool       = malloc(c_poolmax * sizeof(struct tuple));
-  g_tuplespace = malloc(c_poolmax * sizeof(Tuple));
+  g_pool       = calloc(c_poolmax,sizeof(struct tuple));
+  g_tuplespace = calloc(c_poolmax,sizeof(Tuple));
 
   madvise(g_pool,      c_poolmax * sizeof(struct tuple),MADV_RANDOM);
   madvise(g_tuplespace,c_poolmax * sizeof(Tuple),       MADV_RANDOM);
   
-  memset(g_pool, 0,c_poolmax * sizeof(struct tuple));
-
   for (size_t i = 0 ; i < c_poolmax ; i++)
     g_tuplespace[i] = &g_pool[i];
 

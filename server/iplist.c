@@ -389,7 +389,7 @@ struct ipblock *ip_table(size_t *ps)
   assert(ps != NULL);
   
   rc             = 1;
-  array          = malloc(g_ipcnt * sizeof(struct ipblock));
+  array          = calloc(g_ipcnt,sizeof(struct ipblock));
   array[0].size  = 4;
   array[0].count = g_tree->count;
   array[0].smask = 0;
