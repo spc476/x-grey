@@ -44,8 +44,6 @@
 #include "eglobals.h"
 #include "util.h"
 
-static unsigned long m_logseq;
-
 /*****************************************************************/
 
 int create_socket(const char *host,int port,int type)
