@@ -1,6 +1,6 @@
 
-COPYRIGHT_YEAR = $(shell date +%Y)
-PROG_VERSION   = $(shell git describe --tag)
+COPYRIGHT_YEAR := $(shell date +%Y)
+PROG_VERSION   := $(shell git describe --tag)
 
 ifeq ($(PROG_VERSION),)
 	PROG_VERSION = 1.0.19
