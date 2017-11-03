@@ -1,9 +1,0 @@
-.git
-big.tuple.list
-bogon-bn-nonagg.txt
-tuple.list
-*.o
-x-grey/*/build/*
-x-grey/bin/*
-notes
-

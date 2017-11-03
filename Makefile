@@ -3,7 +3,7 @@ COPYRIGHT_YEAR := $(shell date +%Y)
 PROG_VERSION   := $(shell git describe --tag)
 
 ifeq ($(PROG_VERSION),)
-	PROG_VERSION = 1.0.19
+	PROG_VERSION = 1.0.20
 endif
 
 INSTALL         = /usr/bin/install
@@ -33,13 +33,13 @@ override CFLAGS += -DSERVER_STATEDIR='"$(SERVER_STATEDIR)"' -DMCP_HELPDIR='"$(MC
 # Abandon all hope ye who hack here ... 
 #----------------------------------------------------
 
-.PHONY: all depend clean server postfix sendmail test
+.PHONY: all depend clean dist server postfix sendmail test
 
 all:
 	@echo "make (server | postfix | sendmail | test)"
 
 depend:
-	makedepend -Y -- $(CFLAGS) -- `find . -name '*.c'` 2>/dev/null
+	makedepend -Y -- $(CFLAGS) -- $(shell find . -name '*.c') 2>/dev/null
 
 server:   server/gld control/gld-mcp
 postfix:  postfix/pfc
@@ -47,9 +47,9 @@ sendmail: sendmail/smc
 test:	  test/mktuples test/sendtuples test/pcrc
 
 clean:
-	$(RM) `find . -name '*.o'`
-	$(RM) `find . -name '*~'`
-	$(RM) `find . -name '*.bak'`
+	$(RM) $(shell find . -name '*.o')
+	$(RM) $(shell find . -name '*~')
+	$(RM) $(shell find . -name '*.bak')
 	$(RM) server/gld
 	$(RM) control/gld-mcp
 	$(RM) postfix/pfc
@@ -58,12 +58,9 @@ clean:
 	$(RM) test/pcrc
 	$(RM) test/sendtuples
 
-% :
-	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-
 # ===================================================
 
-server/gld: server/main.o		\
+server/gld: server/gld.o		\
 		server/globals.o	\
 		server/signals.o	\
 		server/iplist.o		\
@@ -76,7 +73,7 @@ server/gld: server/main.o		\
 
 # =====================================================================
 
-control/gld-mcp: control/main.o		\
+control/gld-mcp: control/gld-mcp.o	\
 		control/globals.o	\
 		common/globals.o	\
 		common/util.o		\
@@ -85,7 +82,7 @@ control/gld-mcp: override LDLIBS += -lreadline -lcurses
 
 # ===================================================================
 
-postfix/pfc: postfix/main.o		\
+postfix/pfc: postfix/pfc.o		\
 		postfix/globals.o	\
 		common/globals.o	\
 		common/util.o		\
@@ -93,7 +90,7 @@ postfix/pfc: postfix/main.o		\
 
 # =====================================================================
 
-sendmail/smc: sendmail/main.o		\
+sendmail/smc: sendmail/smc.o		\
 		sendmail/globals.o	\
 		common/globals.o	\
 		common/util.o		\
@@ -108,8 +105,8 @@ test/pcrc:       test/pcrc.o
 
 # ======================================================================
 
-tarball:
-	(cd .. ; tar czvf /tmp/x-grey.tar.gz -X x-grey/.exclude x-grey/ )
+dist:
+	git archive -o /tmp/x-grey-$(PROG_VERSION).tar.gz --prefix x-grey/ $(PROG_VERSION)
 
 install:
 	@echo "make (install-server | install-postfix | install-sendmail)"
@@ -154,46 +151,48 @@ uninstall-sendmail:
 	
 # DO NOT DELETE
 
-./postfix/main.o: ./common/greylist.h ./common/util.h ./common/greylist.h
-./postfix/main.o: ./common/crc32.h ./common/globals.h ./common/util.h
-./postfix/main.o: ./postfix/globals.h
+./proto2/cbor.o: ./proto2/cbor.h
+./proto2/encode_cmd.o: ./proto2/cbor.h
 ./postfix/globals.o: ./common/greylist.h ./common/globals.h ./common/util.h
-./postfix/globals.o: ./common/util.h ./common/greylist.h ./conf.h
+./postfix/globals.o: ./common/greylist.h ./common/util.h ./conf.h
+./postfix/pfc.o: ./common/greylist.h ./common/util.h ./common/crc32.h
+./postfix/pfc.o: ./common/globals.h ./common/util.h ./common/greylist.h
+./postfix/pfc.o: ./postfix/globals.h
 ./common/crc32.o: ./common/greylist.h ./common/crc32.h
-./common/util.o: ./common/eglobals.h ./common/util.h
+./common/util.o: ./common/eglobals.h ./common/util.h ./common/greylist.h
 ./common/bisearch.o: ./common/bisearch.h
 ./common/globals.o: ./common/greylist.h ./common/util.h
-./control/main.o: ./common/greylist.h ./common/globals.h ./common/util.h
-./control/main.o: ./common/util.h ./common/greylist.h ./common/crc32.h
-./control/main.o: ./postfix/globals.h
-./control/globals.o: ./common/greylist.h ./common/util.h ./common/greylist.h
-./control/globals.o: ./common/globals.h ./common/util.h ./conf.h
-./sendmail/main.o: ./common/greylist.h ./common/util.h ./common/greylist.h
-./sendmail/main.o: ./common/crc32.h ./common/globals.h ./common/util.h
-./sendmail/main.o: ./postfix/globals.h
+./control/gld-mcp.o: ./common/greylist.h ./common/globals.h ./common/util.h
+./control/gld-mcp.o: ./common/greylist.h ./common/util.h ./common/crc32.h
+./control/gld-mcp.o: ./postfix/globals.h
+./control/globals.o: ./common/greylist.h ./common/util.h ./common/globals.h
+./control/globals.o: ./common/util.h ./common/greylist.h ./conf.h
+./sendmail/smc.o: ./common/greylist.h ./common/util.h ./common/crc32.h
+./sendmail/smc.o: ./common/globals.h ./common/util.h ./common/greylist.h
+./sendmail/smc.o: ./postfix/globals.h
 ./sendmail/globals.o: ./common/greylist.h ./common/globals.h ./common/util.h
-./sendmail/globals.o: ./common/util.h ./common/greylist.h ./conf.h
-./server/main.o: ./common/greylist.h ./common/globals.h ./common/util.h
-./server/main.o: ./common/util.h ./common/greylist.h ./common/crc32.h
-./server/main.o: ./server/tuple.h ./server/server.h ./postfix/globals.h
-./server/main.o: ./server/signals.h ./server/iplist.h ./server/emaildomain.h
-./server/tuple.o: ./common/greylist.h ./common/util.h ./common/greylist.h
-./server/tuple.o: ./common/bisearch.h ./server/tuple.h ./common/globals.h
-./server/tuple.o: ./common/util.h ./server/server.h ./postfix/globals.h
-./server/iplist.o: ./common/globals.h ./common/util.h ./common/util.h
-./server/iplist.o: ./common/greylist.h ./postfix/globals.h ./server/iplist.h
+./sendmail/globals.o: ./common/greylist.h ./common/util.h ./conf.h
+./server/tuple.o: ./common/greylist.h ./common/util.h ./common/bisearch.h
+./server/tuple.o: ./server/tuple.h ./common/globals.h ./common/util.h
+./server/tuple.o: ./common/greylist.h ./server/server.h ./postfix/globals.h
+./server/iplist.o: ./common/globals.h ./common/util.h ./common/greylist.h
+./server/iplist.o: ./common/util.h ./postfix/globals.h ./server/iplist.h
 ./server/iplist.o: ./common/greylist.h
-./server/emaildomain.o: ./common/globals.h ./common/util.h ./common/util.h
-./server/emaildomain.o: ./common/greylist.h ./common/bisearch.h
-./server/emaildomain.o: ./server/emaildomain.h ./postfix/globals.h
-./server/signals.o: ./common/util.h ./common/greylist.h ./postfix/globals.h
-./server/signals.o: ./server/iplist.h ./common/greylist.h ./server/signals.h
+./server/gld.o: ./common/greylist.h ./common/globals.h ./common/util.h
+./server/gld.o: ./common/greylist.h ./common/util.h ./common/crc32.h
+./server/gld.o: ./server/tuple.h ./server/server.h ./postfix/globals.h
+./server/gld.o: ./server/signals.h ./server/iplist.h ./server/emaildomain.h
+./server/emaildomain.o: ./common/globals.h ./common/util.h
+./server/emaildomain.o: ./common/greylist.h ./common/util.h
+./server/emaildomain.o: ./common/bisearch.h ./server/emaildomain.h
+./server/emaildomain.o: ./postfix/globals.h
+./server/signals.o: ./common/util.h ./postfix/globals.h ./server/iplist.h
+./server/signals.o: ./common/greylist.h ./server/signals.h
 ./server/globals.o: ./common/greylist.h ./common/globals.h ./common/util.h
-./server/globals.o: ./common/util.h ./common/greylist.h ./conf.h
+./server/globals.o: ./common/greylist.h ./common/util.h ./conf.h
 ./server/globals.o: ./server/tuple.h ./server/server.h ./server/signals.h
 ./server/globals.o: ./server/iplist.h ./server/emaildomain.h
 ./test/sendtuples.o: ./common/greylist.h ./common/crc32.h ./common/util.h
-./test/sendtuples.o: ./common/greylist.h ./conf.h
-./test/pcrc.o: ./common/greylist.h ./common/crc32.h ./common/util.h
-./test/pcrc.o: ./common/greylist.h ./conf.h
+./test/sendtuples.o: ./conf.h
+./test/pcrc.o: ./common/greylist.h ./common/crc32.h ./common/util.h ./conf.h
 ./test/mktuples.o: ./common/greylist.h ./common/crc32.h
