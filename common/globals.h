@@ -29,10 +29,9 @@
 #define C_IFT		 6
 #define C_REASONS	 8
 
-extern const struct chars_int c_facilities[C_FACILITIES];
-extern const struct chars_int c_levels    [C_LEVELS];
-extern const struct chars_int c_ift       [C_IFT];
-extern const struct chars_int c_reason	  [C_REASONS];
+extern struct chars_int const c_facilities[C_FACILITIES];
+extern struct chars_int const c_levels    [C_LEVELS];
+extern struct chars_int const c_ift       [C_IFT];
+extern struct chars_int const c_reason	  [C_REASONS];
 
 #endif
-

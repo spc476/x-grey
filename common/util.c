@@ -46,7 +46,7 @@
 
 /*****************************************************************/
 
-int create_socket(const char *host,int port,int type)
+int create_socket(char const *host,int port,int type)
 {
   struct sockaddr_in  sin;
   struct hostent     *localhost;
@@ -104,7 +104,7 @@ int create_socket(const char *host,int port,int type)
 
 /*******************************************************************/
 
-int ci_map_int(const char *name,const struct chars_int list[],size_t size)
+int ci_map_int(char const *name,struct chars_int const list[],size_t size)
 {
   size_t i;
 
@@ -122,7 +122,7 @@ int ci_map_int(const char *name,const struct chars_int list[],size_t size)
 
 /************************************************************************/
 
-const char *ci_map_chars(int value,const struct chars_int list[],size_t size)
+char const *ci_map_chars(int value,struct chars_int const list[],size_t size)
 {
   size_t i;
 
@@ -154,14 +154,14 @@ void log_address(struct sockaddr *pin)
   syslog(
         LOG_DEBUG,
         "Address: %s:%d",
-        ipv4((const uint8_t *)&pi->sin_addr.s_addr),
+        ipv4((uint8_t const *)&pi->sin_addr.s_addr),
         ntohs(pi->sin_port)
   );
 }
 
 /***********************************************************************/
 
-char *ipv4(const uint8_t *ip)
+char *ipv4(uint8_t const *ip)
 {
   static char buffer[20];
   
@@ -451,7 +451,7 @@ String *split(size_t *pnum,char *txt)
 
 /********************************************************************/
 
-void write_pidfile(const char *fname)
+void write_pidfile(char const *fname)
 {
   FILE *fp;
   

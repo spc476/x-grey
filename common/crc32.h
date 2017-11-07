@@ -36,7 +36,7 @@
 # error No integral type is 32 bits on this platform
 #endif
 
-CRC32	crc32	(CRC32,const void *,size_t);
+CRC32	crc32	(CRC32,void const *,size_t);
 
 #endif
 

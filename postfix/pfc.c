@@ -289,7 +289,7 @@ int check_greylist(int sock,char *ip,char *from,char *to)
   		glq,
   		packetsize,
   		0,
-  		(const struct sockaddr *)&c_raddr,
+  		(struct sockaddr const *)&c_raddr,
   		c_raddrsize
   	);
   if (rrc == -1)

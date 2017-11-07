@@ -24,13 +24,12 @@
 
 #include <stdbool.h>
 
-extern const char *const c_host;
-extern const int         c_port;
-extern const char *const c_timeformat;
-extern const int         c_log_facility;
-extern const int         c_log_level;
-extern const char *const c_log_id;
-extern const bool        cf_debug;
+extern char const *const c_host;
+extern int  const        c_port;
+extern char const *const c_timeformat;
+extern int  const        c_log_facility;
+extern int  const        c_log_level;
+extern char const *const c_log_id;
+extern bool const        cf_debug;
 
 #endif
-

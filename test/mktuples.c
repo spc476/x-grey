@@ -57,7 +57,7 @@ char   *g_secret     = "decafbad";
 size_t  g_secretsize = 8;
 size_t  g_count      = 65536uL;
 
-static const struct option mc_options[] =
+static struct option const mc_options[] =
 {
   { "input-file"	, required_argument	, NULL	, OPT_INPUT_FILE  } ,
   { "output-file"	, required_argument	, NULL	, OPT_OUTPUT_FILE } ,

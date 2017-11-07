@@ -26,7 +26,7 @@
 
 /**********************************************************/
 
-static const CRC32 m_crc32_table[] =
+static CRC32 const m_crc32_table[] =
 {
   0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA,
   0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
@@ -96,9 +96,9 @@ static const CRC32 m_crc32_table[] =
 
 /******************************************************************/
 
-CRC32 crc32(CRC32 crc,const void *data,size_t size)
+CRC32 crc32(CRC32 crc,void const *data,size_t size)
 {
-  const uint8_t *p = data;
+  uint8_t const *p = data;
   
   assert(data != NULL);
   assert(size >  0);

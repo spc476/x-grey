@@ -73,7 +73,7 @@ char               *g_rhost      = SERVER_HOST;
 int                 g_rport      = SERVER_PORT;
 char               *g_inputfile  = "precanned-tuple.01";
 
-static const struct option mc_options[] =
+static struct option const mc_options[] =
 {
   { "server"		, required_argument	, NULL	, OPT_RHOST	  } ,
   { "server-port"	, required_argument	, NULL	, OPT_RPORT	  } ,
@@ -178,7 +178,7 @@ int main(int argc,char *argv[])
     		packet,
     		*pps,
     		0,
-    		(const struct sockaddr *)&g_raddr,
+    		(struct sockaddr const *)&g_raddr,
     		g_raddrsize
     	);
       packet += *pps;

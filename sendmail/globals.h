@@ -31,30 +31,30 @@
 
 /***********************************************************/
 
-extern const char *const          c_pidfile;
-extern const char *const          c_host;
-extern const int                  c_port;
-extern const char *const          c_rhost;
-extern const int                  c_rport;
-extern const struct sockaddr_in   c_raddr;
-extern const socklen_t            c_raddrsize;
-extern const int                  c_timeout;
-extern const int                  c_log_facility;
-extern const int                  c_log_level;
-extern const char *const          c_log_id;
-extern const char *const          c_secret;
-extern const size_t               c_secretsize;
-extern const char *const          c_filterchannel;
-extern const bool                 cf_foreground;
-extern const bool                 cf_debug;
-extern const size_t               c_maxstack;
+extern char               const *const c_pidfile;
+extern char               const *const c_host;
+extern int                const        c_port;
+extern char               const *const c_rhost;
+extern int                const        c_rport;
+extern struct sockaddr_in const        c_raddr;
+extern socklen_t          const        c_raddrsize;
+extern int                const        c_timeout;
+extern int                const        c_log_facility;
+extern int                const        c_log_level;
+extern char               const *const c_log_id;
+extern char               const *const c_secret;
+extern size_t             const        c_secretsize;
+extern char               const *const c_filterchannel;
+extern bool               const        cf_foreground;
+extern bool               const        cf_debug;
+extern size_t             const        c_maxstack;
 
-extern int                        gl_sock;
+extern int                             gl_sock;
 
 /***********************************************************/
 
 int	(GlobalsInit)	(int,char *[]);
 int	(GlobalsDeinit)	(void);
-void	report_syslog	(int,const char *, ... );
+void	report_syslog	(int,char const *, ... );
 
 #endif

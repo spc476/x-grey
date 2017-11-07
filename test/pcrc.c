@@ -51,7 +51,7 @@ enum
 
 char *g_inputfile  = "precanned-tuple.01";
 
-static const struct option mc_options[] =
+static struct option const mc_options[] =
 {
   { "input-file"	, required_argument	, NULL	, OPT_INPUT_FILE  } ,
   { "help"		, no_argument		, NULL	, OPT_HELP	  } ,

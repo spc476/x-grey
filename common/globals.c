@@ -26,7 +26,7 @@
 
 /******************************************************************/
 
-const struct chars_int c_facilities[20] =
+struct chars_int const c_facilities[20] =
 {
   { "AUTH"      , LOG_AUTHPRIV  } ,
   { "AUTHPRIV"  , LOG_AUTHPRIV  } ,
@@ -50,7 +50,7 @@ const struct chars_int c_facilities[20] =
   { "UUCP"      , LOG_UUCP      }
 };
 
-const struct chars_int c_levels[7] = 
+struct chars_int const c_levels[7] = 
 {
   { "ALERT"     , LOG_ALERT     } ,     
   { "CRIT"      , LOG_CRIT      } ,     
@@ -61,7 +61,7 @@ const struct chars_int c_levels[7] =
   { "WARNING"   , LOG_WARNING   }
 };
 
-const struct chars_int c_ift[6] =
+struct chars_int const c_ift[6] =
 {
   { "GREYLIST"	, IFT_GREYLIST	} ,
   { "GRAYLIST"	, IFT_GREYLIST	} ,
@@ -71,12 +71,12 @@ const struct chars_int c_ift[6] =
   { "EXPIRE"	, IFT_EXPIRE	}
 };  
 
-const struct chars_int c_reason[8] =
+struct chars_int const c_reason[8] =
 {
   { "NONE"	, REASON_NONE		} ,
   { "IP"	, REASON_IP		} ,
   { "FROM"	, REASON_FROM		} ,
-  { "FROM-DOMAIN"	, REASON_FROM_DOMAIN	} ,
+  { "FROM-DOMAIN", REASON_FROM_DOMAIN	} ,
   { "TO"	, REASON_TO		} ,
   { "TO-DOMAIN"	, REASON_TO_DOMAIN	} ,
   { "GREYLIST"	, REASON_GREYLIST	} ,

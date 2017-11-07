@@ -41,8 +41,8 @@
 
 struct chars_int
 {
-  const char *name;
-  const int   value;
+  char const *name;
+  int  const  value;
 };
 
 typedef struct mystring
@@ -53,13 +53,13 @@ typedef struct mystring
 
 /***************************************************************/
 
-int	    create_socket		(const char *,int,int);
-int	    ci_map_int			(const char *,const struct chars_int [],size_t);
-const char *ci_map_chars		(int,const struct chars_int [],size_t);
-void	    report_syslog		(int,const char *, ... );
-void	    report_stderr		(int,const char *, ... );
+int	    create_socket		(char const *,int,int);
+int	    ci_map_int			(char const *,struct chars_int const [],size_t);
+char const *ci_map_chars		(int,struct chars_int const [],size_t);
+void	    report_syslog		(int,char const *, ... );
+void	    report_stderr		(int,char const *, ... );
 void	    log_address			(struct sockaddr *);
-char	   *ipv4			(const uint8_t *);
+char	   *ipv4			(uint8_t const *);
 int	    set_signal			(int,void (*)(int));
 double	    read_dtime			(char *,double);
 size_t	    read_size			(char *);
@@ -72,7 +72,7 @@ char       *report_delta		(double);
 
 String	   *split			(size_t *,char *);
 
-void	    write_pidfile		(const char *);
+void	    write_pidfile		(char const *);
 int	    parse_ip			(uint8_t *,int *,char *);
 
 /***************************************************************/
