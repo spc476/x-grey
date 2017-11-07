@@ -53,29 +53,28 @@ typedef struct mystring
 
 /***************************************************************/
 
-int         create_socket               (char const *,int,int);
-int         ci_map_int                  (char const *,struct chars_int const [],size_t);
-char const *ci_map_chars                (int,struct chars_int const [],size_t);
-void        report_syslog               (int,char const *, ... );
-void        report_stderr               (int,char const *, ... );
-void        log_address                 (struct sockaddr *);
-char       *ipv4                        (uint8_t const *);
-int         set_signal                  (int,void (*)(int));
-double      read_dtime                  (char *,double);
-size_t      read_size                   (char *);
+extern int         create_socket (char const *,int,int);
+extern int         ci_map_int    (char const *,struct chars_int const [],size_t);
+extern char const *ci_map_chars  (int,struct chars_int const [],size_t);
+extern void        report_syslog (int,char const *, ... );
+extern void        report_stderr (int,char const *, ... );
+extern void        log_address   (struct sockaddr *);
+extern char       *ipv4          (uint8_t const *);
+extern int         set_signal    (int,void (*)(int));
+extern double      read_dtime    (char *,double);
+extern size_t      read_size     (char *);
 
-char       *iptoa                       (IP);
-char       *ipptoa                      (IP,Port);
-char       *timetoa                     (time_t);
-char       *report_time                 (time_t,time_t);
-char       *report_delta                (double);
+extern char       *iptoa         (IP);
+extern char       *ipptoa        (IP,Port);
+extern char       *timetoa       (time_t);
+extern char       *report_time   (time_t,time_t);
+extern char       *report_delta  (double);
 
-String     *split                       (size_t *,char *);
+extern String     *split         (size_t *,char *);
 
-void        write_pidfile               (char const *);
-int         parse_ip                    (uint8_t *,int *,char *);
+extern void        write_pidfile (char const *);
+extern int         parse_ip      (uint8_t *,int *,char *);
 
 /***************************************************************/
 
 #endif
-

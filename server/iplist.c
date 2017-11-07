@@ -52,7 +52,7 @@ static size_t            ip_collect     (
                                         
 /*****************************************************************/
 
-int iplist_read(const char *fname)
+int iplist_read(char const *fname)
 {
   FILE   *in;
   uint8_t    ip[16];

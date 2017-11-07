@@ -30,34 +30,34 @@
 
         /*----------------------------------------------*/
         
-extern const char *const    c_pidfile;
-extern const char *const    c_whitefile;
-extern const char *const    c_greyfile;
-extern const char *const    c_dumpfile;
-extern const char *const    c_tofile;
-extern const char *const    c_todfile;
-extern const char *const    c_fromfile;
-extern const char *const    c_fromdfile;
-extern const char *const    c_iplistfile;
-extern const char *const    c_timeformat;
-extern const char *const    c_host;
-extern const int            c_port;
-extern const size_t         c_poolmax;
-extern const unsigned int   c_time_cleanup;
-extern const double         c_time_savestate;
-extern const double         c_timeout_embargo;
-extern const double         c_timeout_grey;
-extern const double         c_timeout_white;
-extern const int            c_facility;
-extern const int            c_level;
-extern const char *const    c_sysid;
-extern const time_t         c_starttime;
-extern const char *const    c_secret;
-extern const size_t         c_secretsize;
-extern const bool           cf_debug;
-extern const bool           cf_foreground;
-extern const bool           cf_oldcounts;
-extern const bool           cf_nomonitor;
+extern char         const *const c_pidfile;
+extern char         const *const c_whitefile;
+extern char         const *const c_greyfile;
+extern char         const *const c_dumpfile;
+extern char         const *const c_tofile;
+extern char         const *const c_todfile;
+extern char         const *const c_fromfile;
+extern char         const *const c_fromdfile;
+extern char         const *const c_iplistfile;
+extern char         const *const c_timeformat;
+extern char         const *const c_sysid;
+extern char         const *const c_host;
+extern char         const *const c_secret;
+extern int          const        c_port;
+extern size_t       const        c_poolmax;
+extern unsigned int const        c_time_cleanup;
+extern double       const        c_time_savestate;
+extern double       const        c_timeout_embargo;
+extern double       const        c_timeout_grey;
+extern double       const        c_timeout_white;
+extern int          const        c_facility;
+extern int          const        c_level;
+extern time_t       const        c_starttime;
+extern size_t       const        c_secretsize;
+extern bool         const        cf_debug;
+extern bool         const        cf_foreground;
+extern bool         const        cf_oldcounts;
+extern bool         const        cf_nomonitor;
 
         /*---------------------------------------------*/
         
@@ -125,11 +125,10 @@ extern size_t              g_fromdomainc;
 
 /*****************************************************************/
 
-int     (GlobalsInit)   (void);
-int     (GlobalsDeinit) (void);
+extern int  (GlobalsInit)   (void);
+extern int  (GlobalsDeinit) (void);
 
-void    parse_cmdline   (int,char *[]);
-void    daemon_init     (void);
+extern void parse_cmdline   (int,char *[]);
+extern void daemon_init     (void);
 
 #endif
-

@@ -30,21 +30,20 @@
 
 /**********************************************************/
 
-int      tuple_cmp_ft           (const void *,const void *);
-int      tuple_cmp_ift          (const void *restrict ,const void *restrict);
-int      tuple_qsort_cmp        (const void *,const void *);
-Tuple    tuple_search           (Tuple,size_t *);
-Tuple    tuple_allocate         (void);
-void     tuple_add              (Tuple,size_t);
-void     tuple_expire           (time_t);
-void     tuple_dump             (void);
-void     tuple_dump_stream      (FILE *);
-void     tuple_all_dump         (void);
-void     tuple_all_dump_stream  (FILE *);
-void     whitelist_dump         (void);
-void     whitelist_dump_stream  (FILE *);
-void     whitelist_load         (void);
-void     log_tuple              (Tuple,int,int);
+extern int   tuple_cmp_ft          (void const *,void const *);
+extern int   tuple_cmp_ift         (void const *restrict,void const *restrict);
+extern int   tuple_qsort_cmp       (void const *,void const *);
+extern Tuple tuple_search          (Tuple,size_t *);
+extern Tuple tuple_allocate        (void);
+extern void  tuple_add             (Tuple,size_t);
+extern void  tuple_expire          (time_t);
+extern void  tuple_dump            (void);
+extern void  tuple_dump_stream     (FILE *);
+extern void  tuple_all_dump        (void);
+extern void  tuple_all_dump_stream (FILE *);
+extern void  whitelist_dump        (void);
+extern void  whitelist_dump_stream (FILE *);
+extern void  whitelist_load        (void);
+extern void  log_tuple             (Tuple,int,int);
 
 #endif
-

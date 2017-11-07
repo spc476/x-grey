@@ -165,7 +165,7 @@ size_t               g_fromdomainc;
 
 /*******************************************************************/
 
-static const struct option mc_options[] =
+static struct option const mc_options[] =
 {
   { "host"              , required_argument     , NULL  , OPT_HOST              } ,
   { "port"              , required_argument     , NULL  , OPT_PORT              } ,

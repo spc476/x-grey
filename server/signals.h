@@ -25,12 +25,12 @@
 #include <signal.h>
 #include <unistd.h>
 
-void    check_signals                   (void);
-void    sighandler_critical_child       (int);
-void    sighandler_sigs                 (int);
-void    sighandler_chld                 (int);
-pid_t   gld_fork                        (void);
-void    save_state                      (void);
+extern void  check_signals             (void);
+extern void  sighandler_critical_child (int);
+extern void  sighandler_sigs           (int);
+extern void  sighandler_chld           (int);
+extern pid_t gld_fork                  (void);
+extern void  save_state                (void);
 
 #endif
 

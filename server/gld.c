@@ -58,14 +58,14 @@
 
 /********************************************************************/
 
-static void      gld                    (void);
-void             type_greylist          (struct request *,int);
-void             type_tuple_remove      (struct request *);
-static void      send_reply             (struct request *,int,int,int);
-static void      send_packet            (struct request *,void *,size_t);
-static void      cmd_mcp_report         (struct request *,void (*)(FILE *),int);
-static void      cmd_mcp_tofrom         (struct request *,int,int);
-static int       greylist_sanitize_req  (struct tuple *,struct request *);
+static void gld                   (void);
+static void type_greylist         (struct request *,int);
+static void type_tuple_remove     (struct request *);
+static void send_reply            (struct request *,int,int,int);
+static void send_packet           (struct request *,void *,size_t);
+static void cmd_mcp_report        (struct request *,void (*)(FILE *),int);
+static void cmd_mcp_tofrom        (struct request *,int,int);
+static int  greylist_sanitize_req (struct tuple *,struct request *);
 
 /********************************************************************/
 
@@ -417,7 +417,7 @@ void type_tuple_remove(struct request *req)
 
 /********************************************************************/
 
-void type_greylist(struct request *req,int response)
+static void type_greylist(struct request *req,int response)
 {
   struct tuple             tuple;
   struct emaildomain       edkey;

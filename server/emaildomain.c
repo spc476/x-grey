@@ -37,17 +37,17 @@
 
 #define ED_DELTA        100
 
-static void file_dump           (const char *,void (*)(FILE *));
+static void file_dump           (char const *,void (*)(FILE *));
 static void tofrom_dump_stream  (FILE *,EDomain,size_t);
 static void tofrom_read         (
-                                  const char  *,
+                                  char const  *,
                                   EDomain    (*)(EDomain,size_t *),
                                   void       (*)(EDomain,size_t),
                                   int         *,
                                   size_t      *
                                 );
 static void tofrom_read_stream  (
-                                  const char  *,
+                                  char const  *,
                                   FILE        *,
                                   EDomain    (*)(EDomain,size_t *),
                                   void       (*)(EDomain,size_t),
@@ -67,10 +67,10 @@ int edomain_cmp(EDomain key,EDomain node)
 
 /*********************************************************************/
 
-static int edomain_look(const void *restrict key,const void *restrict values)
+static int edomain_look(void const *restrict key,void const *restrict values)
 {
-  const struct emaildomain *k = key;
-  const struct emaildomain *v = values;
+  struct emaildomain const *k = key;
+  struct emaildomain const *v = values;
   
   return strcmp(k->text,v->text);
 }
@@ -310,7 +310,7 @@ void edomain_remove_tod(size_t index)
 
 /*******************************************************************/
 
-static void file_dump(const char *fname,void (*function)(FILE *))
+static void file_dump(char const *fname,void (*function)(FILE *))
 {
   FILE *fpout;
   
@@ -359,7 +359,7 @@ void fromd_dump(void)
 
 void to_dump_stream(FILE *out)
 {
-  const char *cmd;
+  char const *cmd;
   
   assert(out != NULL);
   
@@ -372,7 +372,7 @@ void to_dump_stream(FILE *out)
 
 void tod_dump_stream(FILE *out)
 {
-  const char *cmd;
+  char const *cmd;
   
   assert(out);
   
@@ -385,7 +385,7 @@ void tod_dump_stream(FILE *out)
 
 void from_dump_stream(FILE *out)
 {
-  const char *cmd;
+  char const *cmd;
   
   assert(out);
   
@@ -398,7 +398,7 @@ void from_dump_stream(FILE *out)
 
 void fromd_dump_stream(FILE *out)
 {
-  const char *cmd;
+  char const *cmd;
   
   assert(out);
   
@@ -412,7 +412,7 @@ void fromd_dump_stream(FILE *out)
 static void tofrom_dump_stream(FILE *out,EDomain list,size_t size)
 {
   size_t      i;
-  const char *cmd;
+  char const *cmd;
   
   assert(out  != NULL);
   
@@ -454,7 +454,7 @@ void fromd_read(void)
 /******************************************************************/
 
 static void tofrom_read(
-                const char  *fname,
+                char const  *fname,
                 EDomain    (*search)(EDomain,size_t *),
                 void       (*add)   (EDomain,size_t),
                 int         *pdef,
@@ -482,7 +482,7 @@ static void tofrom_read(
 /*******************************************************************/
 
 static void tofrom_read_stream(
-                const char  *fname,
+                char const  *fname,
                 FILE        *in,
                 EDomain    (*search)(EDomain,size_t *),
                 void       (*add)   (EDomain,size_t),

@@ -44,10 +44,10 @@
 
 /**********************************************************************/
 
-int tuple_look_ift(const void *restrict key,const void *restrict values)
+int tuple_look_ift(void const *restrict key,void const *restrict values)
 {
-  const struct tuple *k;
-  const struct tuple *v;
+  struct tuple const *k;
+  struct tuple const *v;
   size_t              len;
   int                 rc;
   

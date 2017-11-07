@@ -47,8 +47,8 @@ extern size_t             const        c_secretsize;
 
 /***********************************************************/
 
-int     (GlobalsInit)   (int,char *[]);
-int     (GlobalsDeinit) (void);
-void    report_syslog   (int,char const *, ... );
+extern int  (GlobalsInit)   (int,char *[]);
+extern int  (GlobalsDeinit) (void);
+extern void report_syslog   (int,char const *, ... );
 
 #endif

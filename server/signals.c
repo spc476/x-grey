@@ -51,15 +51,15 @@
 
 /***********************************************************************/
 
-static void     handle_sigchld          (void);
-static void     handle_sigint           (void);
-static void     handle_sigquit          (void);
-static void     handle_sigterm          (void);
-static void     handle_sigpipe          (void);
-static void     handle_sigalrm          (void);
-static void     handle_sigusr1          (void);
-static void     handle_sigusr2          (void);
-static void     handle_sighup           (void);
+static void handle_sigchld (void);
+static void handle_sigint  (void);
+static void handle_sigquit (void);
+static void handle_sigterm (void);
+static void handle_sigpipe (void);
+static void handle_sigalrm (void);
+static void handle_sigusr1 (void);
+static void handle_sigusr2 (void);
+static void handle_sighup  (void);
 
 /***********************************************************************/
 
@@ -347,4 +347,3 @@ static void handle_sighup(void)
 }
 
 /*********************************************************************/
-
