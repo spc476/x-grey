@@ -104,7 +104,7 @@ CRC32 crc32(CRC32 crc,void const *data,size_t size)
   assert(size >  0);
   
   while(size--)
-  {	/* VVV - uninit mem size 4 next line */
+  {     /* VVV - uninit mem size 4 next line */
     crc = (crc >> 8) ^ m_crc32_table[ (crc ^ *p++) & 0xFF ];
   }
   

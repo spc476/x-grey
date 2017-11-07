@@ -31,13 +31,13 @@
 
 #include "greylist.h"
 
-#define SECSMIN		(60.0)
-#define SECSHOUR	(60.0 * 60.0)
-#define SECSDAY		(60.0 * 60.0 * 24.0)
-#define SECSYEAR	(60.0 * 60.0 * 24.0 * 365.242199)
+#define SECSMIN         (60.0)
+#define SECSHOUR        (60.0 * 60.0)
+#define SECSDAY         (60.0 * 60.0 * 24.0)
+#define SECSYEAR        (60.0 * 60.0 * 24.0 * 365.242199)
 
-#define min(a,b)	((a) < (b)) ? (a) : (b)
-#define max(a,b)	((a) > (b)) ? (a) : (b)
+#define min(a,b)        ((a) < (b)) ? (a) : (b)
+#define max(a,b)        ((a) > (b)) ? (a) : (b)
 
 struct chars_int
 {
@@ -53,27 +53,27 @@ typedef struct mystring
 
 /***************************************************************/
 
-int	    create_socket		(char const *,int,int);
-int	    ci_map_int			(char const *,struct chars_int const [],size_t);
-char const *ci_map_chars		(int,struct chars_int const [],size_t);
-void	    report_syslog		(int,char const *, ... );
-void	    report_stderr		(int,char const *, ... );
-void	    log_address			(struct sockaddr *);
-char	   *ipv4			(uint8_t const *);
-int	    set_signal			(int,void (*)(int));
-double	    read_dtime			(char *,double);
-size_t	    read_size			(char *);
+int         create_socket               (char const *,int,int);
+int         ci_map_int                  (char const *,struct chars_int const [],size_t);
+char const *ci_map_chars                (int,struct chars_int const [],size_t);
+void        report_syslog               (int,char const *, ... );
+void        report_stderr               (int,char const *, ... );
+void        log_address                 (struct sockaddr *);
+char       *ipv4                        (uint8_t const *);
+int         set_signal                  (int,void (*)(int));
+double      read_dtime                  (char *,double);
+size_t      read_size                   (char *);
 
-char       *iptoa			(IP);
-char       *ipptoa			(IP,Port);
-char       *timetoa			(time_t);
-char       *report_time			(time_t,time_t);
-char       *report_delta		(double);
+char       *iptoa                       (IP);
+char       *ipptoa                      (IP,Port);
+char       *timetoa                     (time_t);
+char       *report_time                 (time_t,time_t);
+char       *report_delta                (double);
 
-String	   *split			(size_t *,char *);
+String     *split                       (size_t *,char *);
 
-void	    write_pidfile		(char const *);
-int	    parse_ip			(uint8_t *,int *,char *);
+void        write_pidfile               (char const *);
+int         parse_ip                    (uint8_t *,int *,char *);
 
 /***************************************************************/
 

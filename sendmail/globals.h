@@ -53,8 +53,8 @@ extern int                             gl_sock;
 
 /***********************************************************/
 
-int	(GlobalsInit)	(int,char *[]);
-int	(GlobalsDeinit)	(void);
-void	report_syslog	(int,char const *, ... );
+int     (GlobalsInit)   (int,char *[]);
+int     (GlobalsDeinit) (void);
+void    report_syslog   (int,char const *, ... );
 
 #endif

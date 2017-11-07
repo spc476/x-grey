@@ -35,26 +35,26 @@
 #include "emaildomain.h"
 #include "globals.h"
 
-#define ED_DELTA	100
+#define ED_DELTA        100
 
-static void file_dump		(const char *,void (*)(FILE *));
-static void tofrom_dump_stream	(FILE *,EDomain,size_t);
-static void tofrom_read		(
-				  const char  *,
-				  EDomain    (*)(EDomain,size_t *),
-				  void       (*)(EDomain,size_t),
-				  int         *,
-				  size_t      *
-				);
-static void tofrom_read_stream	(
+static void file_dump           (const char *,void (*)(FILE *));
+static void tofrom_dump_stream  (FILE *,EDomain,size_t);
+static void tofrom_read         (
                                   const char  *,
-				  FILE        *,
-				  EDomain    (*)(EDomain,size_t *),
-				  void       (*)(EDomain,size_t),
-				  int         *,
-				  size_t      *
-				);
-
+                                  EDomain    (*)(EDomain,size_t *),
+                                  void       (*)(EDomain,size_t),
+                                  int         *,
+                                  size_t      *
+                                );
+static void tofrom_read_stream  (
+                                  const char  *,
+                                  FILE        *,
+                                  EDomain    (*)(EDomain,size_t *),
+                                  void       (*)(EDomain,size_t),
+                                  int         *,
+                                  size_t      *
+                                );
+                                
 /******************************************************************/
 
 int edomain_cmp(EDomain key,EDomain node)
@@ -81,7 +81,7 @@ EDomain edomain_search_to(EDomain key,size_t *pidx)
 {
   assert(key  != NULL);
   assert(pidx != NULL);
-
+  
   return edomain_search(key,pidx,g_to,g_sto);
 }
 
@@ -140,9 +140,9 @@ void edomain_add_from(EDomain rec,size_t index)
   }
   
   memmove(
-  	&g_from[index + 1],
-  	&g_from[index],
-  	(g_sfrom - index) * sizeof(struct emaildomain)
+        &g_from[index + 1],
+        &g_from[index],
+        (g_sfrom - index) * sizeof(struct emaildomain)
   );
   
   g_from[index] = *rec;
@@ -163,9 +163,9 @@ void edomain_remove_from(size_t index)
   if (count)
   {
     memmove(
-    	&g_from[index],
-    	&g_from[index + 1],
-    	count * sizeof(struct emaildomain)
+        &g_from[index],
+        &g_from[index + 1],
+        count * sizeof(struct emaildomain)
     );
   }
   
@@ -178,7 +178,7 @@ void edomain_add_fromd(EDomain rec,size_t index)
 {
   assert(rec   != NULL);
   assert(index <= g_sfromd);
-    
+  
   if (g_sfromd == g_smaxfromd)
   {
     g_smaxfromd += ED_DELTA;
@@ -186,9 +186,9 @@ void edomain_add_fromd(EDomain rec,size_t index)
   }
   
   memmove(
-  	&g_fromd[index + 1],
-  	&g_fromd[index],
-  	(g_sfromd - index) * sizeof(struct emaildomain)
+        &g_fromd[index + 1],
+        &g_fromd[index],
+        (g_sfromd - index) * sizeof(struct emaildomain)
   );
   
   g_fromd[index] = *rec;
@@ -209,9 +209,9 @@ void edomain_remove_fromd(size_t index)
   if (count)
   {
     memmove(
-    	&g_fromd[index],
-    	&g_fromd[index + 1],
-    	count * sizeof(struct emaildomain)
+        &g_fromd[index],
+        &g_fromd[index + 1],
+        count * sizeof(struct emaildomain)
     );
   }
   g_sfromd--;
@@ -231,9 +231,9 @@ void edomain_add_to(EDomain rec,size_t index)
   }
   
   memmove(
-  	&g_to[index + 1],
-  	&g_to[index],
-  	(g_sto - index) * sizeof(struct emaildomain)
+        &g_to[index + 1],
+        &g_to[index],
+        (g_sto - index) * sizeof(struct emaildomain)
   );
   
   g_to[index] = *rec;
@@ -247,17 +247,17 @@ void edomain_remove_to(size_t index)
   size_t count;
   
   assert(index <= g_sto);
-
-  if (g_sto == 0) return;  
+  
+  if (g_sto == 0) return;
   free(g_to[index].text);
   count = (g_sto - index) - 1;
-
+  
   if (count)
   {
     memmove(
-    	&g_to[index],
-    	&g_to[index + 1],
-    	count * sizeof(struct emaildomain)
+        &g_to[index],
+        &g_to[index + 1],
+        count * sizeof(struct emaildomain)
     );
   }
   g_sto--;
@@ -277,11 +277,11 @@ void edomain_add_tod(EDomain rec,size_t index)
   }
   
   memmove(
-  	&g_tod[index + 1],
-  	&g_tod[index],
-  	(g_stod - index) * sizeof(struct emaildomain)
+        &g_tod[index + 1],
+        &g_tod[index],
+        (g_stod - index) * sizeof(struct emaildomain)
     );
-  
+    
   g_tod[index] = *rec;
   g_stod++;
 }
@@ -300,9 +300,9 @@ void edomain_remove_tod(size_t index)
   if (count)
   {
     memmove(
-    	&g_tod[index],
-    	&g_tod[index + 1],
-    	count * sizeof(struct emaildomain)
+        &g_tod[index],
+        &g_tod[index + 1],
+        count * sizeof(struct emaildomain)
     );
   }
   g_stod--;
@@ -413,13 +413,13 @@ static void tofrom_dump_stream(FILE *out,EDomain list,size_t size)
 {
   size_t      i;
   const char *cmd;
-
+  
   assert(out  != NULL);
-
+  
   for (i = 0 ; i < size ; i++)
   {
     cmd = ci_map_chars(list[i].cmd,c_ift,C_IFT);
-    fprintf(out,"%10lu %8.8s %s\n",(unsigned long)list[i].count,cmd,list[i].text);    
+    fprintf(out,"%10lu %8.8s %s\n",(unsigned long)list[i].count,cmd,list[i].text);
   }
 }
 
@@ -454,12 +454,12 @@ void fromd_read(void)
 /******************************************************************/
 
 static void tofrom_read(
-		const char  *fname,
-		EDomain    (*search)(EDomain,size_t *),
-		void       (*add)   (EDomain,size_t),
-		int         *pdef,
-		size_t      *pcount
-	)
+                const char  *fname,
+                EDomain    (*search)(EDomain,size_t *),
+                void       (*add)   (EDomain,size_t),
+                int         *pdef,
+                size_t      *pcount
+        )
 {
   FILE *in;
   
@@ -468,8 +468,8 @@ static void tofrom_read(
   assert(add);
   assert(pdef   != NULL);
   assert(pcount != NULL);
-
-  in = fopen(fname,"r");  
+  
+  in = fopen(fname,"r");
   if (in)
   {
     tofrom_read_stream(fname,in,search,add,pdef,pcount);
@@ -483,12 +483,12 @@ static void tofrom_read(
 
 static void tofrom_read_stream(
                 const char  *fname,
-		FILE        *in,
-		EDomain    (*search)(EDomain,size_t *),
-		void       (*add)   (EDomain,size_t),
-		int         *pdef,
-		size_t      *pcount
-	)
+                FILE        *in,
+                EDomain    (*search)(EDomain,size_t *),
+                void       (*add)   (EDomain,size_t),
+                int         *pdef,
+                size_t      *pcount
+        )
 {
   struct emaildomain  ed;
   EDomain             value;
@@ -517,12 +517,12 @@ static void tofrom_read_stream(
     free(fields);
     if (getline(&linebuff,&linesize,in) <= 0)
       break;
-    
+      
     linecnt++;
     
     if (empty_string(linebuff))
       continue;
-    
+      
     line = trim_space(linebuff);
     
     if (line[0] == '#')
@@ -547,7 +547,7 @@ static void tofrom_read_stream(
         *pcount = 0;
       continue;
     }
-
+    
     ed.text  = (char *)fields[2].d;
     ed.tsize = fields[2].s;
     if (cf_oldcounts)
@@ -557,9 +557,9 @@ static void tofrom_read_stream(
     ed.cmd   = ci_map_int(fields[1].d,c_ift,C_IFT);
     
     syslog(LOG_DEBUG,"adding %s as %d",ed.text,ed.cmd);
-
+    
     value = (*search)(&ed,&idx);
-
+    
     if (value == NULL)
     {
       ed.text = strdup(ed.text);

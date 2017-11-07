@@ -26,13 +26,13 @@
 #include <time.h>
 #include <limits.h>
 
-	/*----------------------------------------------------------------
-	; PROG_VERSION (in version.h) defines the actual program version. 
-	; VERSION is the protocol version.  The names are this way for
-	; hysterical reasons.
-	;----------------------------------------------------------------*/
-
-#define VERSION		0x0101
+        /*----------------------------------------------------------------
+        ; PROG_VERSION (in version.h) defines the actual program version.
+        ; VERSION is the protocol version.  The names are this way for
+        ; hysterical reasons.
+        ;----------------------------------------------------------------*/
+        
+#define VERSION         0x0101
 
 /********************************************************************/
 
@@ -40,8 +40,8 @@ typedef uint16_t Port;
 typedef uint32_t IP;
 typedef uint32_t flags;
 
-#define ERR_OKAY	0
-#define ERR_ERR		1
+#define ERR_OKAY        0
+#define ERR_ERR         1
 
 enum
 {
@@ -52,10 +52,10 @@ enum
   OPT_LOG_FACILITY,
   OPT_LOG_LEVEL,
   OPT_LOG_ID,
-  OPT_HOST,	/* local host */
-  OPT_PORT,	/* local port */
-  OPT_RHOST,	/* remote host */
-  OPT_RPORT,	/* remote port */
+  OPT_HOST,     /* local host */
+  OPT_PORT,     /* local port */
+  OPT_RHOST,    /* remote host */
+  OPT_RPORT,    /* remote port */
   OPT_SECRET,
   OPT_USER
 };
@@ -100,12 +100,12 @@ enum
   CMD_MCP_SHOW_TUPLE_ALL_RESP,
   CMD_MCP_SHOW_WHITELIST,
   CMD_MCP_SHOW_WHITELIST_RESP,
-
+  
   CMD_MCP_SHOW_TO,
   CMD_MCP_SHOW_TO_RESP,
   CMD_MCP_SHOW_TO_DOMAIN,
   CMD_MCP_SHOW_TO_DOMAIN_RESP,
-
+  
   CMD_MCP_SHOW_FROM,
   CMD_MCP_SHOW_FROM_RESP,
   CMD_MCP_SHOW_FROM_DOMAIN,
@@ -118,12 +118,12 @@ enum
   CMD_MCP_TO_RESP,
   CMD_MCP_TO_DOMAIN,
   CMD_MCP_TO_DOMAIN_RESP,
-
+  
   CMD_MCP_FROM,
   CMD_MCP_FROM_RESP,
   CMD_MCP_FROM_DOMAIN,
   CMD_MCP_FROM_DOMAIN_RESP,
-
+  
   CMD_MAX
 };
 
@@ -241,7 +241,7 @@ struct glmcp_response_show_stats
   /*-------------------------------------------------
   ; new data for protocol v1.1
   ;-------------------------------------------------*/
-
+  
   uint32_t tuples_read;
   uint32_t tuples_read_cu;
   uint32_t tuples_read_cu_max;
@@ -276,7 +276,7 @@ struct glmcp_request_iplist
   uint16_t type;
   uint16_t cmd;
   uint16_t ipsize;
-  uint16_t mask;	/* the "/X" part of A.B.C.D/X */
+  uint16_t mask;        /* the "/X" part of A.B.C.D/X */
   uint8_t  data[16];
 };
 

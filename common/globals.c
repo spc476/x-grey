@@ -50,10 +50,10 @@ struct chars_int const c_facilities[20] =
   { "UUCP"      , LOG_UUCP      }
 };
 
-struct chars_int const c_levels[7] = 
+struct chars_int const c_levels[7] =
 {
-  { "ALERT"     , LOG_ALERT     } ,     
-  { "CRIT"      , LOG_CRIT      } ,     
+  { "ALERT"     , LOG_ALERT     } ,
+  { "CRIT"      , LOG_CRIT      } ,
   { "DEBUG"     , LOG_DEBUG     } ,
   { "ERR"       , LOG_ERR       } ,
   { "INFO"      , LOG_INFO      } ,
@@ -63,22 +63,22 @@ struct chars_int const c_levels[7] =
 
 struct chars_int const c_ift[6] =
 {
-  { "GREYLIST"	, IFT_GREYLIST	} ,
-  { "GRAYLIST"	, IFT_GREYLIST	} ,
-  { "ACCEPT"	, IFT_ACCEPT	} ,
-  { "REJECT"	, IFT_REJECT	} ,
-  { "REMOVE"	, IFT_REMOVE	} ,
-  { "EXPIRE"	, IFT_EXPIRE	}
-};  
+  { "GREYLIST"  , IFT_GREYLIST  } ,
+  { "GRAYLIST"  , IFT_GREYLIST  } ,
+  { "ACCEPT"    , IFT_ACCEPT    } ,
+  { "REJECT"    , IFT_REJECT    } ,
+  { "REMOVE"    , IFT_REMOVE    } ,
+  { "EXPIRE"    , IFT_EXPIRE    }
+};
 
 struct chars_int const c_reason[8] =
 {
-  { "NONE"	, REASON_NONE		} ,
-  { "IP"	, REASON_IP		} ,
-  { "FROM"	, REASON_FROM		} ,
-  { "FROM-DOMAIN", REASON_FROM_DOMAIN	} ,
-  { "TO"	, REASON_TO		} ,
-  { "TO-DOMAIN"	, REASON_TO_DOMAIN	} ,
-  { "GREYLIST"	, REASON_GREYLIST	} ,
-  { "WHITELIST"	, REASON_WHITELIST	}
+  { "NONE"      , REASON_NONE           } ,
+  { "IP"        , REASON_IP             } ,
+  { "FROM"      , REASON_FROM           } ,
+  { "FROM-DOMAIN", REASON_FROM_DOMAIN   } ,
+  { "TO"        , REASON_TO             } ,
+  { "TO-DOMAIN" , REASON_TO_DOMAIN      } ,
+  { "GREYLIST"  , REASON_GREYLIST       } ,
+  { "WHITELIST" , REASON_WHITELIST      }
 };

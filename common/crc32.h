@@ -22,7 +22,7 @@
 #ifndef CRC_32_H
 #define CRC_32_H
 
-#define INIT_CRC32	0xFFFFFFFF
+#define INIT_CRC32      0xFFFFFFFF
 
 #if (UINT_MAX == 4294967295UL)
   typedef unsigned int CRC32;
@@ -36,7 +36,7 @@
 # error No integral type is 32 bits on this platform
 #endif
 
-CRC32	crc32	(CRC32,void const *,size_t);
+CRC32   crc32   (CRC32,void const *,size_t);
 
 #endif
 

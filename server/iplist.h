@@ -47,13 +47,13 @@ struct ipnode
 
 /******************************************************/
 
-int		 iplist_read		(const char *);
-int		 iplist_check		(uint8_t *,size_t);
-void		 iplist_dump		(void);
-void		 iplist_dump_stream	(FILE *);
-struct ipblock	*ip_table		(size_t *);
-int		 ip_match		(uint8_t *,size_t);
-int		 ip_add_sm		(uint8_t *,size_t,int,int);
-void		 ip_print		(FILE *);
+int              iplist_read            (const char *);
+int              iplist_check           (uint8_t *,size_t);
+void             iplist_dump            (void);
+void             iplist_dump_stream     (FILE *);
+struct ipblock  *ip_table               (size_t *);
+int              ip_match               (uint8_t *,size_t);
+int              ip_add_sm              (uint8_t *,size_t,int,int);
+void             ip_print               (FILE *);
 
 #endif

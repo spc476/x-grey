@@ -38,7 +38,7 @@
 #include "../common/util.h"
 #include "../conf.h"
 
-#define min(a,b)	((a) < (b)) ? (a) : (b)
+#define min(a,b)        ((a) < (b)) ? (a) : (b)
 
 /***********************************************************************/
 
@@ -53,14 +53,14 @@ char *g_inputfile  = "precanned-tuple.01";
 
 static struct option const mc_options[] =
 {
-  { "input-file"	, required_argument	, NULL	, OPT_INPUT_FILE  } ,
-  { "help"		, no_argument		, NULL	, OPT_HELP	  } ,
-  { NULL		, 0			, NULL	, 0		  }
+  { "input-file"        , required_argument     , NULL  , OPT_INPUT_FILE  } ,
+  { "help"              , no_argument           , NULL  , OPT_HELP        } ,
+  { NULL                , 0                     , NULL  , 0               }
 };
 
 /**********************************************************************/
 
-void	parse_command_line	(int,char *[]);
+void    parse_command_line      (int,char *[]);
 
 /**********************************************************************/
 
@@ -141,12 +141,12 @@ void parse_command_line(int argc,char *argv[])
       default:
            fprintf(
                 stderr,
-           	"usage: %s [options]\n"
-           	"\t--input-file <file>\t(%s)\n"
-           	"\t--help\n"
-           	"\n",
-           	argv[0],
-           	g_inputfile
+                "usage: %s [options]\n"
+                "\t--input-file <file>\t(%s)\n"
+                "\t--help\n"
+                "\n",
+                argv[0],
+                g_inputfile
            );
            exit(EXIT_FAILURE);
     }

@@ -51,21 +51,21 @@
 #include "emaildomain.h"
 
 #if !defined(NDEBUG)
-#  define D(x)	x
+#  define D(x)  x
 #else
 #  define D(x)
 #endif
 
 /********************************************************************/
 
-static void	 gld			(void);
-void 		 type_greylist		(struct request *,int);
-void		 type_tuple_remove	(struct request *);
-static void	 send_reply		(struct request *,int,int,int);
-static void	 send_packet		(struct request *,void *,size_t);
-static void	 cmd_mcp_report		(struct request *,void (*)(FILE *),int);
-static void	 cmd_mcp_tofrom		(struct request *,int,int);
-static int	 greylist_sanitize_req	(struct tuple *,struct request *);
+static void      gld                    (void);
+void             type_greylist          (struct request *,int);
+void             type_tuple_remove      (struct request *);
+static void      send_reply             (struct request *,int,int,int);
+static void      send_packet            (struct request *,void *,size_t);
+static void      cmd_mcp_report         (struct request *,void (*)(FILE *),int);
+static void      cmd_mcp_tofrom         (struct request *,int,int);
+static int       greylist_sanitize_req  (struct tuple *,struct request *);
 
 /********************************************************************/
 
@@ -76,10 +76,10 @@ int main(int argc,char *argv[])
   
   parse_cmdline(argc,argv);
   openlog("gld-monitor",0,LOG_DAEMON);
-
+  
   if (!cf_foreground)
     daemon_init();
-  
+    
   abend_last = time(NULL);
   abend_count = 0;
   
@@ -114,9 +114,9 @@ int main(int argc,char *argv[])
     {
       pid_t process;
       int   status;
-    
+      
       process = waitpid(child,&status,0);
-    
+      
       if (process == (pid_t)-1)
         syslog(LOG_CRIT,"monitor(): waitpid(%lu) = %s",(unsigned long)child,strerror(errno));
       else if (process != child)
@@ -137,12 +137,12 @@ int main(int argc,char *argv[])
           
           switch(sig)
           {
-            case SIGTERM: 
-            case SIGQUIT: 
+            case SIGTERM:
+            case SIGQUIT:
             case SIGINT:
                  syslog(LOG_INFO,"gld() shutdown by signal %d---stopping",sig);
                  return EXIT_SUCCESS;
-            
+                 
             default:
                  abend_now = time(NULL);
                  if (difftime(abend_now,abend_last) < 5.0)
@@ -163,8 +163,8 @@ int main(int argc,char *argv[])
                    syslog(LOG_CRIT,"gld() aborted by signal %d %lu times---restarting",sig,(unsigned long)abend_count);
                    abend = true;
                  }
-                 break; 
-
+                 break;
+                 
           }
         }
         else if (WIFSTOPPED(status))
@@ -176,8 +176,8 @@ int main(int argc,char *argv[])
   }
 }
 
-/*************************************************************************/      
-      
+/*************************************************************************/
+
 static void gld(void)
 {
   struct request req;
@@ -190,7 +190,7 @@ static void gld(void)
   sock = create_socket(c_host,c_port,SOCK_DGRAM);
   if (sock == -1)
     exit(EXIT_FAILURE);
-  
+    
   char *t = timetoa(c_starttime);
   syslog(LOG_INFO,"start time: %s",t);
   free(t);
@@ -198,17 +198,17 @@ static void gld(void)
   while(true)
   {
     check_signals();
-
+    
     memset(&req.remote,0,sizeof(req.remote));
-
+    
     req.rsize = sizeof(req.remote);
     rrc       = recvfrom(
-    	sock,
-    	req.packet.data,
-    	sizeof(req.packet.data),
-    	0,
-    	&req.remote,
-    	&req.rsize
+        sock,
+        req.packet.data,
+        sizeof(req.packet.data),
+        0,
+        &req.remote,
+        &req.rsize
     );
     
     if (rrc == -1)
@@ -240,7 +240,7 @@ static void gld(void)
     }
     
     req.glr->type = ntohs(req.glr->type);
-
+    
     switch(req.glr->type)
     {
       case CMD_NONE:
@@ -251,66 +251,66 @@ static void gld(void)
            break;
       case CMD_WHITELIST:
            type_greylist(&req,CMD_WHITELIST_RESP);
-	   break;
+           break;
       case CMD_TUPLE_REMOVE:
            type_tuple_remove(&req);
            break;
       case CMD_MCP_SHOW_STATS:
            {
              struct glmcp_response_show_stats stats;
-	     size_t ave;
-
-	     if (g_cleanup_count)
-	       ave = (size_t)(((double)(g_requests - g_req_cucurrent)
-	     		   / (double)(g_cleanup_count)) + 0.5);
-	     else
-	       ave = 0;
+             size_t ave;
              
-	     stats.crc = stats.pad     = 0;
+             if (g_cleanup_count)
+               ave = (size_t)(((double)(g_requests - g_req_cucurrent)
+                           / (double)(g_cleanup_count)) + 0.5);
+             else
+               ave = 0;
+               
+             stats.crc = stats.pad     = 0;
              stats.version             = htons(VERSION);
              stats.MTA                 = req.glr->MTA;
              stats.type                = htons(CMD_MCP_SHOW_STATS_RESP);
              stats.starttime           = htonl(c_starttime);
              stats.nowtime             = htonl(req.now);
              stats.tuples              = htonl(g_poolnum);
-	     stats.ips                 = htonl(g_ipcnt);
-	     stats.ip_greylist         = htonl(g_ip_cmdcnt[IFT_GREYLIST]);
-	     stats.ip_accept           = htonl(g_ip_cmdcnt[IFT_ACCEPT]);
-	     stats.ip_reject           = htonl(g_ip_cmdcnt[IFT_REJECT]);
+             stats.ips                 = htonl(g_ipcnt);
+             stats.ip_greylist         = htonl(g_ip_cmdcnt[IFT_GREYLIST]);
+             stats.ip_accept           = htonl(g_ip_cmdcnt[IFT_ACCEPT]);
+             stats.ip_reject           = htonl(g_ip_cmdcnt[IFT_REJECT]);
              stats.greylisted          = htonl(g_greylisted);
              stats.whitelisted         = htonl(g_whitelisted);
              stats.greylist_expired    = htonl(g_greylist_expired);
              stats.whitelist_expired   = htonl(g_whitelist_expired);
              stats.requests            = htonl(g_requests);
              stats.requests_cu         = htonl(g_req_cu);
-	     stats.requests_cu_max     = htonl(g_req_cumax);
-	     stats.requests_cu_ave     = htonl(ave);
-	     stats.tuples_read         = htonl(g_tuples_read);
-	     stats.tuples_read_cu      = htonl(g_tuples_read_cu);
-	     stats.tuples_read_cu_max  = htonl(g_tuples_read_cumax);
-	     stats.tuples_read_cu_ave  = 0;
-	     stats.tuples_write        = htonl(g_tuples_write);
-	     stats.tuples_write_cu     = htonl(g_tuples_write_cu);
-	     stats.tuples_write_cu_max = htonl(g_tuples_write_cumax);
-	     stats.tuples_write_cu_ave = 0;
-	     stats.tuples_low          = htonl(g_tuples_low);
-	     stats.tuples_high         = htonl(g_tuples_high);
-	     stats.from                = htonl(g_sfrom  + 1);
-	     stats.from_greylist       = htonl(g_from_cmdcnt[IFT_GREYLIST]);
-	     stats.from_accept         = htonl(g_from_cmdcnt[IFT_ACCEPT]);
-	     stats.from_reject         = htonl(g_from_cmdcnt[IFT_REJECT]);
-	     stats.fromd               = htonl(g_sfromd + 1);
-	     stats.fromd_greylist      = htonl(g_fromd_cmdcnt[IFT_GREYLIST]);
-	     stats.fromd_accept        = htonl(g_fromd_cmdcnt[IFT_ACCEPT]);
-	     stats.fromd_reject        = htonl(g_fromd_cmdcnt[IFT_REJECT]);
-	     stats.to                  = htonl(g_sto    + 1);
-	     stats.to_greylist         = htonl(g_to_cmdcnt[IFT_GREYLIST]);
-	     stats.to_accept           = htonl(g_to_cmdcnt[IFT_ACCEPT]);
-	     stats.to_reject           = htonl(g_to_cmdcnt[IFT_REJECT]);
-	     stats.tod                 = htonl(g_stod   + 1);
-	     stats.tod_greylist        = htonl(g_tod_cmdcnt[IFT_GREYLIST]);
-	     stats.tod_accept          = htonl(g_tod_cmdcnt[IFT_ACCEPT]);
-	     stats.tod_reject          = htonl(g_tod_cmdcnt[IFT_REJECT]);
+             stats.requests_cu_max     = htonl(g_req_cumax);
+             stats.requests_cu_ave     = htonl(ave);
+             stats.tuples_read         = htonl(g_tuples_read);
+             stats.tuples_read_cu      = htonl(g_tuples_read_cu);
+             stats.tuples_read_cu_max  = htonl(g_tuples_read_cumax);
+             stats.tuples_read_cu_ave  = 0;
+             stats.tuples_write        = htonl(g_tuples_write);
+             stats.tuples_write_cu     = htonl(g_tuples_write_cu);
+             stats.tuples_write_cu_max = htonl(g_tuples_write_cumax);
+             stats.tuples_write_cu_ave = 0;
+             stats.tuples_low          = htonl(g_tuples_low);
+             stats.tuples_high         = htonl(g_tuples_high);
+             stats.from                = htonl(g_sfrom  + 1);
+             stats.from_greylist       = htonl(g_from_cmdcnt[IFT_GREYLIST]);
+             stats.from_accept         = htonl(g_from_cmdcnt[IFT_ACCEPT]);
+             stats.from_reject         = htonl(g_from_cmdcnt[IFT_REJECT]);
+             stats.fromd               = htonl(g_sfromd + 1);
+             stats.fromd_greylist      = htonl(g_fromd_cmdcnt[IFT_GREYLIST]);
+             stats.fromd_accept        = htonl(g_fromd_cmdcnt[IFT_ACCEPT]);
+             stats.fromd_reject        = htonl(g_fromd_cmdcnt[IFT_REJECT]);
+             stats.to                  = htonl(g_sto    + 1);
+             stats.to_greylist         = htonl(g_to_cmdcnt[IFT_GREYLIST]);
+             stats.to_accept           = htonl(g_to_cmdcnt[IFT_ACCEPT]);
+             stats.to_reject           = htonl(g_to_cmdcnt[IFT_REJECT]);
+             stats.tod                 = htonl(g_stod   + 1);
+             stats.tod_greylist        = htonl(g_tod_cmdcnt[IFT_GREYLIST]);
+             stats.tod_accept          = htonl(g_tod_cmdcnt[IFT_ACCEPT]);
+             stats.tod_reject          = htonl(g_tod_cmdcnt[IFT_REJECT]);
              
              send_packet(&req,&stats,sizeof(stats)); /* VVV - uninit mem */
            }
@@ -319,7 +319,7 @@ static void gld(void)
            {
              struct glmcp_response_show_config config;
              
-	     config.crc = config.pad = 0;
+             config.crc = config.pad = 0;
              config.version          = htons(VERSION);
              config.MTA              = req.glr->MTA;
              config.type             = htons(CMD_MCP_SHOW_CONFIG_RESP);
@@ -367,8 +367,8 @@ static void gld(void)
                send_reply(&req,CMD_NONE_RESP,GLERR_IPADDR_NOT_SUPPORTED,REASON_NONE);
                break;
              }
-
-	     syslog(LOG_DEBUG,"about to add %s/%d %d",ipv4(pip->data),mask,cmd);
+             
+             syslog(LOG_DEBUG,"about to add %s/%d %d",ipv4(pip->data),mask,cmd);
              ip_add_sm(pip->data,4,mask,cmd);
              send_reply(&req,CMD_MCP_IPLIST_RESP,0,REASON_NONE);
            }
@@ -405,12 +405,12 @@ void type_tuple_remove(struct request *req)
   
   rc = greylist_sanitize_req(&tuple,req);
   if (rc != ERR_OKAY) return;
-
+  
   stored = tuple_search(&tuple,&idx);
-
+  
   if (stored != NULL)
     stored->f |= F_REMOVE;
-
+    
   log_tuple(&tuple,IFT_REMOVE,REASON_GREYLIST);
   send_reply(req,CMD_TUPLE_REMOVE_RESP,0,REASON_GREYLIST);
 }
@@ -426,9 +426,9 @@ void type_greylist(struct request *req,int response)
   size_t                   idx;
   char                    *at;
   int                      rc;
-
+  
   assert(req != NULL);
-
+  
   rc = greylist_sanitize_req(&tuple,req);
   if (rc != ERR_OKAY) return;
   
@@ -438,7 +438,7 @@ void type_greylist(struct request *req,int response)
   /*----------------------------------------------------
   ; check IP address
   ;----------------------------------------------------*/
-
+  
   rc = ip_match(tuple.ip,4);
   g_ip_cmdcnt[rc]++;
   
@@ -448,7 +448,7 @@ void type_greylist(struct request *req,int response)
     send_reply(req,response,rc,REASON_IP);
     return;
   }
-
+  
   /*-------------------------------------------------------
   ; check the from and fromdomain lists.
   ;------------------------------------------------------*/
@@ -461,7 +461,7 @@ void type_greylist(struct request *req,int response)
   {
     edvalue->count++;
     g_from_cmdcnt[edvalue->cmd]++;
-
+    
     if (edvalue->cmd == IFT_GREYLIST)
       goto type_greylist_check_to;
     else
@@ -471,7 +471,7 @@ void type_greylist(struct request *req,int response)
       return;
     }
   }
-  else 
+  else
   {
     g_fromc++;
     g_from_cmdcnt[g_deffrom]++;
@@ -489,20 +489,20 @@ void type_greylist(struct request *req,int response)
     edkey.text  = at + 1;
     edkey.tsize = strlen(edkey.text);
     edvalue     = edomain_search(&edkey,&idx,g_fromd,g_sfromd);
-
+    
     if (edvalue != NULL)
     {
       edvalue->count++;
-      g_fromd_cmdcnt[edvalue->cmd]++; 
-
+      g_fromd_cmdcnt[edvalue->cmd]++;
+      
       if (edvalue->cmd != IFT_GREYLIST)
       {
         log_tuple(&tuple,edvalue->cmd,REASON_FROM_DOMAIN);
         send_reply(req,response,edvalue->cmd,REASON_FROM_DOMAIN);
-	return;
+        return;
       }
     }
-    else 
+    else
     {
       g_fromdomainc++;
       g_fromd_cmdcnt[g_deffromdomain]++;
@@ -510,7 +510,7 @@ void type_greylist(struct request *req,int response)
       {
         log_tuple(&tuple,g_deffromdomain,REASON_FROM_DOMAIN);
         send_reply(req,response,g_deffromdomain,REASON_FROM_DOMAIN);
-	return;
+        return;
       }
     }
   }
@@ -518,7 +518,7 @@ void type_greylist(struct request *req,int response)
   /*-----------------------------------------------------
   ; check the to and todomain lists.
   ;-----------------------------------------------------*/
-
+  
 type_greylist_check_to:
 
   edkey.text  = tuple.to;
@@ -529,7 +529,7 @@ type_greylist_check_to:
   {
     edvalue->count++;
     g_to_cmdcnt[edvalue->cmd]++;
-
+    
     if (edvalue->cmd == IFT_GREYLIST)
       goto type_greylist_check_tuple;
     else
@@ -539,7 +539,7 @@ type_greylist_check_to:
       return;
     }
   }
-  else 
+  else
   {
     g_toc++;
     g_to_cmdcnt[g_defto]++;
@@ -550,14 +550,14 @@ type_greylist_check_to:
       return;
     }
   }
-
+  
   at = strchr(tuple.to,'@');
   if (at)
   {
     edkey.text  = at + 1;
     edkey.tsize = strlen(edkey.text);
     edvalue     = edomain_search(&edkey,&idx,g_tod,g_stod);
-
+    
     if (edvalue != NULL)
     {
       edvalue->count++;
@@ -567,28 +567,28 @@ type_greylist_check_to:
       {
         log_tuple(&tuple,edvalue->cmd,REASON_TO_DOMAIN);
         send_reply(req,response,edvalue->cmd,REASON_TO_DOMAIN);
-	return;
+        return;
       }
     }
-    else 
+    else
     {
       g_todomainc++;
       g_tod_cmdcnt[g_deftodomain]++;
-
+      
       if (g_deftodomain != IFT_GREYLIST)
       {
         log_tuple(&tuple,g_deftodomain,REASON_TO_DOMAIN);
         send_reply(req,response,g_deftodomain,REASON_TO_DOMAIN);
-	return;
+        return;
       }
     }
   }
-
+  
   /*-------------------------------------------------------
   ; Look up the tuple.  If not found, add it, else update the access time,
   ; and if less than the embargo period, return LATER, else accept.
   ;---------------------------------------------------------*/
-
+  
 type_greylist_check_tuple:
 
   stored = tuple_search(&tuple,&idx);
@@ -646,7 +646,7 @@ type_greylist_check_tuple:
     send_reply(req,response,IFT_ACCEPT,REASON_WHITELIST);
     return;
   }
-
+  
   if (difftime(req->now,stored->ctime) < c_timeout_embargo)
   {
     log_tuple(&tuple,IFT_GREYLIST,REASON_GREYLIST);
@@ -677,23 +677,23 @@ static int greylist_sanitize_req(struct tuple *tuple,struct request *req)
   
   glr = req->glr;
   p   = glr->data;
-
+  
   glr->ipsize    = ntohs(glr->ipsize);
   glr->fromsize  = ntohs(glr->fromsize);
   glr->tosize    = ntohs(glr->tosize);
-
+  
   if ((glr->ipsize != 4) && (glr->ipsize != 16))
   {
     send_reply(req,CMD_NONE_RESP,GLERR_BAD_DATA,REASON_NONE);
     return(ERR_ERR);
   }
-
-  rsize = glr->ipsize 
-        + glr->fromsize 
-	+ glr->tosize 
-	+ sizeof(struct greylist_request) 
-	- 4;	/* empiracally found --- this is bad XXX */
-
+  
+  rsize = glr->ipsize
+        + glr->fromsize
+        + glr->tosize
+        + sizeof(struct greylist_request)
+        - 4;    /* empiracally found --- this is bad XXX */
+        
   if (rsize > req->size)
   {
     syslog(LOG_DEBUG,"bad size, expected %lu got %lu",(unsigned long)req->size,(unsigned long)rsize);
@@ -707,18 +707,18 @@ static int greylist_sanitize_req(struct tuple *tuple,struct request *req)
   tuple->fromsize = min(sizeof(tuple->from) - 1,glr->fromsize);
   tuple->tosize   = min(sizeof(tuple->to)   - 1,glr->tosize);
   tuple->f        = 0;
-
+  
   memcpy(tuple->ip,  p,glr->ipsize);     p += glr->ipsize;
   memcpy(tuple->from,p,tuple->fromsize); p += glr->fromsize;
   memcpy(tuple->to,  p,tuple->tosize);
-
+  
   tuple->from[tuple->fromsize] = '\0';
   tuple->to  [tuple->tosize]   = '\0';
-
+  
   if (tuple->fromsize <  glr->fromsize) tuple->f |= F_TRUNCFROM;
   if (tuple->tosize   <  glr->tosize)   tuple->f |= F_TRUNCTO;
   if (glr->ipsize    == 16)             tuple->f |= F_IPv6;
-
+  
   return ERR_OKAY;
 }
 
@@ -761,14 +761,14 @@ static void send_packet(struct request *req,void *packet,size_t size)
   do
   {
     rrc = sendto(
-    		req->sock,
-    		packet,
-    		size,
-    		0,
-    		&req->remote,
-    		req->rsize
-    	);
-    
+                req->sock,
+                packet,
+                size,
+                0,
+                &req->remote,
+                req->rsize
+        );
+        
     if (rrc == -1)
     {
       if (errno == EINTR)
@@ -796,16 +796,16 @@ static void cmd_mcp_report(struct request *req,void (*cb)(FILE *),int resp)
   
   memcpy(&remote,&req->remote,sizeof(struct sockaddr));
   tcp = create_socket(c_host,c_port,SOCK_STREAM);
-
+  
   if (tcp == -1)
   {
     send_reply(req,CMD_NONE_RESP,GLERR_CANT_GENERATE_REPORT,REASON_NONE);
     syslog(LOG_ERR,"could not create socket for report");
     return;
   }
-
+  
   /* listen(tcp,5); */
-    
+  
   pid = gld_fork();
   if (pid == -1)
   {
@@ -813,16 +813,16 @@ static void cmd_mcp_report(struct request *req,void (*cb)(FILE *),int resp)
     send_reply(req,CMD_NONE_RESP,GLERR_CANT_GENERATE_REPORT,REASON_NONE);
     return;
   }
-  else if (pid > 0)	/* parent process */
+  else if (pid > 0)     /* parent process */
   {
     send_reply(req,resp,0,REASON_NONE);
     close(tcp);
     return;
   }
-
+  
   listen(tcp,5);
   alarm(10);
-
+  
   rsize = sizeof(struct sockaddr);
   conn  = accept(tcp,&remote,&rsize);
   
@@ -831,7 +831,7 @@ static void cmd_mcp_report(struct request *req,void (*cb)(FILE *),int resp)
   ; interrupted, it's probably because we want to kill the
   ; process, or the accept() is taking too darned long.
   ;------------------------------------------------------*/
-
+  
   if (conn == -1)
   {
     syslog(LOG_ERR,"cmd_mcp_report(): accept() = %s",strerror(errno));
@@ -875,7 +875,7 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
   edkey.tsize = ntohs(ptf->size);
   edkey.count = 0;
   edkey.cmd   = ntohs(ptf->cmd);
-
+  
   if(
       (strcmp(edkey.text,"default") == 0)
       || (strcmp(edkey.text,"DEFAULT") == 0)
@@ -920,17 +920,17 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
                edomain_add_to(&edkey,index);
              }
            }
-	   else
-	   {
-	     if (edkey.cmd == IFT_REMOVE)
-	       edomain_remove_to(index);
-	     else
-	     {
-	       value->cmd   = edkey.cmd;
-	       value->count = 0;
-	     }
-	   }
-	 }
+           else
+           {
+             if (edkey.cmd == IFT_REMOVE)
+               edomain_remove_to(index);
+             else
+             {
+               value->cmd   = edkey.cmd;
+               value->count = 0;
+             }
+           }
+         }
          break;
     case CMD_MCP_TO_DOMAIN:
          if (def)
@@ -952,17 +952,17 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
                edomain_add_tod(&edkey,index);
              }
            }
-	   else
-	   {
-	     if (edkey.cmd == IFT_REMOVE)
-	       edomain_remove_tod(index);
-	     else
-	     {
-	       value->cmd   = edkey.cmd;
-	       value->count = 0;
-	     }
-	   }
-	 }
+           else
+           {
+             if (edkey.cmd == IFT_REMOVE)
+               edomain_remove_tod(index);
+             else
+             {
+               value->cmd   = edkey.cmd;
+               value->count = 0;
+             }
+           }
+         }
          break;
     case CMD_MCP_FROM:
          if (def)
@@ -984,17 +984,17 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
                edomain_add_from(&edkey,index);
              }
            }
-	   else
-	   {
-	     if (edkey.cmd == IFT_REMOVE)
-	       edomain_remove_from(index);
-	     else
-	     {
-	       value->cmd   = edkey.cmd;
-	       value->count = 0;
-	     }
-	   }
-	 }
+           else
+           {
+             if (edkey.cmd == IFT_REMOVE)
+               edomain_remove_from(index);
+             else
+             {
+               value->cmd   = edkey.cmd;
+               value->count = 0;
+             }
+           }
+         }
          break;
     case CMD_MCP_FROM_DOMAIN:
          if (def)
@@ -1016,17 +1016,17 @@ static void cmd_mcp_tofrom(struct request *req,int cmd,int resp)
                edomain_add_fromd(&edkey,index);
              }
            }
-	   else
-	   {
-	     if (edkey.cmd == IFT_REMOVE)
-	       edomain_remove_fromd(index);
-	     else
-	     {
-	       value->cmd   = edkey.cmd;
-	       value->count = 0;
-	     }
-	   }
-	 }
+           else
+           {
+             if (edkey.cmd == IFT_REMOVE)
+               edomain_remove_fromd(index);
+             else
+             {
+               value->cmd   = edkey.cmd;
+               value->count = 0;
+             }
+           }
+         }
          break;
     default:
          assert(0);

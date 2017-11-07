@@ -38,18 +38,18 @@
 
 /*****************************************************************/
 
-static size_t	         ip_collect	(
-				  	  uint8_t *,
-				  	  uint8_t *,
-				  	  size_t,
-				  	  struct ipnode *,
-				  	  int,
-				  	  int,
-				          int,
-				  	  struct ipblock *,
-				  	  size_t
-					);
-
+static size_t            ip_collect     (
+                                          uint8_t *,
+                                          uint8_t *,
+                                          size_t,
+                                          struct ipnode *,
+                                          int,
+                                          int,
+                                          int,
+                                          struct ipblock *,
+                                          size_t
+                                        );
+                                        
 /*****************************************************************/
 
 int iplist_read(const char *fname)
@@ -87,7 +87,7 @@ int iplist_read(const char *fname)
     
     if (empty_string(line))
       continue;
-    
+      
     up_string(line);
     
     tokens = split(&numtoks,line);
@@ -124,7 +124,7 @@ int iplist_read(const char *fname)
       mask = strtoul(tline,&tline,10);
     else
       mask = 32;
-    
+      
     if (mask > 32)
     {
       syslog(LOG_ERR,"%s(%lu): syntax error---bad mask value %d",fname,(unsigned long)lcount,mask);
@@ -164,7 +164,7 @@ int iplist_read(const char *fname)
       
       strcpy(tip  ,ipv4(iplist[i].addr));
       strcpy(tmask,ipv4(iplist[i].mask));
-
+      
       syslog(
           LOG_DEBUG,
           "%8.8s %15.15s %15.15s",
@@ -172,10 +172,10 @@ int iplist_read(const char *fname)
           tip,
           tmask
         );
-    }      
+    }
     free(iplist);
   }
-
+  
   return(ERR_OKAY);
 }
 
@@ -211,8 +211,8 @@ void iplist_dump_stream(FILE *out)
     sprintf(ipaddr,"%s/%d",ipv4(array[i].addr),array[i].smask);
     fprintf(out,"%18.18s %s\n",ipaddr,ci_map_chars(array[i].cmd,c_ift,C_IFT));
   }
-
-  free(array);  
+  
+  free(array);
 }
 
 /*************************************************************/
@@ -231,7 +231,7 @@ int ip_match(uint8_t *ip,size_t size __attribute__((unused)))
   {
     if (p->match != IFT_NONE)
       match = p;
-    
+      
     if (bit == 0)
     {
       bit = 0x80;
@@ -251,7 +251,7 @@ int ip_match(uint8_t *ip,size_t size __attribute__((unused)))
     
     bit >>= 1;
   }
-
+  
   return(g_tree->match);
 }
 
@@ -269,7 +269,7 @@ int ip_add_sm(uint8_t *ip,size_t size __attribute__((unused)),int mask,int cmd)
   assert(size == 4);
   assert(mask >  -1);
   assert(mask <  33);
-
+  
   /*----------------------------------
   ; if the mask is 0, we don't support
   ; removing the default match.  Sorry
@@ -281,7 +281,7 @@ int ip_add_sm(uint8_t *ip,size_t size __attribute__((unused)),int mask,int cmd)
       g_tree->match = cmd;
     return(0);
   }
-
+  
   while(mask)
   {
     if (bit == 0)
@@ -332,13 +332,13 @@ int ip_add_sm(uint8_t *ip,size_t size __attribute__((unused)),int mask,int cmd)
     else
       return(0);
   }
-
+  
   if (cmd == IFT_REMOVE)
   {
     cmd = IFT_NONE;
     g_ipcnt--;
   }
-
+  
   p->match = cmd;
   return(0);
 }
@@ -353,12 +353,12 @@ void ip_print(FILE *out)
   char            tip  [20];
   char            tmask[20];
   char           *t;
-
+  
   assert(out != NULL);
   
   array = ip_table(&asize);
   
-  for (i = 0 ; i < asize ; i++)  
+  for (i = 0 ; i < asize ; i++)
   {
     t = ipv4(array[i].addr);
     strcpy(tip,t);
@@ -385,7 +385,7 @@ struct ipblock *ip_table(size_t *ps)
   uint8_t            addr[16];
   uint8_t            mask[16];
   size_t          rc;
-
+  
   assert(ps != NULL);
   
   rc             = 1;
@@ -402,13 +402,13 @@ struct ipblock *ip_table(size_t *ps)
   
   if (g_tree->zero)
     rc = ip_collect(addr,mask,4,g_tree->zero,0,0x80,   0,array,1);
-
+    
   memset(addr,0,sizeof(addr));
   memset(mask,0,sizeof(mask));
   
   if (g_tree->one)
     rc = ip_collect(addr,mask,4,g_tree->one, 0,0x80,0x80,array,rc);
-
+    
   syslog(LOG_DEBUG,"g: %lu rc: %lu",(unsigned long)g_ipcnt,(unsigned long)rc);
   *ps = rc;
   return(array);
@@ -425,7 +425,7 @@ static size_t ip_collect(
                    int             mbit,
                    int             bit,
                    struct ipblock *array,
-		   size_t          i
+                   size_t          i
                  )
 {
   int nmb;
@@ -440,15 +440,15 @@ static size_t ip_collect(
   assert(array != NULL);
   assert(
              (bit == 0x00)
-  	  || (bit == 0x01)
-  	  || (bit == 0x02)
-  	  || (bit == 0x04)
-  	  || (bit == 0x08)
-  	  || (bit == 0x10)
-  	  || (bit == 0x20)
-  	  || (bit == 0x40)
-  	  || (bit == 0x80)
-  	);
+          || (bit == 0x01)
+          || (bit == 0x02)
+          || (bit == 0x04)
+          || (bit == 0x08)
+          || (bit == 0x10)
+          || (bit == 0x20)
+          || (bit == 0x40)
+          || (bit == 0x80)
+        );
   assert(
              (mbit == 0x01)
           || (mbit == 0x02)
@@ -459,13 +459,13 @@ static size_t ip_collect(
           || (mbit == 0x40)
           || (mbit == 0x80)
         );
-
+        
   mask[off] |= mbit;
   ip[off]   |= bit;
-
+  
   noff = off;
   nmb  = mbit >> 1;
-  if (nmb == 0) 
+  if (nmb == 0)
   {
     nmb = 0x80;
     noff ++;
@@ -476,21 +476,21 @@ static size_t ip_collect(
     
   if (p->one)
     i = ip_collect(ip,mask,4,p->one,noff,nmb,nmb,array,i);
-
+    
   if (p->match != IFT_NONE)
   {
     array[i].size  = size;
     array[i].count = p->count;
     array[i].cmd   = p->match;
     array[i].smask = (off * 8)
-    			+ ((mask[off] & 0x80) != 0)
-    			+ ((mask[off] & 0x40) != 0)
-    			+ ((mask[off] & 0x20) != 0)
-    			+ ((mask[off] & 0x10) != 0)
-    			+ ((mask[off] & 0x08) != 0)
-    			+ ((mask[off] & 0x04) != 0)
-    			+ ((mask[off] & 0x02) != 0)
-    			+ ((mask[off] & 0x01) != 0);
+                        + ((mask[off] & 0x80) != 0)
+                        + ((mask[off] & 0x40) != 0)
+                        + ((mask[off] & 0x20) != 0)
+                        + ((mask[off] & 0x10) != 0)
+                        + ((mask[off] & 0x08) != 0)
+                        + ((mask[off] & 0x04) != 0)
+                        + ((mask[off] & 0x02) != 0)
+                        + ((mask[off] & 0x01) != 0);
     memcpy(array[i].mask,mask,size);
     memcpy(array[i].addr,ip,  size);
     i++;

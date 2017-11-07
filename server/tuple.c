@@ -37,7 +37,7 @@
 #include "globals.h"
 
 #if !defined(NDEBUG)
-#  define D(x)	x
+#  define D(x)  x
 #else
 #  define D(x)
 #endif
@@ -50,7 +50,7 @@ int tuple_look_ift(const void *restrict key,const void *restrict values)
   const struct tuple *v;
   size_t              len;
   int                 rc;
-
+  
   k  = key;
   v  = *(struct tuple *const *)values;
   
@@ -63,7 +63,7 @@ int tuple_look_ift(const void *restrict key,const void *restrict values)
     return -1;
   else if (k->fromsize > v->fromsize)
     return 1;
-  
+    
   len = (k->tosize < v->tosize) ? k->tosize : v->tosize;
   if ((rc = memcmp(k->to,v->to,len)) != 0) return rc;
   
@@ -108,14 +108,14 @@ Tuple tuple_allocate(void)
       
       syslog(LOG_ERR,"too many requests-cleaning house failed-starting over");
       g_poolnum    = 0;
-      g_tuples_low = 0;	/* reset the low count automatically */
+      g_tuples_low = 0; /* reset the low count automatically */
       
       for (i = 0 ; i < c_poolmax ; i++)
         g_tuplespace[i] = &g_pool[i];
     }
   }
   
-  return g_tuplespace[g_poolnum];  
+  return g_tuplespace[g_poolnum];
 }
 
 /*****************************************************************/
@@ -133,11 +133,11 @@ void tuple_add(Tuple rec,size_t index)
   g_tuples_write_cucurrent++;
   
   memmove(
-  	&g_tuplespace[index + 1],
-  	&g_tuplespace[index],
-  	(g_poolnum - index) * sizeof(Tuple)
+        &g_tuplespace[index + 1],
+        &g_tuplespace[index],
+        (g_poolnum - index) * sizeof(Tuple)
     );
-
+    
   g_tuplespace[index] = rec;
   g_poolnum++;
   
@@ -153,7 +153,7 @@ void tuple_expire(time_t Tao)
   size_t wle;
   size_t i;
   size_t j;
-
+  
   g_tuples_write++;
   g_tuples_write_cucurrent++;
   gle = wle = 0;
@@ -206,7 +206,7 @@ void tuple_expire(time_t Tao)
   }
   
   g_poolnum = j;
-
+  
   /*------------------------------------------
   ; moved expired entries to the free pool
   ;-------------------------------------------*/
@@ -221,14 +221,14 @@ void tuple_expire(time_t Tao)
   }
   
   syslog(
-  	LOG_INFO,
-  	"greylist-expired: %lu whitelist-expired: %lu",
-  	(unsigned long)gle,
-  	(unsigned long)wle
+        LOG_INFO,
+        "greylist-expired: %lu whitelist-expired: %lu",
+        (unsigned long)gle,
+        (unsigned long)wle
   );
   
   if (g_poolnum < g_tuples_low)  g_tuples_low  = g_poolnum;
-  if (g_poolnum > g_tuples_high) g_tuples_high = g_poolnum;  
+  if (g_poolnum > g_tuples_high) g_tuples_high = g_poolnum;
 }
 
 /**********************************************************************/
@@ -263,7 +263,7 @@ void whitelist_dump_stream(FILE *out)
             ipv4(g_tuplespace[i]->ip),
             (g_tuplespace[i]->fromsize) ? g_tuplespace[i]->from : "-",
             (g_tuplespace[i]->tosize)   ? g_tuplespace[i]->to   : "-"
-      	);
+        );
     }
   }
 }
@@ -333,7 +333,7 @@ void tuple_all_dump(void)
 void tuple_all_dump_stream(FILE *out)
 {
   assert(out != NULL);
-
+  
   for (size_t i = 0 ; i < g_poolnum ; i++)
   {
     fprintf(
@@ -368,8 +368,8 @@ void whitelist_load(void)
   now      = time(NULL);
   in       = fopen(c_whitefile,"r");
   
-  if (in == NULL)	/* normal condition, if it doesn't exist */
-    return;		/* don't sweat about it */
+  if (in == NULL)       /* normal condition, if it doesn't exist */
+    return;             /* don't sweat about it */
     
   while(getline(&line,&linesize,in) > 0)
   {
@@ -380,9 +380,9 @@ void whitelist_load(void)
     
     memset(&tuple,0,sizeof(struct tuple));
     
-    if (empty_string(line)) 
+    if (empty_string(line))
       continue;
-
+      
     line = trim_space(line);
     
     D(tuple.pad = 0xDECAFBAD;)
@@ -400,9 +400,9 @@ void whitelist_load(void)
     
     if (n == NULL)
       continue;
-    
+      
     *n++ = '\0';
-   
+    
     if (strcmp(p,"-") == 0)
     {
       tuple.from[0]   = '\0';
@@ -413,7 +413,7 @@ void whitelist_load(void)
       strncpy(tuple.from,p,sizeof(tuple.from) - 1);
       tuple.fromsize = strlen(tuple.from);
     }
-
+    
     if (strcmp(n,"-") == 0)
     {
       tuple.to[0]  = '\0';
@@ -424,17 +424,17 @@ void whitelist_load(void)
       strncpy(tuple.to,  n,sizeof(tuple.to)   - 1);
       tuple.tosize = strlen(tuple.to);
     }
-
+    
     tuple.ctime    = tuple.atime = now;
-
+    
     syslog(
         LOG_DEBUG,
         "Adding [%s , %s , %s]",
-	ipv4(tuple.ip),
-	tuple.from,
-	tuple.to
+        ipv4(tuple.ip),
+        tuple.from,
+        tuple.to
       );
-    
+      
     stored = tuple_search(&tuple,&idx);
     
     if (stored == NULL)
@@ -455,7 +455,7 @@ void whitelist_load(void)
         stored->f |= F_WHITELIST;
         g_whitelisted++;
       }
-    }    
+    }
   }
   
   free(line);
@@ -476,7 +476,7 @@ void whitelist_load(void)
 
 void log_tuple(Tuple tuple,int rc,int why)
 {
-  syslog(  
+  syslog(
         LOG_INFO,
         "tuple: [%s , %s , %s]%s%s %s %s",
         ipv4(tuple->ip),

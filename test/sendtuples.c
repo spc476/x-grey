@@ -40,7 +40,7 @@
 #include "../common/util.h"
 #include "../conf.h"
 
-#define min(a,b)	((a) < (b)) ? (a) : (b)
+#define min(a,b)        ((a) < (b)) ? (a) : (b)
 
 /***********************************************************************/
 
@@ -51,10 +51,10 @@ enum
 
 /************************************************************************/
 
-	/*----------------------
-	; required for linkage
-	;-----------------------*/
-	
+        /*----------------------
+        ; required for linkage
+        ;-----------------------*/
+        
 char   *c_host         = "0.0.0.0";
 int     c_port         = 0;
 char   *c_timeformat   = "%c";
@@ -63,10 +63,10 @@ int     c_log_level    = 0;
 char   *c_log_id       = NULL;
 bool    cf_debug       = false;
 
-	/*--------------------------
-	; our global variables
-	;--------------------------*/
-
+        /*--------------------------
+        ; our global variables
+        ;--------------------------*/
+        
 struct sockaddr_in  g_raddr;
 socklen_t           g_raddrsize  = sizeof(struct sockaddr_in);
 char               *g_rhost      = SERVER_HOST;
@@ -75,18 +75,18 @@ char               *g_inputfile  = "precanned-tuple.01";
 
 static struct option const mc_options[] =
 {
-  { "server"		, required_argument	, NULL	, OPT_RHOST	  } ,
-  { "server-port"	, required_argument	, NULL	, OPT_RPORT	  } ,
-  { "host"		, required_argument	, NULL	, OPT_HOST	  } ,
-  { "port"		, required_argument	, NULL	, OPT_PORT	  } ,
-  { "input-file"	, required_argument	, NULL	, OPT_INPUT_FILE  } ,
-  { "help"		, no_argument		, NULL	, OPT_HELP	  } ,
-  { NULL		, 0			, NULL	, 0		  }
+  { "server"            , required_argument     , NULL  , OPT_RHOST       } ,
+  { "server-port"       , required_argument     , NULL  , OPT_RPORT       } ,
+  { "host"              , required_argument     , NULL  , OPT_HOST        } ,
+  { "port"              , required_argument     , NULL  , OPT_PORT        } ,
+  { "input-file"        , required_argument     , NULL  , OPT_INPUT_FILE  } ,
+  { "help"              , no_argument           , NULL  , OPT_HELP        } ,
+  { NULL                , 0                     , NULL  , 0               }
 };
 
 /**********************************************************************/
 
-void	parse_command_line	(int,char *[]);
+void    parse_command_line      (int,char *[]);
 
 /**********************************************************************/
 
@@ -98,7 +98,7 @@ int main(int argc,char *argv[])
   void           *vba;
   size_t         *pps;
   char           *packet;
-  int		  sock;
+  int             sock;
   pid_t           child;
   int             rc;
   
@@ -148,7 +148,7 @@ int main(int argc,char *argv[])
   
   packet = vba;
   sock   = create_socket(c_host,c_port,SOCK_DGRAM);
-
+  
 #if 0
   child = fork();
   if (child == (pid_t)-1)
@@ -163,7 +163,7 @@ int main(int argc,char *argv[])
   child = 0;
 #endif
 
-  if (child == 0)	/* parent */
+  if (child == 0)       /* parent */
   {
     size_t  size  = status.st_size;
     size_t  count = 0;
@@ -174,32 +174,32 @@ int main(int argc,char *argv[])
       pps = (size_t *)packet;
       packet += sizeof(size_t);
       rrc = sendto(
-    		sock,
-    		packet,
-    		*pps,
-    		0,
-    		(struct sockaddr const *)&g_raddr,
-    		g_raddrsize
-    	);
+                sock,
+                packet,
+                *pps,
+                0,
+                (struct sockaddr const *)&g_raddr,
+                g_raddrsize
+        );
       packet += *pps;
       size -= (sizeof(size_t) + *pps);
       count++;
-
+      
 #if 1
       {
         uint8_t inpacket[1500];
         struct sockaddr_in sip;
         socklen_t          sipsize;
-       
+        
         sipsize = sizeof(struct sockaddr_in);
         rrc     = recvfrom(
-       			sock,
-       			inpacket,
-       			sizeof(inpacket),
-       			0,
-       			(struct sockaddr *)&sip,
-       			&sipsize
-       		);
+                        sock,
+                        inpacket,
+                        sizeof(inpacket),
+                        0,
+                        (struct sockaddr *)&sip,
+                        &sipsize
+                );
       }
 #endif
 
@@ -207,7 +207,7 @@ int main(int argc,char *argv[])
     
     printf("%lu packets sent\n",(unsigned long)count);
   }
-  else			/* child */
+  else                  /* child */
   {
     uint8_t            inpacket[1500];
     struct sockaddr_in sip;
@@ -218,17 +218,17 @@ int main(int argc,char *argv[])
     {
       sipsize = sizeof(struct sockaddr_in);
       rrc     = recvfrom(
-      			sock,
-      			inpacket,
-      			sizeof(inpacket),
-      			0,
-      			(struct sockaddr *)&sip,
-      			&sipsize
-      		);
+                        sock,
+                        inpacket,
+                        sizeof(inpacket),
+                        0,
+                        (struct sockaddr *)&sip,
+                        &sipsize
+                );
     }
     _exit(EXIT_SUCCESS);
-  }  
-
+  }
+  
 #if 0
   /*sleep(1);*/
   kill(child,SIGTERM);
@@ -273,20 +273,20 @@ void parse_command_line(int argc,char *argv[])
       default:
            fprintf(
                 stderr,
-           	"usage: %s [options]\n"
-           	"\t--input-file <file>\t(%s)\n"
-           	"\t--server <host>\t\t(%s)\n"
-           	"\t--server-port <num>\t(%d)\n"
-           	"\t--host <host>\t\t(%s)\n"
-           	"\t--port <num>\t\t(%d)\n"
-           	"\t--help\n"
-           	"\n",
-           	argv[0],
-           	g_inputfile,
-           	g_rhost,
-           	g_rport,
-           	c_host,
-           	c_port
+                "usage: %s [options]\n"
+                "\t--input-file <file>\t(%s)\n"
+                "\t--server <host>\t\t(%s)\n"
+                "\t--server-port <num>\t(%d)\n"
+                "\t--host <host>\t\t(%s)\n"
+                "\t--port <num>\t\t(%d)\n"
+                "\t--help\n"
+                "\n",
+                argv[0],
+                g_inputfile,
+                g_rhost,
+                g_rport,
+                c_host,
+                c_port
            );
            exit(EXIT_FAILURE);
     }

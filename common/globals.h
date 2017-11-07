@@ -24,14 +24,14 @@
 
 #include "util.h"
 
-#define C_FACILITIES	20
-#define C_LEVELS	 7
-#define C_IFT		 6
-#define C_REASONS	 8
+#define C_FACILITIES    20
+#define C_LEVELS         7
+#define C_IFT            6
+#define C_REASONS        8
 
 extern struct chars_int const c_facilities[C_FACILITIES];
 extern struct chars_int const c_levels    [C_LEVELS];
 extern struct chars_int const c_ift       [C_IFT];
-extern struct chars_int const c_reason	  [C_REASONS];
+extern struct chars_int const c_reason    [C_REASONS];
 
 #endif

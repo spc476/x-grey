@@ -49,7 +49,7 @@
 #include "../common/globals.h"
 #include "globals.h"
 
-#define min(a,b)	((a) < (b)) ? (a) : (b)
+#define min(a,b)        ((a) < (b)) ? (a) : (b)
 
 struct mfprivate
 {
@@ -60,19 +60,19 @@ struct mfprivate
 
 /***********************************************************/
 
-static sfsistat		mf_connect	(SMFICTX *,char *,_SOCK_ADDR *);
-static sfsistat		mf_mail_from	(SMFICTX *,char **);
-static sfsistat		mf_rcpt_to	(SMFICTX *,char **);
-static sfsistat		mf_close	(SMFICTX *);
+static sfsistat         mf_connect      (SMFICTX *,char *,_SOCK_ADDR *);
+static sfsistat         mf_mail_from    (SMFICTX *,char **);
+static sfsistat         mf_rcpt_to      (SMFICTX *,char **);
+static sfsistat         mf_close        (SMFICTX *);
 
-static int		check_greylist	(int,uint8_t *,char *,char *);	
-static void		handler_sigalrm	(int);
-static int		isbracket	(int);
+static int              check_greylist  (int,uint8_t *,char *,char *);
+static void             handler_sigalrm (int);
+static int              isbracket       (int);
 
 /**********************************************************/
 
 static volatile sig_atomic_t mf_sigalrm;
-static struct smfiDesc       m_smfilter = 
+static struct smfiDesc       m_smfilter =
 {
   "Greylist Daemon",
   SMFI_VERSION,
@@ -96,16 +96,16 @@ int main(int argc,char *argv[])
   int rc;
   
   if (GlobalsInit(argc,argv) != EXIT_SUCCESS)
-    return(EXIT_FAILURE);  
-
+    return(EXIT_FAILURE);
+    
   set_signal(SIGALRM,handler_sigalrm);
   rc      = smfi_setconn((char *)c_filterchannel);
   rc      = smfi_register(m_smfilter);
   gl_sock = create_socket(c_host,c_port,SOCK_DGRAM);
-
+  
   if (gl_sock == -1)
     return EXIT_FAILURE;
-
+    
   return (smfi_main());
 }
 
@@ -115,17 +115,17 @@ static sfsistat mf_connect(SMFICTX *ctx,char *hostname __attribute__((unused)),_
 {
   struct mfprivate   *data;
   struct sockaddr_in *ip = (struct sockaddr_in *)addr;
-
+  
   assert(ctx  != NULL);
   assert(addr != NULL);
-
+  
   data = smfi_getpriv(ctx);
   if (data == NULL)
   {
     data = malloc(sizeof(struct mfprivate));
     smfi_setpriv(ctx,data);
   }
-
+  
   data->sip    = 4;
   memset(data->sender,0,sizeof(data->sender));
   memcpy(data->ip,&ip->sin_addr.s_addr,4);
@@ -143,26 +143,26 @@ static sfsistat mf_mail_from(SMFICTX *ctx,char **argv)
   
   assert(ctx  != NULL);
   assert(argv != NULL);
-
+  
   /*---------------------------------------------------
   ; check to see if the user has authenticated, if so
   ; return OK and skip the rest of the processing (we
   ; hope)
   ;---------------------------------------------------*/
-
+  
   tauth = smfi_getsymval(ctx,"{auth_authen}");
   if (!emptynull_string(tauth))
     return(SMFIS_ACCEPT);
-  
+    
   /*-------------------------------------------------
-  ; continue saving information for later ... 
+  ; continue saving information for later ...
   ;--------------------------------------------------*/
-
+  
   data = smfi_getpriv(ctx);
   size = min(sizeof(data->sender) - 1,strlen(argv[0]));
   memcpy(data->sender,argv[0],size);
   remove_char(data->sender,isbracket);
-
+  
   return(SMFIS_CONTINUE);
 }
 
@@ -201,10 +201,10 @@ static sfsistat mf_close(SMFICTX *ctx)
   assert(ctx != NULL);
   
   data = smfi_getpriv(ctx);
-
+  
   if (data != NULL)
     free(data);
-  
+    
   smfi_setpriv(ctx,NULL);
   return(SMFIS_CONTINUE);
 }
@@ -233,33 +233,33 @@ static int check_greylist(int sock,uint8_t *ip,char *from,char *to)
   glr = &inpacket.res;
   
   p = glq->data;
-
-  glq->crc      = 0;  
+  
+  glq->crc      = 0;
   glq->version  = htons(VERSION);
   glq->MTA      = htons(MTA_POSTFIX);
   glq->type     = htons(CMD_GREYLIST);
   glq->ipsize   = htons(4);
   glq->fromsize = htons(sfrom);
   glq->tosize   = htons(sto);
-
-  memcpy(p,ip,4);	p += 4;
-  memcpy(p,from,sfrom);	p += sfrom;
+  
+  memcpy(p,ip,4);       p += 4;
+  memcpy(p,from,sfrom); p += sfrom;
   memcpy(p,to,sto);     p += sto;
   
   packetsize = (size_t)(p - outpacket.data);
-
+  
   crc      = crc32(INIT_CRC32,&glq->version,packetsize - sizeof(CRC32));
   crc      = crc32(crc,c_secret,c_secretsize);
   glq->crc = htonl(crc);
   
   rrc = sendto(
-  		sock,
-  		glq,
-  		packetsize,
-  		0,
-  		(struct sockaddr const *)&c_raddr,
-  		c_raddrsize
-  	);
+                sock,
+                glq,
+                packetsize,
+                0,
+                (struct sockaddr const *)&c_raddr,
+                c_raddrsize
+        );
   if (rrc == -1)
   {
     syslog(LOG_ERR,"sendto() = %s",strerror(errno));
@@ -270,14 +270,14 @@ static int check_greylist(int sock,uint8_t *ip,char *from,char *to)
   
   sipsize = sizeof(struct sockaddr_in);
   rrc     = recvfrom(
-  		sock,
-  		inpacket.data,
-  		sizeof(inpacket),
-  		0,
-  		(struct sockaddr *)&sip,
-  		&sipsize
-  	);
-  
+                sock,
+                inpacket.data,
+                sizeof(inpacket),
+                0,
+                (struct sockaddr *)&sip,
+                &sipsize
+        );
+        
   alarm(0);
   
   /*--------------------------------------------------------
@@ -314,7 +314,7 @@ static int check_greylist(int sock,uint8_t *ip,char *from,char *to)
     syslog(LOG_ERR,"received response from wrong version");
     return(IFT_ACCEPT);
   }
-
+  
   if (ntohs(glr->MTA) != MTA_POSTFIX)
   {
     syslog(LOG_ERR,"are we running another MTA here?");

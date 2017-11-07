@@ -50,8 +50,8 @@ enum
 
 /*****************************************************************/
 
-static void		 parse_cmdline	(int,char *[]);
-static void		 dump_defaults	(void);
+static void              parse_cmdline  (int,char *[]);
+static void              dump_defaults  (void);
 
 /****************************************************************/
 
@@ -65,28 +65,28 @@ socklen_t            c_raddrsize    = sizeof(struct sockaddr_in);
 int                  c_timeout      = POSTFIX_TIMEOUT;
 int                  c_log_facility = POSTFIX_LOG_FACILITY;
 int                  c_log_level    = POSTFIX_LOG_LEVEL;
-char                *c_log_id	    = POSTFIX_LOG_ID;
+char                *c_log_id       = POSTFIX_LOG_ID;
 bool                 cf_debug       = false;
 char                *c_secret       = SECRET;
 size_t               c_secretsize   = SECRETSIZE;
 
   /*----------------------------------------------------*/
-
+  
 static struct option const mc_options[] =
 {
-  { "host"		, required_argument	, NULL	, OPT_HOST		} ,
-  { "port"		, required_argument	, NULL	, OPT_PORT		} ,
-  { "server"		, required_argument	, NULL	, OPT_RHOST		} ,
-  { "server-port"	, required_argument	, NULL	, OPT_RPORT		} ,
-  { "timeout"		, required_argument	, NULL  , OPT_TIMEOUT		} ,
-  { "log-facility"	, required_argument	, NULL	, OPT_LOG_FACILITY	} ,
-  { "log-level"		, required_argument	, NULL	, OPT_LOG_LEVEL		} ,
-  { "log-id"		, required_argument	, NULL	, OPT_LOG_ID		} ,
-  { "secret"		, required_argument	, NULL	, OPT_SECRET		} ,
-  { "debug"		, no_argument		, NULL	, OPT_DEBUG		} ,
-  { "version"		, no_argument		, NULL	, OPT_VERSION		} ,
-  { "help"		, no_argument		, NULL	, OPT_HELP		} ,
-  { NULL		, 0			, NULL	, 0			} 
+  { "host"              , required_argument     , NULL  , OPT_HOST              } ,
+  { "port"              , required_argument     , NULL  , OPT_PORT              } ,
+  { "server"            , required_argument     , NULL  , OPT_RHOST             } ,
+  { "server-port"       , required_argument     , NULL  , OPT_RPORT             } ,
+  { "timeout"           , required_argument     , NULL  , OPT_TIMEOUT           } ,
+  { "log-facility"      , required_argument     , NULL  , OPT_LOG_FACILITY      } ,
+  { "log-level"         , required_argument     , NULL  , OPT_LOG_LEVEL         } ,
+  { "log-id"            , required_argument     , NULL  , OPT_LOG_ID            } ,
+  { "secret"            , required_argument     , NULL  , OPT_SECRET            } ,
+  { "debug"             , no_argument           , NULL  , OPT_DEBUG             } ,
+  { "version"           , no_argument           , NULL  , OPT_VERSION           } ,
+  { "help"              , no_argument           , NULL  , OPT_HELP              } ,
+  { NULL                , 0                     , NULL  , 0                     }
 };
 
 /*********************************************************************/
@@ -94,7 +94,7 @@ static struct option const mc_options[] =
 int (GlobalsInit)(int argc,char *argv[])
 {
   struct hostent *remote;
-
+  
   assert(argc >  0);
   assert(argv != NULL);
   
@@ -109,7 +109,7 @@ int (GlobalsInit)(int argc,char *argv[])
   memcpy(&c_raddr.sin_addr.s_addr,remote->h_addr,remote->h_length);
   c_raddr.sin_family = AF_INET;
   c_raddr.sin_port   = htons(c_rport);
-
+  
   openlog(c_log_id,0,c_log_facility);
   return EXIT_SUCCESS;
 }

@@ -38,7 +38,7 @@
 #include "../common/greylist.h"
 #include "../common/crc32.h"
 
-#define min(a,b)	((a) < (b)) ? (a) : (b)
+#define min(a,b)        ((a) < (b)) ? (a) : (b)
 
 /***********************************************************************/
 
@@ -59,17 +59,17 @@ size_t  g_count      = 65536uL;
 
 static struct option const mc_options[] =
 {
-  { "input-file"	, required_argument	, NULL	, OPT_INPUT_FILE  } ,
-  { "output-file"	, required_argument	, NULL	, OPT_OUTPUT_FILE } ,
-  { "count"		, required_argument	, NULL	, OPT_COUNT	  } ,
-  { "secret"		, required_argument	, NULL	, OPT_SECRET	  } ,
-  { "help"		, no_argument		, NULL	, OPT_HELP	  } ,
-  { NULL		, 0			, NULL	, 0		  }
+  { "input-file"        , required_argument     , NULL  , OPT_INPUT_FILE  } ,
+  { "output-file"       , required_argument     , NULL  , OPT_OUTPUT_FILE } ,
+  { "count"             , required_argument     , NULL  , OPT_COUNT       } ,
+  { "secret"            , required_argument     , NULL  , OPT_SECRET      } ,
+  { "help"              , no_argument           , NULL  , OPT_HELP        } ,
+  { NULL                , 0                     , NULL  , 0               }
 };
 
 /**********************************************************************/
 
-void	parse_command_line	(int,char *[]);
+void    parse_command_line      (int,char *[]);
 
 /**********************************************************************/
 
@@ -92,7 +92,7 @@ int main(int argc,char *argv[])
   
   if (g_inputfile)
     input = fopen(g_inputfile,"r");
-  
+    
   count = g_count;
   
   while(getline(&line,&linesize,input) > 0)
@@ -122,7 +122,7 @@ int main(int argc,char *argv[])
       }
       count = 0;
     }
-      
+    
     if (empty_string(line)) continue;
     
     glq = (struct greylist_request *)outpacket;
@@ -144,10 +144,10 @@ int main(int argc,char *argv[])
     
     if (strcmp(from,"-") == 0)
       from = "";
-    
+      
     if (strcmp(to,"-") == 0)
       to = "";
-    
+      
     sfrom = min(strlen(from),200);
     sto   = min(strlen(to),200);
     
@@ -203,18 +203,18 @@ void parse_command_line(int argc,char *argv[])
       case OPT_HELP:
       default:
            fprintf(
-           	stderr,
-           	"usage: %s [options]\n"
-           	"\t--input-file <file>	(stdin)\n"
-           	"\t--output-file <file>	(%s)\n"
-           	"\t--secret <string>	(%s)\n"
-           	"\t--count <num>	(%lu)\n"
-           	"\t--help		(this text)\n"
-           	"\n",
-           	argv[0],
-           	g_outputfile,
-           	g_secret,
-           	(unsigned long)g_count
+                stderr,
+                "usage: %s [options]\n"
+                "\t--input-file <file>  (stdin)\n"
+                "\t--output-file <file> (%s)\n"
+                "\t--secret <string>    (%s)\n"
+                "\t--count <num>        (%lu)\n"
+                "\t--help               (this text)\n"
+                "\n",
+                argv[0],
+                g_outputfile,
+                g_secret,
+                (unsigned long)g_count
            );
            exit(EXIT_FAILURE);
     }

@@ -51,15 +51,15 @@
 
 /***********************************************************************/
 
-static void	handle_sigchld		(void);
-static void	handle_sigint		(void);
-static void	handle_sigquit		(void);
-static void	handle_sigterm		(void);
-static void	handle_sigpipe		(void);
-static void	handle_sigalrm		(void);
-static void	handle_sigusr1		(void);
-static void	handle_sigusr2		(void);
-static void	handle_sighup		(void);
+static void     handle_sigchld          (void);
+static void     handle_sigint           (void);
+static void     handle_sigquit          (void);
+static void     handle_sigterm          (void);
+static void     handle_sigpipe          (void);
+static void     handle_sigalrm          (void);
+static void     handle_sigusr1          (void);
+static void     handle_sigusr2          (void);
+static void     handle_sighup           (void);
 
 /***********************************************************************/
 
@@ -80,7 +80,7 @@ void check_signals(void)
 {
   if (mf_sigchld)  handle_sigchld();
   if (mf_sigalrm)  handle_sigalrm();
-  if (mf_sigint)   handle_sigint(); 
+  if (mf_sigint)   handle_sigint();
   if (mf_sigquit)  handle_sigquit();
   if (mf_sigterm)  handle_sigterm();
   if (mf_sigpipe)  handle_sigpipe();
@@ -134,11 +134,11 @@ void handle_sigchld(void)
   
   syslog(LOG_DEBUG,"child process ended");
   mf_sigchld = 0;
-
+  
   while(1)
   {
     child = waitpid(-1,&status,WNOHANG);
-  
+    
     if (child == (pid_t)-1)
     {
       if (errno == ECHILD) return;
@@ -146,7 +146,7 @@ void handle_sigchld(void)
       syslog(LOG_ERR,"waitpid() = %s",strerror(errno));
       return;
     }
-  
+    
     if (WIFEXITED(status))
     {
       ret = WEXITSTATUS(status);
@@ -177,14 +177,14 @@ pid_t gld_fork(void)
     syslog(LOG_CRIT,"fork() = %s",strerror(errno));
     return(pid);
   }
-  else if (pid > (pid_t)0)	/* parent returns immediately */
+  else if (pid > (pid_t)0)      /* parent returns immediately */
     return(pid);
-  
+    
   /*---------------------------------------------------
   ; set the environment for the child process.
   ;--------------------------------------------------*/
-
-  alarm(0);	/* turn off any pending alarms */
+  
+  alarm(0);     /* turn off any pending alarms */
   
   set_signal(SIGSEGV,sighandler_critical_child);
   set_signal(SIGBUS, sighandler_critical_child);
@@ -193,7 +193,7 @@ pid_t gld_fork(void)
   set_signal(SIGXCPU,sighandler_critical_child);
   set_signal(SIGXFSZ,sighandler_critical_child);
   set_signal(SIGPIPE,sighandler_critical_child);
-
+  
   return(pid);
 }
 
@@ -209,12 +209,12 @@ void save_state(void)
   fromd_dump();
 }
 
-/*******************************************************************/ 
- 
+/*******************************************************************/
+
 static void handle_sigint(void)
 {
   syslog(LOG_DEBUG,"Interrupt Signal");
-
+  
   save_state();
   GlobalsDeinit();
   set_signal(SIGINT,SIG_DFL);
@@ -226,7 +226,7 @@ static void handle_sigint(void)
 static void handle_sigquit(void)
 {
   syslog(LOG_DEBUG,"Quit signal");
-
+  
   save_state();
   GlobalsDeinit();
   set_signal(SIGQUIT,SIG_DFL);
@@ -238,7 +238,7 @@ static void handle_sigquit(void)
 static void handle_sigterm(void)
 {
   syslog(LOG_DEBUG,"Terminate Signal");
-
+  
   save_state();
   GlobalsDeinit();
   set_signal(SIGTERM,SIG_DFL);
@@ -260,7 +260,7 @@ static void handle_sigalrm(void)
   time_t now;
   
   syslog(LOG_DEBUG,"Alarm-time for house cleaning!");
-
+  
   mf_sigalrm      = 0;
   now             = time(NULL);
   g_cleanup_count++;
@@ -279,26 +279,26 @@ static void handle_sigalrm(void)
   g_tuples_write_cucurrent = 0;
   if (g_tuples_write_cu > g_tuples_write_cumax)
     g_tuples_write_cumax = g_tuples_write_cu;
-
+    
   tuple_expire(now);
-
+  
   if (difftime(now,g_time_savestate) >= c_time_savestate)
   {
     pid_t child;
-  
+    
     syslog(LOG_DEBUG,"saving state");
-  
+    
     g_time_savestate = now;
     child            = gld_fork();
     
-    if (child == 0)	/* child process */
+    if (child == 0)     /* child process */
     {
       save_state();
       _exit(0);
     }
-  }  
-
-  alarm(c_time_cleanup);	/* signal next cleanup */
+  }
+  
+  alarm(c_time_cleanup);        /* signal next cleanup */
 }
 
 /***********************************************************/
@@ -306,12 +306,12 @@ static void handle_sigalrm(void)
 static void handle_sigusr1(void)
 {
   pid_t  child;
-
+  
   syslog(LOG_DEBUG,"User 1 Signal");
   mf_sigusr1 = 0;
-
+  
   child = gld_fork();
-
+  
   if (child == 0)
   {
     tuple_all_dump();
@@ -333,7 +333,7 @@ static void handle_sigusr2(void)
 static void handle_sighup(void)
 {
   char *t;
-
+  
   syslog(LOG_DEBUG,"Sighup");
   mf_sighup = 0;
   t = report_time(c_starttime,time(NULL));

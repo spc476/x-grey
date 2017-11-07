@@ -61,8 +61,8 @@ enum
 
 /********************************************************************/
 
-static void	 dump_defaults	(void);
-static void	 my_exit	(void);
+static void      dump_defaults  (void);
+static void      my_exit        (void);
 
 /*********************************************************************/
 
@@ -73,14 +73,14 @@ char          *c_host            = SERVER_BINDHOST;
 int            c_port            = SERVER_PORT;
 int            c_log_facility    = SERVER_LOG_FACILITY;
 int            c_log_level       = SERVER_LOG_LEVEL;
-char	      *c_log_id          = SERVER_LOG_ID;
-char	      *c_secret		 = SECRET;
-size_t         c_secretsize	 = SECRETSIZE;
+char          *c_log_id          = SERVER_LOG_ID;
+char          *c_secret          = SECRET;
+size_t         c_secretsize      = SECRETSIZE;
 bool           cf_debug          = false;
 
-char          *c_conffile	 = SERVER_STATEDIR "/config.txt";
+char          *c_conffile        = SERVER_STATEDIR "/config.txt";
 char          *c_whitefile       = SERVER_STATEDIR "/whitelist.txt";
-char          *c_greyfile        = SERVER_STATEDIR "/greyfile.txt";	
+char          *c_greyfile        = SERVER_STATEDIR "/greyfile.txt";
 char          *c_dumpfile        = SERVER_STATEDIR "/dump.txt";
 char          *c_iplistfile      = SERVER_STATEDIR "/iplist.txt";
 char          *c_tofile          = SERVER_STATEDIR "/to.txt";
@@ -91,22 +91,22 @@ char          *c_timeformat      = "%c";
 size_t         c_poolmax         = SERVER_MAX_TUPLES;
 unsigned int   c_time_cleanup    = SERVER_CLEANUP;
 double         c_time_savestate  = SERVER_SAVESTATE;
-double	       c_timeout_embargo = SERVER_TIMEOUT_EMBARGO;
+double         c_timeout_embargo = SERVER_TIMEOUT_EMBARGO;
 double         c_timeout_grey    = SERVER_TIMEOUT_GREYLIST;
-double	       c_timeout_white   = SERVER_TIMEOUT_WHITELIST;
+double         c_timeout_white   = SERVER_TIMEOUT_WHITELIST;
 time_t         c_starttime       = 0;
 bool           cf_foreground     = false;
 bool           cf_oldcounts      = false;
 bool           cf_nomonitor      = false;
 
-	/*---------------------------------------------------*/
-	
+        /*---------------------------------------------------*/
+        
 char                 g_argv0[FILENAME_MAX];
 char               **g_argv;
 
 size_t               g_poolnum;
-struct tuple        *g_pool;		/* actual space */
-Tuple               *g_tuplespace;	/* used for sorting records */
+struct tuple        *g_pool;            /* actual space */
+Tuple               *g_tuplespace;      /* used for sorting records */
 
 size_t               g_requests;
 size_t               g_req_cu;
@@ -117,7 +117,7 @@ size_t               g_greylisted;
 size_t               g_whitelisted;
 size_t               g_whitelist_expired;
 size_t               g_greylist_expired;
-size_t		     g_tuples_read;
+size_t               g_tuples_read;
 size_t               g_tuples_read_cu;
 size_t               g_tuples_read_cucurrent;
 size_t               g_tuples_read_cumax;
@@ -132,8 +132,8 @@ struct ipnode       *g_tree;
 size_t               g_ipcnt = 1;
 size_t               g_ip_cmdcnt[3];
 
-size_t		     g_smaxfrom;
-size_t	             g_sfrom;
+size_t               g_smaxfrom;
+size_t               g_sfrom;
 struct emaildomain  *g_from;
 size_t               g_from_cmdcnt[3];
 
@@ -154,9 +154,9 @@ size_t               g_tod_cmdcnt[3];
 
 time_t               g_time_savestate;
 
-int		     g_defto         = IFT_GREYLIST;
+int                  g_defto         = IFT_GREYLIST;
 int                  g_deftodomain   = IFT_GREYLIST;
-int		     g_deffrom       = IFT_GREYLIST;
+int                  g_deffrom       = IFT_GREYLIST;
 int                  g_deffromdomain = IFT_GREYLIST;
 size_t               g_toc;
 size_t               g_todomainc;
@@ -167,32 +167,32 @@ size_t               g_fromdomainc;
 
 static const struct option mc_options[] =
 {
-  { "host"		, required_argument	, NULL	, OPT_HOST		} ,
-  { "port"		, required_argument	, NULL	, OPT_PORT		} ,
-  { "debug"		, no_argument		, NULL	, OPT_DEBUG		} ,
-  { "foreground"	, no_argument		, NULL	, OPT_FOREGROUND	} ,
-  { "nomonitor"		, no_argument		, NULL	, OPT_NOMONITOR		} ,
-  { "version"		, no_argument		, NULL	, OPT_VERSION		} ,
-  { "help"		, no_argument		, NULL	, OPT_HELP		} ,
-  { NULL		, 0			, NULL	, 0			}
+  { "host"              , required_argument     , NULL  , OPT_HOST              } ,
+  { "port"              , required_argument     , NULL  , OPT_PORT              } ,
+  { "debug"             , no_argument           , NULL  , OPT_DEBUG             } ,
+  { "foreground"        , no_argument           , NULL  , OPT_FOREGROUND        } ,
+  { "nomonitor"         , no_argument           , NULL  , OPT_NOMONITOR         } ,
+  { "version"           , no_argument           , NULL  , OPT_VERSION           } ,
+  { "help"              , no_argument           , NULL  , OPT_HELP              } ,
+  { NULL                , 0                     , NULL  , 0                     }
 };
 
 /********************************************************************/
 
 int (GlobalsInit)(void)
 {
-  c_starttime = g_time_savestate = time(NULL);  
+  c_starttime = g_time_savestate = time(NULL);
   openlog(c_log_id,0,c_log_facility);
-
+  
   g_pool       = calloc(c_poolmax,sizeof(struct tuple));
   g_tuplespace = calloc(c_poolmax,sizeof(Tuple));
-
+  
   madvise(g_pool,      c_poolmax * sizeof(struct tuple),MADV_RANDOM);
   madvise(g_tuplespace,c_poolmax * sizeof(Tuple),       MADV_RANDOM);
   
   for (size_t i = 0 ; i < c_poolmax ; i++)
     g_tuplespace[i] = &g_pool[i];
-
+    
   g_tree         = malloc(sizeof(struct ipnode));
   g_tree->parent = NULL;
   g_tree->zero   = NULL;
@@ -202,7 +202,7 @@ int (GlobalsInit)(void)
   
   if (cf_debug)
     dump_defaults();
-  
+    
   iplist_read(c_iplistfile);
   whitelist_load();
   to_read();
@@ -211,10 +211,10 @@ int (GlobalsInit)(void)
   fromd_read();
   
   atexit(my_exit);
-
+  
   /*-------------------------------------------------------------
   ; yes, I don't bother checking the return code for thes calls.
-  ; Why?  Because the underlying system call, sigaction(), only 
+  ; Why?  Because the underlying system call, sigaction(), only
   ; returns type 1 errors (see http://boston.conman.org/2009/12/01.2
   ; for more information) which indicate bad code, not a real
   ; error condition.
@@ -228,10 +228,10 @@ int (GlobalsInit)(void)
   set_signal(SIGUSR2, sighandler_sigs);
   set_signal(SIGALRM, sighandler_sigs);
   set_signal(SIGHUP,  sighandler_sigs);
-
+  
   if (!cf_nomonitor)
     write_pidfile(c_pidfile);
-  alarm(c_time_cleanup);	/* start the countdown */
+  alarm(c_time_cleanup);        /* start the countdown */
   return(ERR_OKAY);
 }
 
@@ -240,7 +240,7 @@ int (GlobalsInit)(void)
 int (GlobalsDeinit)(void)
 {
   free(g_pool);
-  free(g_tuplespace);	/* XXX - free g_tree */
+  free(g_tuplespace);   /* XXX - free g_tree */
   closelog();
   return(ERR_OKAY);
 }
@@ -267,7 +267,7 @@ static void dump_defaults(void)
    );
 }
 
-/********************************************************************/ 
+/********************************************************************/
 
 void parse_cmdline(int argc,char *argv[])
 {
@@ -302,7 +302,7 @@ void parse_cmdline(int argc,char *argv[])
            break;
       case OPT_VERSION:
            fputs("Version: " PROG_VERSION "\n",stderr);
-	   exit(EXIT_FAILURE);
+           exit(EXIT_FAILURE);
       case OPT_HELP:
       default:
            fprintf(stderr,"usage: %s [options]\n",argv[0]);
@@ -310,7 +310,7 @@ void parse_cmdline(int argc,char *argv[])
            exit(EXIT_FAILURE);
     }
   }
-} 
+}
 
 /*******************************************************************/
 
@@ -325,9 +325,9 @@ void daemon_init(void)
     syslog(LOG_EMERG,"daemon_init(): fork() = %s",strerror(errno));
     exit(EXIT_FAILURE);
   }
-  else if (pid != 0)	/* parent goes bye bye */
+  else if (pid != 0)    /* parent goes bye bye */
     exit(EXIT_SUCCESS);
-
+    
   setsid();
   set_signal(SIGHUP,SIG_IGN);
   
@@ -339,7 +339,7 @@ void daemon_init(void)
   }
   else if (pid != 0)
     _exit(EXIT_SUCCESS);
-  
+    
   chdir("/");
   umask(022);
   
@@ -353,7 +353,7 @@ void daemon_init(void)
   assert(fh > 2);
   dup2(fh,STDIN_FILENO);
   dup2(fh,STDOUT_FILENO);
-  dup2(fh,STDERR_FILENO);	/* we always close this when going into daemon mode */
+  dup2(fh,STDERR_FILENO);       /* we always close this when going into daemon mode */
   
   close(fh);
 }
@@ -368,7 +368,7 @@ static void my_exit(void)
   ; calls to exit().
   ;------------------------------------------------*/
   
-  unlink(c_pidfile);  
+  unlink(c_pidfile);
   closelog();
   
   if (cf_foreground)

@@ -28,9 +28,9 @@
 #include "iplist.h"
 #include "emaildomain.h"
 
-	/*----------------------------------------------*/
-
-extern const char *const    c_pidfile;	
+        /*----------------------------------------------*/
+        
+extern const char *const    c_pidfile;
 extern const char *const    c_whitefile;
 extern const char *const    c_greyfile;
 extern const char *const    c_dumpfile;
@@ -59,8 +59,8 @@ extern const bool           cf_foreground;
 extern const bool           cf_oldcounts;
 extern const bool           cf_nomonitor;
 
-	/*---------------------------------------------*/
-	
+        /*---------------------------------------------*/
+        
 extern size_t              g_poolnum;
 extern struct tuple       *g_pool;
 extern Tuple              *g_tuplespace;
@@ -68,22 +68,22 @@ extern Tuple              *g_tuplespace;
 extern char                g_argv0[FILENAME_MAX];
 extern char              **g_argv;
 
-extern size_t		   g_requests;
+extern size_t              g_requests;
 extern size_t              g_req_cu;
 extern size_t              g_req_cucurrent;
-extern size_t		   g_req_cumax;
-extern size_t		   g_cleanup_count;
-extern size_t	           g_greylisted;
-extern size_t	           g_whitelisted;
-extern size_t	           g_whitelist_expired;
-extern size_t	           g_greylist_expired;
-extern size_t		   g_tuples_read;
+extern size_t              g_req_cumax;
+extern size_t              g_cleanup_count;
+extern size_t              g_greylisted;
+extern size_t              g_whitelisted;
+extern size_t              g_whitelist_expired;
+extern size_t              g_greylist_expired;
+extern size_t              g_tuples_read;
 extern size_t              g_tuples_read_cu;
 extern size_t              g_tuples_read_cucurrent;
 extern size_t              g_tuples_read_cumax;
-extern size_t		   g_tuples_write;
+extern size_t              g_tuples_write;
 extern size_t              g_tuples_write_cu;
-extern size_t		   g_tuples_write_cucurrent;
+extern size_t              g_tuples_write_cucurrent;
 extern size_t              g_tuples_write_cumax;
 extern size_t              g_tuples_low;
 extern size_t              g_tuples_high;
@@ -125,11 +125,11 @@ extern size_t              g_fromdomainc;
 
 /*****************************************************************/
 
-int	(GlobalsInit)	(void);
-int	(GlobalsDeinit)	(void);
+int     (GlobalsInit)   (void);
+int     (GlobalsDeinit) (void);
 
-void	parse_cmdline	(int,char *[]);
-void	daemon_init	(void);
+void    parse_cmdline   (int,char *[]);
+void    daemon_init     (void);
 
 #endif
 

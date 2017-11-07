@@ -53,9 +53,9 @@
 
 /***********************************************************/
 
-int		check_greylist	(int,char *,char *,char *);	
-static int	process_request	(int);
-static void	handler_sigalrm	(int);
+int             check_greylist  (int,char *,char *,char *);
+static int      process_request (int);
+static void     handler_sigalrm (int);
 
 /**********************************************************/
 
@@ -71,17 +71,17 @@ int main(int argc,char *argv[])
   int sock;
   
   if (GlobalsInit(argc,argv) != EXIT_SUCCESS)
-    return(EXIT_FAILURE);  
-
+    return(EXIT_FAILURE);
+    
   set_signal(SIGALRM,handler_sigalrm);
   
   sock = create_socket(c_host,c_port,SOCK_DGRAM);
   if (sock == -1)
     exit(EXIT_FAILURE);
-  
+    
   while(process_request(sock))
     ;
-  
+    
   return(EXIT_SUCCESS);
 }
 
@@ -110,7 +110,7 @@ static int process_request(int sock)
   ; reads in a bunch of data, finds each line, breaks
   ; each line into "name" = "value", the sets the variables
   ; we are interested in, all using ANSI C and POSIX calls.
-  ; 
+  ;
   ; Even when I fix CGILib, I doubt I'll fix this code, as
   ; it works, and it works fast.
   ;--------------------------------------------------*/
@@ -129,7 +129,7 @@ static int process_request(int sock)
   from    = strdup("");
   to      = strdup("");
   ip      = strdup("");
-
+  
   while(1)
   {
     if (refill)
@@ -144,7 +144,7 @@ static int process_request(int sock)
       if (rrc == -1)
       {
         syslog(LOG_DEBUG,"process_request(): read() = %s",strerror(errno));
-	return(0);
+        return(0);
       }
       if (rrc ==  0) return(0);
       
@@ -169,22 +169,22 @@ static int process_request(int sock)
       
       switch(response)
       {
-        default: 
-	     assert(0);
+        default:
+             assert(0);
         case IFT_ACCEPT:
-	     rrc = write(STDOUT_FILENO,m_dunno,sizeof(m_dunno) - 1);
-	     assert(rrc == sizeof(m_dunno) - 1);
-	     break;
-	case IFT_REJECT:
-	     rrc = write(STDOUT_FILENO,m_reject,sizeof(m_reject) - 1);
-	     assert(rrc == sizeof(m_reject) - 1);
-	     break;
-	case IFT_GREYLIST:
-	     rrc = write(STDOUT_FILENO,m_defer,sizeof(m_defer) - 1);
-	     assert(rrc == sizeof(m_defer) - 1);
-	     break;
+             rrc = write(STDOUT_FILENO,m_dunno,sizeof(m_dunno) - 1);
+             assert(rrc == sizeof(m_dunno) - 1);
+             break;
+        case IFT_REJECT:
+             rrc = write(STDOUT_FILENO,m_reject,sizeof(m_reject) - 1);
+             assert(rrc == sizeof(m_reject) - 1);
+             break;
+        case IFT_GREYLIST:
+             rrc = write(STDOUT_FILENO,m_defer,sizeof(m_defer) - 1);
+             assert(rrc == sizeof(m_defer) - 1);
+             break;
       }
-
+      
       free(request);
       free(from);
       free(to);
@@ -195,20 +195,20 @@ static int process_request(int sock)
       bufsiz = amount;
       return(1);
     }
-
+    
     v = memchr(buffer,'=',bufsiz);
-
+    
     if (v == NULL)
     {
       syslog(LOG_ERR,"bad input format");
       return(0);
     }
-
+    
     *p++ = '\0';
     *v++ = '\0';
-
+    
     syslog(LOG_DEBUG,"request: %s = %s",buffer,v);
-
+    
     if (strcmp(buffer,"request") == 0)
     {
       free(request);
@@ -251,9 +251,9 @@ int check_greylist(int sock,char *ip,char *from,char *to)
   uint8_t                    *p;
   char                       *d;
   ssize_t                     rrc;
-  size_t                      packetsize; 
+  size_t                      packetsize;
   CRC32                       crc;
-
+  
   sfrom = min(strlen(from),200);
   sto   = min(strlen(to),  200);
   
@@ -270,28 +270,28 @@ int check_greylist(int sock,char *ip,char *from,char *to)
   glq->fromsize = htons(sfrom);
   glq->tosize   = htons(sto);
   
-  *p++ = strtoul(ip,&d,10); d++;	/* pack IP */
+  *p++ = strtoul(ip,&d,10); d++;        /* pack IP */
   *p++ = strtoul(d ,&d,10); d++;
   *p++ = strtoul(d ,&d,10); d++;
   *p++ = strtoul(d ,&d,10); d++;
   
-  memcpy(p,from,sfrom);	p += sfrom;
+  memcpy(p,from,sfrom); p += sfrom;
   memcpy(p,to,sto);     p += sto;
-
+  
   packetsize = (size_t)(p - outpacket.data);
-
+  
   crc        = crc32(INIT_CRC32,&glq->version,packetsize - sizeof(CRC32));
   crc        = crc32(crc,c_secret,c_secretsize);
   glq->crc   = htonl(crc);
-
+  
   rrc = sendto(
-  		sock,
-  		glq,
-  		packetsize,
-  		0,
-  		(struct sockaddr const *)&c_raddr,
-  		c_raddrsize
-  	);
+                sock,
+                glq,
+                packetsize,
+                0,
+                (struct sockaddr const *)&c_raddr,
+                c_raddrsize
+        );
   if (rrc == -1)
   {
     syslog(LOG_ERR,"check_greylist(): sendto() = %s",strerror(errno));
@@ -302,14 +302,14 @@ int check_greylist(int sock,char *ip,char *from,char *to)
   
   sipsize = sizeof(struct sockaddr_in);
   rrc     = recvfrom(
-  		sock,
-  		inpacket.data,
-  		sizeof(inpacket),
-  		0,
-  		(struct sockaddr *)&sip,
-  		&sipsize
-  	);
-  
+                sock,
+                inpacket.data,
+                sizeof(inpacket),
+                0,
+                (struct sockaddr *)&sip,
+                &sipsize
+        );
+        
   alarm(0);
   
   /*--------------------------------------------------------
@@ -346,7 +346,7 @@ int check_greylist(int sock,char *ip,char *from,char *to)
     syslog(LOG_ERR,"received response from wrong version");
     return(IFT_ACCEPT);
   }
-
+  
   if (ntohs(glr->MTA) != MTA_POSTFIX)
   {
     syslog(LOG_ERR,"are we running another MTA here?");

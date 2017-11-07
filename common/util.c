@@ -54,13 +54,13 @@ int create_socket(char const *host,int port,int type)
   int                 s;
   int                 rc;
   int                 reuse = 1;
-
+  
   assert(host != NULL);
   assert(port >= 0);
   assert(port <= 65535);
   
   lh = inet_addr(host);
-
+  
   if (lh == (in_addr_t)-1)
   {
     localhost = gethostbyname(host);
@@ -73,7 +73,7 @@ int create_socket(char const *host,int port,int type)
   }
   else
     memcpy(&sin.sin_addr.s_addr,&lh,sizeof(in_addr_t));
-
+    
   sin.sin_family = AF_INET;
   sin.sin_port   = htons(port);
   
@@ -107,11 +107,11 @@ int create_socket(char const *host,int port,int type)
 int ci_map_int(char const *name,struct chars_int const list[],size_t size)
 {
   size_t i;
-
+  
   assert(name != NULL);
   assert(list != NULL);
   assert(size >  0);
-
+  
   for (i = 0 ; i < size ; i++)
   {
     if (strcmp(name,list[i].name) == 0)
@@ -125,10 +125,10 @@ int ci_map_int(char const *name,struct chars_int const list[],size_t size)
 char const *ci_map_chars(int value,struct chars_int const list[],size_t size)
 {
   size_t i;
-
+  
   assert(list != NULL);
   assert(size >  0);
-
+  
   for (i = 0 ; i < size ; i++)
   {
     if (value == list[i].value)
@@ -178,14 +178,14 @@ int set_signal(int sig,void (*handler)(int))
   struct sigaction act;
   struct sigaction oact;
   int              rc;
-
+  
   /*-----------------------------------------------
   ; Do NOT set SA_RESTART!  This will cause the program
   ; to fail in mysterious ways.  I've tried the "restart
   ; system calls" method and it doesn't work for this
   ; program.  So please don't bother adding it.
-  ; 
-  ; You have been warned ... 
+  ;
+  ; You have been warned ...
   ;-----------------------------------------------*/
   
   sigemptyset(&act.sa_mask);
@@ -195,7 +195,7 @@ int set_signal(int sig,void (*handler)(int))
   rc = sigaction(sig,&act,&oact);
   if (rc == -1)
     syslog(LOG_ERR,"sigaction() = %s",strerror(errno));
-  
+    
   return rc;
 }
 
@@ -206,7 +206,7 @@ double read_dtime(char *arg,double defaultval)
   double time = 0.0;
   double val;
   char   *p;
- 
+  
   p = arg;
   do
   {
@@ -240,7 +240,7 @@ double read_dtime(char *arg,double defaultval)
     }
     time += val;
   } while (*p);
-
+  
   return time;
 }
 
@@ -283,7 +283,7 @@ char *iptoa(IP addr)
     (addr >>  8) & 0xFF,
     (addr      ) & 0xFF
   );
-
+  
   return strdup(buffer);
 }
 
@@ -328,7 +328,7 @@ char *report_time(time_t start,time_t end)
   char      *ptstart;
   char      *ptend;
   struct tm *ptime;
-
+  
   ptstart = txt_start;
   ptend   = txt_end;
   
@@ -337,20 +337,20 @@ char *report_time(time_t start,time_t end)
     strftime(txt_start,BUFSIZ,c_timeformat,ptime);
   else
     ptstart = "[ERROR in timestamp]";
-  
+    
   ptime = localtime(&end);
   if (ptime)
     strftime(txt_end,BUFSIZ,c_timeformat,ptime);
   else
     ptend = "[ERROR in timestamp]";
-
+    
   delta = report_delta(difftime(end,start));
   
   snprintf(msg,sizeof(msg),"Start: %s End: %s Running: %s",ptstart,ptend,delta);
   free(delta);
   return strdup(msg);
 }
-  
+
 /******************************************************************/
 
 char *report_delta(double diff)
@@ -362,7 +362,7 @@ char *report_delta(double diff)
   int    hour;
   int    min;
   int    sec;
-
+  
   assert(diff >= 0.0);
   
   year  = (int)(diff / SECSYEAR);
@@ -412,19 +412,19 @@ String *split(size_t *pnum,char *txt)
     
     for ( ; (*txt) && isspace(*txt) ; txt++)
       ;
-
+      
     for ( p = txt ; (*p) && !isspace(*p) ; p++)
       ;
-    
+      
     if (p == txt) break;
     
     pool[num].d   = txt;
     pool[num++].s = p - txt;
-
+    
     
     if (*p == '\0')
       break;
-    
+      
     *p++ = '\0';
     txt  = p;
     syslog(
@@ -464,7 +464,7 @@ void write_pidfile(char const *fname)
     fclose(fp);
   }
   else
-    syslog(LOG_ERR,"fopen(%s,WRITE) = %s",fname,strerror(errno));    
+    syslog(LOG_ERR,"fopen(%s,WRITE) = %s",fname,strerror(errno));
 }
 
 /*********************************************************************/
@@ -476,15 +476,15 @@ int parse_ip(uint8_t *ip,int *mask,char *text)
   assert(ip   != NULL);
   assert(mask != NULL);
   assert(text != NULL);
-
-  do  
+  
+  do
   {
     ip[octetcount] = strtoul(text,&text,10);
     if (text[0] == '\0') break;
     if (text[0] == '/')  break;
     if (text[0] != '.')
       return(ERR_ERR);
-    
+      
     octetcount++;
     text++;
   } while(octetcount < 4);
@@ -496,7 +496,7 @@ int parse_ip(uint8_t *ip,int *mask,char *text)
   }
   else
     *mask = 32;
-  
+    
   return ERR_OKAY;
 }
 
