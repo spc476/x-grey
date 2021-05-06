@@ -22,7 +22,7 @@ SERVER_STATEDIR        = $(localstatedir)/state/gld
 MCP_HELPDIR            = $(datarootdir)/gld
 SENDMAIL_FILTERCHANNEL = $(localstatedir)/state/gld/milter
 
-CC      = gcc -std=c99 -Wall -Wextra -pedantic
+CC      = gcc -std=c99 -Wall -Wextra -pedantic -Wwrite-strings
 CFLAGS  = -g
 LDFLAGS = -g
 LDLIBS  = -lcgi6

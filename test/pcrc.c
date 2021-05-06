@@ -49,7 +49,7 @@ enum
 
 /************************************************************************/
 
-char *g_inputfile  = "precanned-tuple.01";
+char const *g_inputfile  = "precanned-tuple.01";
 
 static struct option const mc_options[] =
 {

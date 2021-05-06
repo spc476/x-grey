@@ -68,7 +68,7 @@ const char          *c_log_id       = MCP_LOG_ID;
 bool                 cf_debug       = false;
 const char          *c_timeformat   = "%c";
 const char          *c_pager        = MCP_PAGER;
-char                *c_secret       = SECRET;
+char const          *c_secret       = SECRET;
 size_t               c_secretsize   = SECRETSIZE;
 void               (*cv_pager) (int)                    = pager_interactive;
 

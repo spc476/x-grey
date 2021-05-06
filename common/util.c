@@ -321,13 +321,13 @@ char *timetoa(time_t stamp)
 
 char *report_time(time_t start,time_t end)
 {
-  char      *delta;
-  char       txt_start[BUFSIZ];
-  char       txt_end  [BUFSIZ];
-  char       msg      [BUFSIZ];
-  char      *ptstart;
-  char      *ptend;
-  struct tm *ptime;
+  char       *delta;
+  char        txt_start[BUFSIZ];
+  char        txt_end  [BUFSIZ];
+  char        msg      [BUFSIZ];
+  char const *ptstart;
+  char const *ptend;
+  struct tm  *ptime;
   
   ptstart = txt_start;
   ptend   = txt_end;

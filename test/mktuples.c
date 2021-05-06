@@ -51,11 +51,11 @@ enum
 
 /************************************************************************/
 
-char   *g_inputfile  = NULL;
-char   *g_outputfile = "precanned-tuple.%02d";
-char   *g_secret     = "decafbad";
-size_t  g_secretsize = 8;
-size_t  g_count      = 65536uL;
+char const *g_inputfile  = NULL;
+char const *g_outputfile = "precanned-tuple.%02d";
+char const *g_secret     = "decafbad";
+size_t      g_secretsize = 8;
+size_t      g_count      = 65536uL;
 
 static struct option const mc_options[] =
 {
@@ -105,8 +105,10 @@ int main(int argc,char *argv[])
     size_t   packetsize;
     uint8_t *p;
     CRC32    crc;
+    char     empty;
     
-    nl = strchr(line,'\n'); if (nl) *nl = '\0';
+    empty = '\0';
+    nl    = strchr(line,'\n'); if (nl) *nl = '\0';
     
     if (count == g_count)
     {
@@ -143,10 +145,10 @@ int main(int argc,char *argv[])
     *to++ = '\0';
     
     if (strcmp(from,"-") == 0)
-      from = "";
+      from = &empty;
       
     if (strcmp(to,"-") == 0)
-      to = "";
+      to = &empty;
       
     sfrom = min(strlen(from),200);
     sto   = min(strlen(to),200);

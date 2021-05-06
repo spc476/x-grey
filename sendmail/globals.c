@@ -65,21 +65,21 @@ static void              my_exit        (void);
 
 /****************************************************************/
 
-char                *c_pidfile       = SENDMAIL_PIDFILE;
-char                *c_host          = SENDMAIL_HOST;
+char const          *c_pidfile       = SENDMAIL_PIDFILE;
+char const          *c_host          = SENDMAIL_HOST;
 int                  c_port          = 0;
-char                *c_timeformat    = "%c";
-char                *c_rhost         = SERVER_HOST;
+char const          *c_timeformat    = "%c";
+char const          *c_rhost         = SERVER_HOST;
 int                  c_rport         = SERVER_PORT;
 int                  c_timeout       = SENDMAIL_TIMEOUT;
 struct sockaddr_in   c_raddr;
 socklen_t            c_raddrsize     = sizeof(struct sockaddr_in);
 int                  c_log_facility  = SENDMAIL_LOG_FACILITY;
 int                  c_log_level     = SENDMAIL_LOG_LEVEL;
-char                *c_log_id        = SENDMAIL_LOG_ID;
-char                *c_secret        = SECRET;
+char const          *c_log_id        = SENDMAIL_LOG_ID;
+char const          *c_secret        = SECRET;
 size_t               c_secretsize    = SECRETSIZE;
-char                *c_filterchannel = SENDMAIL_FILTERCHANNEL;
+char const          *c_filterchannel = SENDMAIL_FILTERCHANNEL;
 bool                 cf_foreground   = false;
 bool                 cf_debug        = false;
 size_t               c_maxstack      = (64uL * 1024uL);

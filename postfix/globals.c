@@ -55,19 +55,19 @@ static void              dump_defaults  (void);
 
 /****************************************************************/
 
-char                *c_host         = POSTFIX_HOST;
+char const          *c_host         = POSTFIX_HOST;
 int                  c_port         = 0;
-char                *c_timeformat   = "%c";
-char                *c_rhost        = SERVER_HOST;
+char const          *c_timeformat   = "%c";
+char const          *c_rhost        = SERVER_HOST;
 int                  c_rport        = SERVER_PORT;
 struct sockaddr_in   c_raddr;
 socklen_t            c_raddrsize    = sizeof(struct sockaddr_in);
 int                  c_timeout      = POSTFIX_TIMEOUT;
 int                  c_log_facility = POSTFIX_LOG_FACILITY;
 int                  c_log_level    = POSTFIX_LOG_LEVEL;
-char                *c_log_id       = POSTFIX_LOG_ID;
+char const          *c_log_id       = POSTFIX_LOG_ID;
 bool                 cf_debug       = false;
-char                *c_secret       = SECRET;
+char const          *c_secret       = SECRET;
 size_t               c_secretsize   = SECRETSIZE;
 
   /*----------------------------------------------------*/

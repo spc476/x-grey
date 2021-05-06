@@ -55,13 +55,13 @@ enum
         ; required for linkage
         ;-----------------------*/
         
-char   *c_host         = "0.0.0.0";
-int     c_port         = 0;
-char   *c_timeformat   = "%c";
-int     c_log_facility = 0;
-int     c_log_level    = 0;
-char   *c_log_id       = NULL;
-bool    cf_debug       = false;
+char const *c_host         = "0.0.0.0";
+int         c_port         = 0;
+char const *c_timeformat   = "%c";
+int         c_log_facility = 0;
+int         c_log_level    = 0;
+char const *c_log_id       = NULL;
+bool        cf_debug       = false;
 
         /*--------------------------
         ; our global variables
@@ -69,9 +69,9 @@ bool    cf_debug       = false;
         
 struct sockaddr_in  g_raddr;
 socklen_t           g_raddrsize  = sizeof(struct sockaddr_in);
-char               *g_rhost      = SERVER_HOST;
+char const         *g_rhost      = SERVER_HOST;
 int                 g_rport      = SERVER_PORT;
-char               *g_inputfile  = "precanned-tuple.01";
+char const         *g_inputfile  = "precanned-tuple.01";
 
 static struct option const mc_options[] =
 {
