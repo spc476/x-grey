@@ -783,6 +783,13 @@ static void send_packet(struct request *req,void *packet,size_t size)
 
 /*********************************************************************/
 
+static void handle_child_alarm(int sig)
+{
+  (void)sig;
+}
+
+/*********************************************************************/
+
 static void cmd_mcp_report(struct request *req,void (*cb)(FILE *),int resp)
 {
   struct sockaddr  remote;
@@ -804,8 +811,6 @@ static void cmd_mcp_report(struct request *req,void (*cb)(FILE *),int resp)
     return;
   }
   
-  /* listen(tcp,5); */
-  
   pid = gld_fork();
   if (pid == -1)
   {
@@ -820,6 +825,14 @@ static void cmd_mcp_report(struct request *req,void (*cb)(FILE *),int resp)
     return;
   }
   
+  /*------------------------------------------------------------------------
+  ; We are in the child process here.  We inherit signal dispositions.  If
+  ; we receive a SIGALRM, then we'll try to dump the state if accept() times
+  ; out.  To avoid that, we reset the signal disposition of SIGALRM to a
+  ; do-nothing handler.
+  ;-------------------------------------------------------------------------*/
+  
+  set_signal(SIGALRM,handle_child_alarm);
   listen(tcp,5);
   alarm(10);
   

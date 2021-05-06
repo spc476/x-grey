@@ -1,3 +1,9 @@
+1.0.20	2021-05-06
+
+	* GLD: Fix problematic alarm when generating a report.
+
+	* ALL: Add new compiler warning.
+
 1.0.19	2016-12-05
 
 	* GLD: Use calloc() over malloc(n * s) to avoid overflow
