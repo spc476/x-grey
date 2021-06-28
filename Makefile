@@ -25,7 +25,6 @@ SENDMAIL_FILTERCHANNEL = $(localstatedir)/state/gld/milter
 CC      = gcc -std=c99 -Wall -Wextra -pedantic -Wwrite-strings
 CFLAGS  = -g
 LDFLAGS = -g
-LDLIBS  = -lcgi6
 
 override CFLAGS += -DSERVER_STATEDIR='"$(SERVER_STATEDIR)"' -DMCP_HELPDIR='"$(MCP_HELPDIR)"' -DSENDMAIL_FILTERCHANNEL='"$(SENDMAIL_FILTERCHANNEL)"' -DSERVER_PIDFILE='"$(runstatedir)/gld.pid"' -DSENDMAIL_PIDFILE='"$(runstatedir)/smc.pid"' -DPROG_VERSION='"$(PROG_VERSION)"' -DCOPYRIGHT_YEAR='"$(COPYRIGHT_YEAR)"'
 
@@ -70,6 +69,7 @@ server/gld: server/gld.o		\
 		common/util.o		\
 		common/crc32.o		\
 		common/bisearch.o
+server/gld: LDLIBS = -lcgi6
 
 # =====================================================================
 
@@ -78,7 +78,7 @@ control/gld-mcp: control/gld-mcp.o	\
 		common/globals.o	\
 		common/util.o		\
 		common/crc32.o
-control/gld-mcp: override LDLIBS += -lreadline -lcurses
+control/gld-mcp: LDLIBS = -lreadline -lcurses -lcgi6
 
 # ===================================================================
 
@@ -87,6 +87,7 @@ postfix/pfc: postfix/pfc.o		\
 		common/globals.o	\
 		common/util.o		\
 		common/crc32.o
+postfix/pfc: LDLIBS = -lcgi6
 
 # =====================================================================
 
@@ -95,11 +96,12 @@ sendmail/smc: sendmail/smc.o		\
 		common/globals.o	\
 		common/util.o		\
 		common/crc32.o
-sendmail/smc: override LDLIBS += -lmilter -lpthread
+sendmail/smc: LDLIBS = -lmilter -lpthread -lcgi6
 
 # ========================================================================
 
 test/mktuples:   test/mktuples.o common/crc32.o
+test/mktuples:   LDLIBS = -lcgi6
 test/sendtuples: test/sendtuples.o common/util.o
 test/pcrc:       test/pcrc.o
 
