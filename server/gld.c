@@ -820,7 +820,6 @@ static void cmd_mcp_report(struct request *req,void (*cb)(FILE *),int resp)
   }
   else if (pid > 0)     /* parent process */
   {
-    send_reply(req,resp,0,REASON_NONE);
     close(tcp);
     return;
   }
@@ -835,6 +834,7 @@ static void cmd_mcp_report(struct request *req,void (*cb)(FILE *),int resp)
   set_signal(SIGALRM,handle_child_alarm);
   listen(tcp,5);
   alarm(10);
+  send_reply(req,resp,0,REASON_NONE);
   
   rsize = sizeof(struct sockaddr);
   conn  = accept(tcp,&remote,&rsize);
