@@ -7,7 +7,6 @@ Dependencies:
 	version is available at:
 
 		git://github.com/spc476/CGILib.git
-		http://www.conman.org/software/cgilib/cgilib.tar.gz
 
 	All programs require the GNU getopt library, or an equivilent
 	replacement.

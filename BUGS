@@ -37,6 +37,12 @@
 		I think this finally marks the end of v1.0.  Anything past
 		this will be a radical redesign.
 
+		FIXED	2023-06-27
+
+		I finally found the root cause of the bug---I wasn't allowing
+		the server enough time for the child process to start up
+		before sending the data.  Sigh.
+
 2009-05-29
 
 	* when removing tuples, the counts might not be adjusted properly

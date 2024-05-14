@@ -1,3 +1,20 @@
+1.0.22	2024-05-14
+
+	* Updated CHANGES file (forgot to for 1.0.21)
+
+	* Updated BUGS file
+
+	* Updated INSTALL file to remove outdated location for CGILib
+
+	* Update README to remove outdated note.
+
+	* No code changes for this version---it's just a documentation
+	  update.
+
+1.0.21	2023-06-27
+
+	* GLD: Fixed TCP bulk transfers (long standing bug)
+
 1.0.20	2021-05-06
 
 	* GLD: Fix problematic alarm when generating a report.

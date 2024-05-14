@@ -38,13 +38,6 @@ Features:
 	* Boundable.  It consumes a predictable amount of memory and disk
 	  space.  Expired tuples are automatically purged from the system.
 
-Note:
-
-	If you pulled the source code from Github, you'll need to run
-	"scripts/post-commit" to generate the version.h file.  You can, of
-	course, add this script to the ".git/hooks" directory to re-generate
-	this file on each commit.
-
 Acknowledgements:
 
 	I would like to thank Pick Internet <http://www.pickint.net/> and
